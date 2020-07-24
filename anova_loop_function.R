@@ -1,6 +1,6 @@
 library(stats)
 
-new.data<- read.csv('YOUR_DATA.csv', header=TRUE, sep=",")  
+setwd("<YOURPATHWAY>")
 
 #my data was read in as a csv file with columns: 
 
@@ -8,11 +8,20 @@ new.data<- read.csv('YOUR_DATA.csv', header=TRUE, sep=",")
 # "Standardization.type" "Paired."              "Study.type"           "Data.point"           "Treatment"            "Population"           "Mean"                
 # "N" 
 
-new.data$TraitID<-new.data$Trait.ID
+new.data<- read.csv('YOUR_DATA.csv', header=TRUE, sep=",") %>% 
+  rename( Mean = MeanValue, Treatment = Predation)
 
-#how many traits/species/studies?
-length(unique(new.data$Trait.ID))
-length(unique(new.data$Species))
+#filter out incomplete entries, and entries with only two data points (will make R2 1.0)
+new.data<-new.data  %>% 
+  filter(!is.na(Treatment)) %>% 
+  filter(!is.na(Mean)) %>% 
+  filter(PopulationType=="Single") %>% 
+  filter(!(TraitID %in% c(277, 282, 283, 284, 285, 326))) #277 only has low, 282-285 are mixed but labelled single, 326 only has one for each but is single?
+
+new.data$Treatment<-as.factor(new.data$Treatment)
+
+#how many traits/studies?
+length(unique(new.data$TraitID))
 length(unique(new.data$Study.ID))
 
 
@@ -73,7 +82,7 @@ hist(as.numeric(as.character(output.all$justr)))
 
 
 #write results to a csv file for further analyses
-#write.table(output.all, file = "NEW_OUTPUT_FILE.csv",row.names=FALSE,col.names=TRUE, sep=",")
+#write.table(output.all, file = "TraitR2.csv",row.names=FALSE,col.names=TRUE, sep=",")
 
 
 
