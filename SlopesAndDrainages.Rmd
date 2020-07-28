@@ -1,0 +1,99 @@
+---
+title: "Slopes & Drainages"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+data<- read.csv('YOUR_DATA.csv', header=TRUE, sep=",") %>% 
+  rename( Mean = MeanValue, Treatment = Predation)
+
+data<- read.csv('../Data/data.csv', header=TRUE, sep=",") %>% 
+    rename( Mean = MeanValue, Treatment = Predation)
+```
+
+Add in a column noting if north or south slope watersheds, and one for drainage
+North: 
+Yarra, Marianne, Paria, Madamas, Mission (North but over near Tompire?), Tompire, Damier
+
+South: 
+Caroni Drainage (Tunapuna, Lopinot, Guanapo, Aripo, Cuara, Tranquille, Mausica, Tacarigua, Arouca, El Cedro, Cuara)
+Oropuche Drainage (Quare, Oropuche, Turure, Matura - but northeast, La Seiva)
+
+Questionable
+Tompire: west coast potentially 'north' but not connected to others
+Arena: Near the arena reservoir some place? thoroughly out of the mountains
+Naranjo: north but kinda like tompire
+Tumbason:south, drainage? not included anymore
+Hollis: South? not included anymore
+Matura: in oropuche drainage but far northeast
+Silverstream: South West (from jackie)
+Vance: South West (from jackie, I think it means not in oropuche or caroni, potentially out of the south slope too)
+
+
+```{r drainage slope}
+data$Population<-gsub("ElCedro1", "El Cedro", data$Population)
+data$Population<-gsub("ElCedro2", "El Cedro", data$Population)
+data$Population<-gsub("Lower Guapo 1", "Guapo", data$Population)
+data$Population<-gsub("Lower Guapo 2", "Guapo", data$Population)
+data$Population<-gsub("laseiva", "La Seiva", data$Population)
+
+data$Population<-as.factor(data$Population)
+river.list<-data %>% 
+  filter(PopulationType=="Single") %>% 
+  select(Population) %>% 
+  unique()
+
+North<-c("Yarra", "Marianne", "Paria", "Madamas", "Damier") #"Mission", "Tompire", "Naranjo"
+South<-c("Arima", "Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Quare", "Oropuche", "Turure", "Matura", "Caroni", "Arouca", "Mausica", "Tacarigua", "El Cedro")
+
+@Drainage level
+Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Caroni Lower Dyke")
+
+Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva") #"Matura"
+
+unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South)))
+print(unknown.rivers)
+```
+
+We still need to locate these and identify which drainage if possible as well (x24): 
+Balandra			
+Brasso Seco   (North? the village is north slope)	
+Cenzina			
+Rio Barro			
+Rio Grande			
+Tompire		(Far north east?)	
+Ceniza			
+QT        (quare trib?)		
+Ricon			
+La Selva			
+Cunupia Lower Dyke			
+Caura			
+Coffee			
+Guapo			
+Lizard			
+Manzanilla			
+Pilote			
+Toco			
+Lower Trib 1			
+Lower Trib 2			
+Visigney			
+Maracas		(North based on the beach/town?)	
+Vance			
+Manacal			
+Valencia    (south maybe oropuche (based on town))			
+
+
+```{r columns}
+
+data$Slope<-  case_when(
+  data$Population %in% South ~ "South",
+  data$Population %in% North ~ "North" #labels all single populations as North or South Slope
+) 
+data$Drainage<- case_when(
+  data$Population %in% Caroni ~ "Caroni",
+  data$Population %in% Oropuche ~ "Oropuche",
+  data$Population %in% North ~ "Northern" #Labels all single populations as a specific drainage
+)
+```
