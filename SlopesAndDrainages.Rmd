@@ -13,31 +13,47 @@ data<- read.csv('../Data/data.csv', header=TRUE, sep=",") %>%
     rename( Mean = MeanValue, Treatment = Predation)
 ```
 
-Add in a column noting if north or south slope watersheds, and one for drainage
 North: 
-Yarra, Marianne, Paria, Madamas, Mission (North but over near Tompire?), Tompire, Damier
+Yarra, Marianne, Paria, Madamas, Damier, Brasso Seco, Balandra *Tompire*, *Ricon*, *Mission*, *Toco* (*northeast?*)
 
 South: 
-Caroni Drainage (Tunapuna, Lopinot, Guanapo, Aripo, Cuara, Tranquille, Mausica, Tacarigua, Arouca, El Cedro, Cuara)
-Oropuche Drainage (Quare, Oropuche, Turure, Matura - but northeast, La Seiva)
+Caroni Drainage (Tunapuna, Lopinot, Guanapo, Aripo, Cuara, Tranquille, Caroni, Arima, Arouca, Mausica, Tacarigua, El Cedro, Ceniza, Naranjo, Maracas, Caroni Lower Dyke, Cuara, Manacal)
+Oropuche Drainage (Quare, Oropuche, Turure, La Seiva, Rio Barro, Rio Grande, La Selva, Visigney, Valencia, Matura)
 
-Questionable
-Tompire: west coast potentially 'north' but not connected to others
-Arena: Near the arena reservoir some place? thoroughly out of the mountains
-Naranjo: north but kinda like tompire
+*Questionable/Notes*
+Naranjo: upper aripo
 Tumbason:south, drainage? not included anymore
 Hollis: South? not included anymore
-Matura: in oropuche drainage but far northeast
-Silverstream: South West (from jackie)
-Vance: South West (from jackie, I think it means not in oropuche or caroni, potentially out of the south slope too)
+Tompire: west coast usually counted as northern range but not connected to others 
+Mission: North but over near Tompire
+Ricon: north but east and not connected to a drainage
+Toco: north east like tompire
+Cunupia Lower Dyke: near caroni but listed as distinct in 23, has gps in supplementary mat.	
+Manzanilla:	No gps, listed as separate drainage
+Matura: inlcuded for now in oropuche but some say it's not because its far east and north a bit
+
+*Southern trinidad outside northern mountain range*
+Pilote and lower trib 1 &2 are a part of a Mayaro drainage, in southern trinidad)
+Lizard
+Guapo
+Coffee
+Silverstream
+Arena: Near the arena reservoir some place? thoroughly out of the mountains
+Vance: South West (from jackie outside the northern range, also in paper 23, but not listed in supplementary material as a site??)
 
 
 ```{r drainage slope}
+#fix typos not previously found
 data$Population<-gsub("ElCedro1", "El Cedro", data$Population)
 data$Population<-gsub("ElCedro2", "El Cedro", data$Population)
 data$Population<-gsub("Lower Guapo 1", "Guapo", data$Population)
 data$Population<-gsub("Lower Guapo 2", "Guapo", data$Population)
-data$Population<-gsub("laseiva", "La Seiva", data$Population)
+data$Population<-gsub("Laseiva", "La Seiva", data$Population)
+data$Population<-gsub("Cenzina", "Ceniza", data$Population)
+data$PopulationRaw<-gsub("Lower Trib 1", "Mayaro Lower Tributary 1", data$PopulationRaw)
+data$PopulationRaw<-gsub("Lower Trib 2", "Mayaro Lower Tributary 2", data$PopulationRaw)
+data$Population<-gsub("Lower Trib 1", "Mayaro", data$Population)
+data$Population<-gsub("Lower Trib 2", "Mayaro", data$Population)
 
 data$Population<-as.factor(data$Population)
 river.list<-data %>% 
@@ -45,55 +61,32 @@ river.list<-data %>%
   select(Population) %>% 
   unique()
 
-North<-c("Yarra", "Marianne", "Paria", "Madamas", "Damier") #"Mission", "Tompire", "Naranjo"
-South<-c("Arima", "Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Quare", "Oropuche", "Turure", "Matura", "Caroni", "Arouca", "Mausica", "Tacarigua", "El Cedro")
+North<-c("Yarra", "Marianne", "Paria", "Madamas", "Damier", "Brasso Seco", "Balandra") #"Tompire", "Ricon", "Mission", "Toco" (Northeast?)
+South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal", "Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura")  
 
-@Drainage level
-Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Caroni Lower Dyke")
+#Drainage level
+Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal")
 
-Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva") #"Matura"
+Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura")
 
-unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South)))
-print(unknown.rivers)
+unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South))) #rivers not already sorted into north or south slope
 ```
 
-We still need to locate these and identify which drainage if possible as well (x24): 
-Balandra			
-Brasso Seco   (North? the village is north slope)	
-Cenzina			
-Rio Barro			
-Rio Grande			
-Tompire		(Far north east?)	
-Ceniza			
-QT        (quare trib?)		
-Ricon			
-La Selva			
-Cunupia Lower Dyke			
-Caura			
-Coffee			
-Guapo			
-Lizard			
-Manzanilla			
-Pilote			
-Toco			
-Lower Trib 1			
-Lower Trib 2			
-Visigney			
-Maracas		(North based on the beach/town?)	
-Vance			
-Manacal			
-Valencia    (south maybe oropuche (based on town))			
+Alexis
+Cenzina		typo (checked paper it's ceniza)	
 
+QT        (quare trib? check with Alexis it's upper quare)
 
 ```{r columns}
 
 data$Slope<-  case_when(
   data$Population %in% South ~ "South",
-  data$Population %in% North ~ "North" #labels all single populations as North or South Slope
-) 
+  data$Population %in% North ~ "North" 
+) #labels all single populations as North or South Slope
+
 data$Drainage<- case_when(
   data$Population %in% Caroni ~ "Caroni",
   data$Population %in% Oropuche ~ "Oropuche",
-  data$Population %in% North ~ "Northern" #Labels all single populations as a specific drainage
-)
+  data$Population %in% North ~ "Northern"
+)  #Labels all single populations as a specific drainage
 ```
