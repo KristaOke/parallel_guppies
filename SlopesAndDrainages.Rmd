@@ -31,8 +31,11 @@ Toco: north east like tompire
 Cunupia Lower Dyke: near caroni but listed as distinct in 23, has gps in supplementary mat.	
 Manzanilla:	No gps, listed as separate drainage
 Matura: inlcuded for now in oropuche but some say it's not because its far east and north a bit
+Cenzina changed to Ceniza (typo confirmed in paper)
 
 *Southern trinidad outside northern mountain range*
+
+Southern trinidad outside northern mountain range
 Pilote and lower trib 1 &2 are a part of a Mayaro drainage, in southern trinidad)
 Lizard
 Guapo
@@ -71,7 +74,6 @@ Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande"
 
 unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South))) #rivers not already sorted into north or south slope
 ```
-
 
 
 ```{r new columns}
