@@ -14,6 +14,7 @@ data<- read.csv('../Data/data.csv', header=TRUE, sep=",") %>%
 ```
 
 North: 
+<<<<<<< HEAD
 Yarra, Marianne, Paria, Madamas, Damier, Brasso Seco, Balandra *Tompire*, *Ricon*, *Mission*, *Toco* (*northeast?*)
 
 South: 
@@ -33,6 +34,26 @@ Manzanilla:	No gps, listed as separate drainage
 Matura: inlcuded for now in oropuche but some say it's not because its far east and north a bit
 
 *Southern trinidad outside northern mountain range*
+=======
+Yarra, Marianne, Paria, Madamas, *Tompire*, Damier, *Ricon*, *Mission*, *Toco* (*northeast?*)
+
+South: 
+Caroni Drainage (Tunapuna, Lopinot, Guanapo, Aripo, Cuara, Tranquille, Mausica, Tacarigua, Arouca, El Cedro, Cuara, Manacal)
+Oropuche Drainage (Quare, Oropuche, Turure, Matura, La Seiva, Valencia)
+
+Questionable/Notes
+Naranjo: upper aripo
+Tumbason:south, drainage? not included anymore
+Hollis: South? not included anymore
+Tompire: west coast usually counted as northern range but not connected to othersMission (North but over near Tompire)
+Ricon (north but east and not connected to a drainage)
+Toco (north east like tompire)
+Cunupia Lower Dyke (near caroni but listed as distinct in 23, has gps in supplementary mat.)	
+Manzanilla	(No gps, listed as separate drainage)
+Matura: inlcuded for now in oropuche but some say it's not because its far and east and north a bit)
+
+Southern trinidad outside northern mountain range
+>>>>>>> 62e4c043d1ff0796cc42763e5f63cb40d9c6cfa2
 Pilote and lower trib 1 &2 are a part of a Mayaro drainage, in southern trinidad)
 Lizard
 Guapo
@@ -67,12 +88,20 @@ South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caro
 #Drainage level
 Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal")
 
+<<<<<<< HEAD
 Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura")
+=======
+Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barre", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura")
+>>>>>>> 62e4c043d1ff0796cc42763e5f63cb40d9c6cfa2
 
 unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South))) #rivers not already sorted into north or south slope
 ```
 
+<<<<<<< HEAD
 Alexis
+=======
+We still need to locate these and identify which drainage if possible as well (x24): 
+>>>>>>> 62e4c043d1ff0796cc42763e5f63cb40d9c6cfa2
 Cenzina		typo (checked paper it's ceniza)	
 
 QT        (quare trib? check with Alexis it's upper quare)
