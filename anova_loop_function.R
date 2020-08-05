@@ -1,6 +1,9 @@
 library(stats)
 
-setwd("<YOURPATHWAY>")
+#setwd("<YOURPATHWAY>")
+wd <- getwd()
+new.data<- read.csv(paste(wd,'/data/YOUR_DATA.csv',sep=""), header=TRUE, sep=",") %>% #let's update with the real file name
+  rename( Mean = MeanValue, Treatment = Predation)
 
 #my data was read in as a csv file with columns: 
 
@@ -8,8 +11,7 @@ setwd("<YOURPATHWAY>")
 # "Standardization.type" "Paired."              "Study.type"           "Data.point"           "Treatment"            "Population"           "Mean"                
 # "N" 
 
-new.data<- read.csv('YOUR_DATA.csv', header=TRUE, sep=",") %>% 
-  rename( Mean = MeanValue, Treatment = Predation)
+
 
 #filter out incomplete entries, and entries with only two data points (will make R2 1.0)
 new.data<-new.data  %>% 
