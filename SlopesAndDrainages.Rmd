@@ -4,13 +4,14 @@ output: html_notebook
 ---
 
 
-```{r}
+```{r read in}
 library(tidyverse)
-data<- read.csv('YOUR_DATA.csv', header=TRUE, sep=",") %>% 
+wd <- getwd()
+new.data<- read.csv(paste(wd,'/data/YOUR_DATA.csv',sep=""), header=TRUE, sep=",") %>% #let's update with the real file name
   rename( Mean = MeanValue, Treatment = Predation)
 
-data<- read.csv('../Data/data.csv', header=TRUE, sep=",") %>% 
-    rename( Mean = MeanValue, Treatment = Predation)
+#data<- read.csv('../Data/data.csv', header=TRUE, sep=",") %>% 
+    #rename( Mean = MeanValue, Treatment = Predation) #this is just my old path read in I will delete when we have common path working
 ```
 
 North: 
@@ -64,13 +65,17 @@ river.list<-data %>%
   select(Population) %>% 
   unique()
 
-North<-c("Yarra", "Marianne", "Paria", "Madamas", "Damier", "Brasso Seco", "Balandra") #"Tompire", "Ricon", "Mission", "Toco" (Northeast?)
+North<-c("Yarra", "Marianne", "Paria", "Madamas", "Damier", "Brasso Seco", "Balandra") #I think we should keep these together for drainage level, logistically it'll be easier and its how others do it (paper 2 is an example)
+
+Other<-c("Tompire", "Ricon", "Mission", "Toco", "Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro") #need to finalize with the new lower trib name and update with new papers
+
 South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal", "Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura")  
 
 #Drainage level
 Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal")
 
 Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura")
+
 
 unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South))) #rivers not already sorted into north or south slope
 ```
@@ -80,31 +85,44 @@ unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.l
 
 data$Slope<-  case_when(
   data$Population %in% South ~ "South",
-  data$Population %in% North ~ "North" 
-) #labels all single populations as North or South Slope
+  data$Population %in% North ~ "North",
+  data$Population %in% Other ~ "Other"
+) #labels all single populations as North or South Slope, and other for identified rivers not in this dichotomy
 
 data$Drainage<- case_when(
   data$Population %in% Caroni ~ "Caroni",
   data$Population %in% Oropuche ~ "Oropuche",
-  data$Population %in% North ~ "Northern"
+  data$Population %in% North ~ "Northern",
+  data$Population %in% Other ~ "Other"
 )  #Labels all single populations as a specific drainage
 ```
 
-
+visualising year data and spread for collection years
 ```{r years}
+#TraitR2<-read.csv(paste(wd,'/data/TraitR2.csv',sep=""), header=TRUE, sep=",") #for common path
+
+TraitR2 <- read_csv("../Data/TraitR2.csv") %>% 
+  rename(TraitID = traitID)
+
 year<-data %>% 
-  select(StudyID:Month, TraitID, PopulationType)
-year$YearStart<-NA
-year$YearEnd<-NA
-year$YearEnd<-str_sub(year$CollectionYear, -4)
-year$YearStart<-str_sub(year$CollectionYear, start = 0, 4)
+  mutate(duration =  (as.numeric(str_sub(CollectionYear, -4))) - (as.numeric(str_sub(CollectionYear, start = 0, 4)))) %>% 
+  mutate(YearStart = as.numeric(str_sub(CollectionYear, start = 0, 4))) %>% 
+  filter(duration < 2) #27 studies under 2 years, 4 studies with a higher range (Aug 6th)
+
+#year$YearEnd<-as.numeric(str_sub(year$CollectionYear, -4)) #if we want the last year of collection
+
+
+traitData<-left_join(TraitR2, year, by = "TraitID")
+traitData<-traitData[!duplicated(traitData$TraitID),]
 ```
 
 
-```{r plots}
+```{r year plots}
 ggplot(year, aes(YearStart))+geom_histogram(stat = "count")
 
 ggplot(year, aes(as.Date(YearStart, format = "%Y"), as.Date(YearEnd, format = "%Y")))+geom_point()+ geom_abline(intercept = 0, slope = 1) +  scale_x_date(date_labels = "%Y")
+
+ggplot(traitData, aes(as.Date(YearStart, format = "%Y"), R.2))+geom_point()
 ```
 
 
