@@ -90,14 +90,20 @@ data$Drainage<- case_when(
 )  #Labels all single populations as a specific drainage
 ```
 
-
+visualising year data and spread for collection years
 ```{r years}
+TraitR2 <- read_csv("../Data/TraitR2.csv") %>% 
+  rename(TraitID = traitID)
+
 year<-data %>% 
   select(StudyID:Month, TraitID, PopulationType)
 year$YearStart<-NA
 year$YearEnd<-NA
 year$YearEnd<-str_sub(year$CollectionYear, -4)
 year$YearStart<-str_sub(year$CollectionYear, start = 0, 4)
+
+traitData<-left_join(TraitR2, year, by = "TraitID")
+traitData<-traitData[!duplicated(traitData$TraitID),]
 ```
 
 
@@ -105,6 +111,8 @@ year$YearStart<-str_sub(year$CollectionYear, start = 0, 4)
 ggplot(year, aes(YearStart))+geom_histogram(stat = "count")
 
 ggplot(year, aes(as.Date(YearStart, format = "%Y"), as.Date(YearEnd, format = "%Y")))+geom_point()+ geom_abline(intercept = 0, slope = 1) +  scale_x_date(date_labels = "%Y")
+
+ggplot(traitData, aes(as.Date(YearStart, format = "%Y"), R.2))+geom_point() #+geom_smooth()
 ```
 
 
