@@ -142,23 +142,38 @@ ggplot(traitData, aes(as.Date(YearStart, format = "%Y"), R.2))+geom_point()
 
 
 plot??????
-```{r R2 plots}
+```{r R2 prep}
 r.squared<- read.csv(paste(wd,'/data/TraitR2.csv',sep=""), header=TRUE, sep=",")
 
 library(ggplot2)
 r.squared$TraitID<-as.numeric(r.squared$TraitID)
 new.data<-left_join(new.data, r.squared, by = "TraitID")
 new.data<-left_join(new.data, slope.info, by = "TraitID")
+new.data$R.2<-as.numeric(new.data$R.2)
+```
 
 
+```{r R2 plots box}
 ggplot(data = new.data, aes(x=TraitType2, y = R.2, fill = TraitType2)) + geom_boxplot() 
+ggplot(data = new.data, aes(x=TraitType1, y = R.2, fill = TraitType1)) + geom_boxplot() 
 
 d<-new.data %>% 
   filter(`n_distinct(Slope)`==1)
-ggplot(data = d, aes(x=Slope, y = R.2, fill = TraitType2)) + geom_boxplot() 
+ggplot(data = d, aes(x=Slope, y = R.2, fill = Slope)) + geom_boxplot() 
 
+ggplot(data = new.data, aes(x=StudyType, y = R.2, fill = StudyType)) + geom_boxplot() 
 ```
 
+```{r plots violin}
+ggplot(data = new.data, aes(x=TraitType2, y = R.2, fill = TraitType2)) + geom_violin() 
+ggplot(data = new.data, aes(x=TraitType1, y = R.2, fill = TraitType1)) + geom_violin() 
+
+d<-new.data %>% 
+  filter(`n_distinct(Slope)`==1)
+ggplot(data = d, aes(x=Slope, y = R.2, fill = Slope)) + geom_violin() 
+
+ggplot(data = new.data, aes(x=StudyType, y = R.2, fill = StudyType)) + geom_violin() 
+```
 
 
 
