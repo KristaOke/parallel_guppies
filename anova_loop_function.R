@@ -3,7 +3,8 @@ library(stats)
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
 new.data<- read.csv(paste(wd,'/data/YOUR_DATA.csv',sep=""), header=TRUE, sep=",") %>% #let's update with the real file name
-  rename( Mean = MeanValue, Treatment = Predation)
+  rename( Mean = MeanValue, Treatment = Predation, Study.ID= StudyID) %>% 
+  select(Study.ID:Comments)
 
 #my data was read in as a csv file with columns: 
 
@@ -11,6 +12,19 @@ new.data<- read.csv(paste(wd,'/data/YOUR_DATA.csv',sep=""), header=TRUE, sep=","
 # "Standardization.type" "Paired."              "Study.type"           "Data.point"           "Treatment"            "Population"           "Mean"                
 # "N" 
 
+#coding the TraitID column
+new.data<-new.data %>% 
+  arrange(Study.ID, Trait)
+lengths<-rle(as.character(new.data$Trait))
+new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
+
+#select only entries with both predation levels
+a<-new.data[8]
+a$High<- ifelse(new.data$Treatment== "High", print(new.data$TraitID), NA )
+a$Low<- ifelse(new.data$Treatment== "Low", print(new.data$TraitID), NA )
+
+a$High[!(a$High %in% a$Low)] #4
+a$Low[!(a$Low %in% a$High)] #630
 
 
 #filter out incomplete entries, and entries with only two data points (will make R2 1.0)
@@ -18,13 +32,13 @@ new.data<-new.data  %>%
   filter(!is.na(Treatment)) %>% 
   filter(!is.na(Mean)) %>% 
   filter(PopulationType=="Single") %>% 
-  filter(!(TraitID %in% c(277, 282, 283, 284, 285, 326))) #277 only has low, 282-285 are mixed but labelled single, 326 only has one for each but is single?
+  filter(!(TraitID %in% c(4,630))) #these are entries that need to be excluded (only one pred level)
 
 new.data$Treatment<-as.factor(new.data$Treatment)
 
 #how many traits/studies?
-length(unique(new.data$TraitID))
-length(unique(new.data$Study.ID))
+length(unique(new.data$TraitID)) #782 as of Aug 26th (781 without 630)
+length(unique(new.data$Study.ID)) #33
 
 
 #set up a new function to loop through all data and run anova on Mean trait values for each trait
