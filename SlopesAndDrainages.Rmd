@@ -7,11 +7,10 @@ output: html_notebook
 ```{r read in}
 library(tidyverse)
 wd <- getwd()
-new.data<- read.csv(paste(wd,'/data/YOUR_DATA.csv',sep=""), header=TRUE, sep=",") %>% #let's update with the real file name
-  rename( Mean = MeanValue, Treatment = Predation)
+new.data<- read.csv(paste(wd,'/data/MetaData.csv',sep=""), header=TRUE, sep=",") %>% 
+  rename( Mean = MeanValue, Treatment = Predation, Study.ID= StudyID) %>% 
+  select(Study.ID:Comments)
 
-#data<- read.csv('../Data/data.csv', header=TRUE, sep=",") %>% 
-    #rename( Mean = MeanValue, Treatment = Predation) #this is just my old path read in I will delete when we have common path working
 
 ```
 
@@ -153,16 +152,6 @@ new.data$R.2<-as.numeric(new.data$R.2)
 ```
 
 
-```{r R2 plots box}
-ggplot(data = new.data, aes(x=TraitType2, y = R.2, fill = TraitType2)) + geom_boxplot() 
-ggplot(data = new.data, aes(x=TraitType1, y = R.2, fill = TraitType1)) + geom_boxplot() 
-
-d<-new.data %>% 
-  filter(`n_distinct(Slope)`==1)
-ggplot(data = d, aes(x=Slope, y = R.2, fill = Slope)) + geom_boxplot() 
-
-ggplot(data = new.data, aes(x=StudyType, y = R.2, fill = StudyType)) + geom_boxplot() 
-```
 
 ```{r plots violin}
 ggplot(data = new.data, aes(x=TraitType2, y = R.2, fill = TraitType2)) + geom_violin() 
@@ -173,6 +162,9 @@ d<-new.data %>%
 ggplot(data = d, aes(x=Slope, y = R.2, fill = Slope)) + geom_violin() 
 
 ggplot(data = new.data, aes(x=StudyType, y = R.2, fill = StudyType)) + geom_violin() 
+
+f<-new.data %>% 
+  filter(sex = )
 ```
 
 
