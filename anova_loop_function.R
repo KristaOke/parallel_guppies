@@ -100,5 +100,7 @@ hist(as.numeric(as.character(output.all$justr)))
 #write results to a csv file for further analyses
 #write.table(output.all, file = "TraitR2.csv",row.names=FALSE,col.names=TRUE, sep=",")
 
+library(ggplot2)
 
-
+left_join(new.data, output.all, by = "TraitID")
+ggplot(output.all, aes())
