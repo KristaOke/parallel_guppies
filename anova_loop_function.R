@@ -56,7 +56,7 @@ anova_loop <- function(dat=dat){
   trait <- as.factor(dat$TraitID)
   
   output <- matrix(ncol=7,nrow=length(levels(trait)))
-  colnames(output) <- c("R^2","adj.R^2","partial.Eta","F","p","traitID", "justr")
+  colnames(output) <- c("R^2","adj.R^2","partial.Eta","F","p","TraitID", "justr")
   
   for (i in 1: length(levels(trait))){
     
@@ -74,10 +74,10 @@ anova_loop <- function(dat=dat){
     F_value <- round(as.numeric(anova.mod$"F value")[1],3)       # F
     p_value <- round(as.numeric(anova.mod$"Pr(>F)")[1],3)        # p value
     partial_eta <- round(mod.pes[1],3)                           # pes
-    traitID <- levels(trait)[i]
+    TraitID <- levels(trait)[i]
     justr <- sqrt(anova.mod[1,4]/(anova.mod[1,4]+anova.mod[2,1]))
     
-    output[i,] <- c(R,R_adj,partial_eta,F_value,p_value, traitID, justr) 
+    output[i,] <- c(R,R_adj,partial_eta,F_value,p_value, TraitID, justr) 
   }
   output <- data.frame(output)
   return(output)
