@@ -12,7 +12,9 @@ new.data<- read.csv(paste(wd,'/data/YOUR_DATA.csv',sep=""), header=TRUE, sep=","
 
 #data<- read.csv('../Data/data.csv', header=TRUE, sep=",") %>% 
     #rename( Mean = MeanValue, Treatment = Predation) #this is just my old path read in I will delete when we have common path working
+
 ```
+
 
 North: 
 Yarra, Marianne, Paria, Madamas, Damier, Brasso Seco, Balandra *Tompire*, *Ricon*, *Mission*, *Toco* (*northeast?*)
@@ -59,6 +61,7 @@ data$PopulationRaw<-gsub("Lower Trib 1", "Mayaro Lower Tributary 1", data$Popula
 data$PopulationRaw<-gsub("Lower Trib 2", "Mayaro Lower Tributary 2", data$PopulationRaw)
 data$Population<-gsub("Lower Trib 1", "Mayaro", data$Population)
 data$Population<-gsub("Lower Trib 2", "Mayaro", data$Population)
+data$Population<-gsub("Tompire 2", "Tompire", data$Population)
 
 data$Population<-as.factor(data$Population)
 river.list<-data %>% 
@@ -96,6 +99,12 @@ data$Drainage<- case_when(
   data$Population %in% North ~ "Northern",
   data$Population %in% Other ~ "Other"
 )  #Labels all single populations as a specific drainage
+
+slope.info<-data %>% 
+  group_by(TraitID) %>%
+  summarise(n_distinct(Slope))
+summary(as.factor(slope.info$`n_distinct(Slope)`), maxsum = 100)
+
 ```
 
 
