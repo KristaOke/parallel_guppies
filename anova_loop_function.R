@@ -74,7 +74,7 @@ anova_loop <- function(dat=dat){
     F_value <- round(as.numeric(anova.mod$"F value")[1],3)       # F
     p_value <- round(as.numeric(anova.mod$"Pr(>F)")[1],3)        # p value
     partial_eta <- round(mod.pes[1],3)                           # pes
-    traitID <- levels(trait)[i]
+    TraitID <- levels(trait)[i]
     justr <- sqrt(anova.mod[1,4]/(anova.mod[1,4]+anova.mod[2,1]))
     
     output[i,] <- c(R,R_adj,partial_eta,F_value,p_value, traitID, justr) 
@@ -100,5 +100,7 @@ hist(as.numeric(as.character(output.all$justr)))
 #write results to a csv file for further analyses
 #write.table(output.all, file = "TraitR2.csv",row.names=FALSE,col.names=TRUE, sep=",")
 
+library(ggplot2)
 
-
+left_join(new.data, output.all, by = "TraitID")
+ggplot(output.all, aes())
