@@ -116,10 +116,6 @@ new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
 
 ### visualising year data and spread for collection years
 ```{r years, eval=FALSE}
-
-r.squared <- read_csv("../Data/TraitR2.csv") %>% 
-  rename(TraitID = traitID)
-
 year<-new.data %>% 
   mutate(duration =  (as.numeric(str_sub(CollectionYear, -4))) - (as.numeric(str_sub(CollectionYear, start = 0, 4)))) %>% 
   mutate(YearStart = as.numeric(str_sub(CollectionYear, start = 0, 4))) %>% 
@@ -168,11 +164,29 @@ new.data %>%
   filter(`n_distinct(Slope)`==1) %>% 
 ggplot(aes(x=Slope, y = R.2, fill = Slope)) + geom_violin() 
 
+new.data %>% 
+  filter(`n_distinct(Slope)`==1) %>% 
+ggplot(aes(x=TraitType2, y = R.2, fill = Slope)) + geom_violin()
+
+new.data %>% 
+  filter(`n_distinct(Slope)`==1) %>% 
+ggplot(aes(x=TraitType1, y = R.2, fill = Slope)) + geom_violin()
+
 #ggplot(data = new.data, aes(x=StudyType, y = R.2, fill = StudyType)) + geom_violin() 
+
+#sex specific plots
+new.data %>% 
+  filter(Sex == "M" | Sex == "F") %>% 
+ggplot( aes(x = Sex, y = R.2, fill = Sex)) + geom_violin()
 
 new.data %>% 
   filter(Sex == "M" | Sex == "F") %>% 
 ggplot( aes(x = TraitType2, y = R.2, fill = Sex)) + geom_violin()
+
+new.data %>% 
+  filter(Sex == "M" | Sex == "F") %>% 
+ggplot( aes(x = TraitType1, y = R.2, fill = Sex)) + geom_violin()
+
 ```
 
 
