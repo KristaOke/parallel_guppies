@@ -12,11 +12,6 @@ new.data<- read.csv(paste(wd,'/data/YOUR_DATA.csv',sep=""), header=TRUE, sep=","
 # "Standardization.type" "Paired."              "Study.type"           "Data.point"           "Treatment"            "Population"           "Mean"                
 # "N" 
 
-#coding the TraitID column
-new.data<-new.data %>% 
-  arrange(Study.ID, Trait)
-lengths<-rle(as.character(new.data$Trait))
-new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
 
 #select only entries with both predation levels
 a<-new.data[8]
