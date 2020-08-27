@@ -7,6 +7,7 @@ output: html_notebook
 ```{r read in}
 library(tidyverse)
 library(ggplot2)
+#setwd("<YOURPATHWAY>")
 wd <- getwd()
 new.data<- read.csv(paste(wd,'/data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved Aug 27
 r.squared<- read.csv(paste(wd,'/data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated Aug 26
@@ -84,6 +85,7 @@ Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande"
 ```
 
 
+
 ```{r Slope, Drainage, and TraitID columns, eval=FALSE}
 
 new.data$Slope<-  case_when(
@@ -110,12 +112,12 @@ new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
 ```
 
 
+
+
 ### visualising year data and spread for collection years
 ```{r years, eval=FALSE}
 
-#TraitR2<-read.csv(paste(wd,'/data/TraitR2.csv',sep=""), header=TRUE, sep=",") #for common path
-
-TraitR2 <- read_csv("../Data/TraitR2.csv") %>% 
+r.squared <- read_csv("../Data/TraitR2.csv") %>% 
   rename(TraitID = traitID)
 
 year<-new.data %>% 
@@ -126,7 +128,7 @@ year<-new.data %>%
 #year$YearEnd<-as.numeric(str_sub(year$CollectionYear, -4)) #if we want the last year of collection
 
 
-traitData<-left_join(TraitR2, year, by = "TraitID")
+traitData<-left_join(r.squared, year, by = "TraitID")
 traitData<-traitData[!duplicated(traitData$TraitID),]
 ```
 
