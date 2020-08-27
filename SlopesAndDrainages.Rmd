@@ -6,12 +6,10 @@ output: html_notebook
 
 ```{r read in}
 library(tidyverse)
+library(ggplot2)
 wd <- getwd()
-new.data<- read.csv(paste(wd,'/data/MetaData.csv',sep=""), header=TRUE, sep=",") %>% 
-  rename( Mean = MeanValue, Treatment = Predation, Study.ID= StudyID) %>% 
-  select(Study.ID:Comments)
-
-
+new.data<- read.csv(paste(wd,'/data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved Aug 27
+r.squared<- read.csv(paste(wd,'/data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated Aug 26
 ```
 
 
@@ -48,22 +46,24 @@ Arena: Near the arena reservoir some place? thoroughly out of the mountains
 Vance: South West (from jackie outside the northern range, also in paper 23, but not listed in supplementary material as a site??)
 
 
-```{r drainage slope}
+```{r typos and river lists, eval=FALSE}
 #fix typos not previously found
-data$Population<-gsub("ElCedro1", "El Cedro", data$Population)
-data$Population<-gsub("ElCedro2", "El Cedro", data$Population)
-data$Population<-gsub("Lower Guapo 1", "Guapo", data$Population)
-data$Population<-gsub("Lower Guapo 2", "Guapo", data$Population)
-data$Population<-gsub("Laseiva", "La Seiva", data$Population)
-data$Population<-gsub("Cenzina", "Ceniza", data$Population)
-data$PopulationRaw<-gsub("Lower Trib 1", "Mayaro Lower Tributary 1", data$PopulationRaw)
-data$PopulationRaw<-gsub("Lower Trib 2", "Mayaro Lower Tributary 2", data$PopulationRaw)
-data$Population<-gsub("Lower Trib 1", "Mayaro", data$Population)
-data$Population<-gsub("Lower Trib 2", "Mayaro", data$Population)
-data$Population<-gsub("Tompire 2", "Tompire", data$Population)
+new.data$Population<-gsub("ElCedro1", "El Cedro", new.data$Population)
+new.data$Population<-gsub("ElCedro2", "El Cedro", new.data$Population)
+new.data$Population<-gsub("Lower Guapo 1", "Guapo", new.data$Population)
+new.data$Population<-gsub("Lower Guapo 2", "Guapo", new.data$Population)
+new.data$Population<-gsub("Laseiva", "La Seiva", new.data$Population)
+new.data$Population<-gsub("Cenzina", "Ceniza", new.data$Population)
+new.data$PopulationRaw<-gsub("Lower Trib 1", "Mayaro Lower Tributary 1", new.data$PopulationRaw)
+new.data$PopulationRaw<-gsub("Lower Trib 2", "Mayaro Lower Tributary 2", new.data$PopulationRaw)
+new.data$Population<-gsub("Lower Trib 1", "Mayaro", new.data$Population)
+new.data$Population<-gsub("Lower Trib 2", "Mayaro", new.data$Population)
+new.data$Population<-gsub("Tompire 2", "Tompire", new.data$Population)
 
-data$Population<-as.factor(data$Population)
-river.list<-data %>% 
+new.data$TraitType2<-gsub("Life-history", "Life history", new.data$TraitType2)
+
+new.data$Population<-as.factor(new.data$Population)
+river.list<-new.data %>% 
   filter(PopulationType=="Single") %>% 
   select(Population) %>% 
   unique()
@@ -79,36 +79,38 @@ Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Car
 
 Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura")
 
-
-unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South))) #rivers not already sorted into north or south slope
+#rivers not already sorted into north or south slope
+#unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South))) 
 ```
 
 
-```{r new columns}
+```{r Slope, Drainage, and TraitID columns, eval=FALSE}
 
-data$Slope<-  case_when(
-  data$Population %in% South ~ "South",
-  data$Population %in% North ~ "North",
-  data$Population %in% Other ~ "Other"
+new.data$Slope<-  case_when(
+  new.data$Population %in% South ~ "South",
+  new.data$Population %in% North ~ "North",
+  new.data$Population %in% Other ~ "Other"
 ) #labels all single populations as North or South Slope, and other for identified rivers not in this dichotomy
 
-data$Drainage<- case_when(
-  data$Population %in% Caroni ~ "Caroni",
-  data$Population %in% Oropuche ~ "Oropuche",
-  data$Population %in% North ~ "Northern",
-  data$Population %in% Other ~ "Other"
+new.data$Drainage<- case_when(
+  new.data$Population %in% Caroni ~ "Caroni",
+  new.data$Population %in% Oropuche ~ "Oropuche",
+  new.data$Population %in% North ~ "Northern",
+  new.data$Population %in% Other ~ "Other"
 )  #Labels all single populations as a specific drainage
 
-slope.info<-data %>% 
-  group_by(TraitID) %>%
-  summarise(n_distinct(Slope))
-summary(as.factor(slope.info$`n_distinct(Slope)`), maxsum = 100)
+#coding the trait column
+new.data<-new.data %>% 
+  arrange(Study.ID, Trait)
+lengths<-rle(as.character(new.data$Trait))
+new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
+
+#write_csv(new.data, path = "~/Documents/Masters/R scripts/Meta Analysis/data/MetaData.csv") #written aug 27th
 
 ```
 
 
-
-visualising year data and spread for collection years
+### visualising year data and spread for collection years
 ```{r years, eval=FALSE}
 
 #TraitR2<-read.csv(paste(wd,'/data/TraitR2.csv',sep=""), header=TRUE, sep=",") #for common path
@@ -116,7 +118,7 @@ visualising year data and spread for collection years
 TraitR2 <- read_csv("../Data/TraitR2.csv") %>% 
   rename(TraitID = traitID)
 
-year<-data %>% 
+year<-new.data %>% 
   mutate(duration =  (as.numeric(str_sub(CollectionYear, -4))) - (as.numeric(str_sub(CollectionYear, start = 0, 4)))) %>% 
   mutate(YearStart = as.numeric(str_sub(CollectionYear, start = 0, 4))) %>% 
   filter(duration < 2) #27 studies under 2 years, 4 studies with a higher range (Aug 6th)
@@ -129,7 +131,7 @@ traitData<-traitData[!duplicated(traitData$TraitID),]
 ```
 
 
-```{r year plots, eval = FALSE}
+```{r year plots, eval=FALSE}
 ggplot(year, aes(YearStart))+geom_histogram(stat = "count")
 
 ggplot(year, aes(as.Date(YearStart, format = "%Y"), as.Date(YearEnd, format = "%Y")))+geom_point()+ geom_abline(intercept = 0, slope = 1) +  scale_x_date(date_labels = "%Y")
@@ -140,12 +142,15 @@ ggplot(traitData, aes(as.Date(YearStart, format = "%Y"), R.2))+geom_point()
 ```
 
 
-plot??????
+### plots??
 ```{r R2 prep}
-r.squared<- read.csv(paste(wd,'/data/TraitR2.csv',sep=""), header=TRUE, sep=",")
+r.squared$TraitID<-as.numeric(r.squared$traitID)
 
-library(ggplot2)
-r.squared$TraitID<-as.numeric(r.squared$TraitID)
+slope.info<-new.data %>% 
+  group_by(TraitID) %>%
+  summarise(n_distinct(Slope))
+summary(as.factor(slope.info$`n_distinct(Slope)`), maxsum = 100)
+
 new.data<-left_join(new.data, r.squared, by = "TraitID")
 new.data<-left_join(new.data, slope.info, by = "TraitID")
 new.data$R.2<-as.numeric(new.data$R.2)
@@ -157,14 +162,15 @@ new.data$R.2<-as.numeric(new.data$R.2)
 ggplot(data = new.data, aes(x=TraitType2, y = R.2, fill = TraitType2)) + geom_violin() 
 ggplot(data = new.data, aes(x=TraitType1, y = R.2, fill = TraitType1)) + geom_violin() 
 
-d<-new.data %>% 
-  filter(`n_distinct(Slope)`==1)
-ggplot(data = d, aes(x=Slope, y = R.2, fill = Slope)) + geom_violin() 
+new.data %>% 
+  filter(`n_distinct(Slope)`==1) %>% 
+ggplot(aes(x=Slope, y = R.2, fill = Slope)) + geom_violin() 
 
-ggplot(data = new.data, aes(x=StudyType, y = R.2, fill = StudyType)) + geom_violin() 
+#ggplot(data = new.data, aes(x=StudyType, y = R.2, fill = StudyType)) + geom_violin() 
 
-f<-new.data %>% 
-  filter(sex = )
+new.data %>% 
+  filter(Sex == "M" | Sex == "F") %>% 
+ggplot( aes(x = TraitType2, y = R.2, fill = Sex)) + geom_violin()
 ```
 
 

@@ -2,7 +2,7 @@ library(stats)
 
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
-new.data<- read.csv(paste(wd,'/data/YOUR_DATA.csv',sep=""), header=TRUE, sep=",") %>% #let's update with the real file name
+new.data<- read.csv(paste(wd,'/data/MetaData.csv',sep=""), header=TRUE, sep=",") %>% #let's update with the real file name
   rename( Mean = MeanValue, Treatment = Predation, Study.ID= StudyID) %>% 
   select(Study.ID:Comments)
 
@@ -12,11 +12,6 @@ new.data<- read.csv(paste(wd,'/data/YOUR_DATA.csv',sep=""), header=TRUE, sep=","
 # "Standardization.type" "Paired."              "Study.type"           "Data.point"           "Treatment"            "Population"           "Mean"                
 # "N" 
 
-#coding the TraitID column
-new.data<-new.data %>% 
-  arrange(Study.ID, Trait)
-lengths<-rle(as.character(new.data$Trait))
-new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
 
 #select only entries with both predation levels
 a<-new.data[8]
