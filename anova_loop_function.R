@@ -2,9 +2,7 @@ library(stats)
 
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
-new.data<- read.csv(paste(wd,'/data/MetaData.csv',sep=""), header=TRUE, sep=",") %>% #let's update with the real file name
-  rename( Mean = MeanValue, Treatment = Predation, Study.ID= StudyID) %>% 
-  select(Study.ID:Comments)
+new.data<- read.csv(paste(wd,'/data/MetaData.csv',sep=""), header=TRUE, sep=",")
 
 #my data was read in as a csv file with columns: 
 
@@ -14,20 +12,30 @@ new.data<- read.csv(paste(wd,'/data/MetaData.csv',sep=""), header=TRUE, sep=",")
 
 
 #select only entries with both predation levels
-a<-new.data[8]
+a<-new.data
 a$High<- ifelse(new.data$Treatment== "High", print(new.data$TraitID), NA )
 a$Low<- ifelse(new.data$Treatment== "Low", print(new.data$TraitID), NA )
 
 a$High[!(a$High %in% a$Low)] #4
 a$Low[!(a$Low %in% a$High)] #630
 
+#sex_TraitID column info
+a<-new.data
+a$High<- ifelse(new.data$Treatment== "High", print(new.data$sex_TraitID), NA )
+a$Low<- ifelse(new.data$Treatment== "Low", print(new.data$sex_TraitID), NA )
+
+a$High[!(a$High %in% a$Low)] #6 (previously 4), 208, 2
+a$Low[!(a$Low %in% a$High)] #618 (previously 630)
+
 
 #filter out incomplete entries, and entries with only two data points (will make R2 1.0)
+#NOTE: TraitID = 4,630 sex_TraitID = 682,6,208,2,618 (aug 30 two typos need to be fixed, one waiting for email)
 new.data<-new.data  %>% 
   filter(!is.na(Treatment)) %>% 
   filter(!is.na(Mean)) %>% 
   filter(PopulationType=="Single") %>% 
-  filter(!(TraitID %in% c(4,630))) #these are entries that need to be excluded (only one pred level)
+  filter(!(sex_TraitID %in% c(682,6,208,2,618))) #these are entries that need to be excluded (only one pred level) 
+
 
 new.data$Treatment<-as.factor(new.data$Treatment)
 
@@ -35,6 +43,8 @@ new.data$Treatment<-as.factor(new.data$Treatment)
 length(unique(new.data$TraitID)) #782 as of Aug 26th (781 without 630)
 length(unique(new.data$Study.ID)) #33
 
+#NOTES for sex specific trait IDs ->2 or less levels: 682 (emailed), 208 (typo trait labelled male only sex labelled F),
+# 6 (previously trait 4 only one entry), 2 (typo?)
 
 #set up a new function to loop through all data and run anova on Mean trait values for each trait
 #note this assumes we have just one covariate of interest: treatment (basically habitat, e.g. high/low predation)
