@@ -3,7 +3,7 @@
 # ok
 
 # I've kept in all of the models that don't work, but you can DELETE THEM.
-# Just wanted them in so you could see what I've tried so far 
+# Just wanted them in so you could see what I've tried so far
 
 # LIBRARIES ---- 
 library(dplyr)
