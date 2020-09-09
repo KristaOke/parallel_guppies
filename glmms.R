@@ -1,10 +1,13 @@
 # GLMMs for parallel_guppies! 
 # 2020-08-31 AH
-# ok
-# test 
 
 # I've kept in all of the models that don't work, but you can DELETE THEM.
 # Just wanted them in so you could see what I've tried so far
+
+# 2020-09-08 comments AH
+# We need to collapse categories - TraitType1/TraitType2
+# Probably should exclude common garden (check cgtally)
+# Maybe include morphometric for CG?
 
 # LIBRARIES ---- 
 library(dplyr)
@@ -18,7 +21,7 @@ library(corrplot)
 library(tidyverse)
 
 # set working directory
-setwd("~/R/MSc/Side_projects/Meta_guppies_parallel/Data")
+# setwd("")
 
 # Import and tidy
 spreadsheet.data <- read.csv("MetaData_sexID.csv")
@@ -37,7 +40,6 @@ spreadsheet.data$Collection_end <- as.factor(spreadsheet.data$Collection_end)
 spreadsheet.data$Published <- as.factor(spreadsheet.data$Published)
 spreadsheet.data$TraitID <- as.factor(spreadsheet.data$TraitID)
 
-str(R2.data)
 R2.data$sex_TraitID <- as.factor(R2.data$sex_TraitID)
 
 # This (data.for.models) is the data to use
@@ -80,7 +82,12 @@ data.for.models %>% filter(StudyType == "Wildcaught" & Sex == "Both" & Slope != 
   data.for.models %>% 
   filter(StudyType == "Wildcaught" & Slope %in% c("North", "South") & Sex %in% c("M", "F", "Both")) %>% 
   group_by(Slope, Sex, TraitType2, Paired) %>% tally())
-  
+
+(slope.only.tally <-
+data.for.models %>% 
+  filter(Slope %in% c("North", "South") & Sex == "Both") %>% 
+  group_by(Slope, Sex, TraitType2) %>% tally())
+
 ## MOD 1 Traits/both sexes
 
 # WC 
@@ -210,7 +217,6 @@ mod1.drain <- glmer(R.2 ~ TraitType2 + (1|Study.ID/Drainage),
                       & data.for.models$Sex == "Both",])
 
 summary(mod1.drain)
-AIC(mod1.drain)
 
 # Again, this one won't converge - crappy crap
 mod1.slope <- glmer(R.2 ~ TraitType2 + (1|Study.ID/Slope), 
@@ -222,6 +228,8 @@ mod1.slope <- glmer(R.2 ~ TraitType2 + (1|Study.ID/Slope),
 summary(mod1.slope)
 AIC(mod1.slope)
 
+
+
 # Only North - Won't run (error) 
 mod1.north <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
                            family = binomial,
@@ -230,6 +238,18 @@ mod1.north <- glmer(R.2 ~ TraitType2 + (1|Study.ID),
                              & data.for.models$Sex == "Both"
                              & data.for.models$Slope == "North",
                              ])
+
+# this one works... collapse morpho/diet into other?
+mod1b.north <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
+                    family = binomial,
+                    data = data.for.models[
+                      data.for.models$StudyType == "Wildcaught" 
+                      & data.for.models$Sex == "Both"
+                      & data.for.models$TraitType2 %in% c("Physiology", "Other", "Life History")
+                      & data.for.models$Slope == "North",
+                      ])
+summary(mod1b.north)
+
 
 # This follows totally to our original plan... again, model won't converge
 trait.mod1 <- glmer(R.2 ~ Slope + TraitType2 + Paired + (1|Study.ID), 
@@ -240,9 +260,8 @@ trait.mod1 <- glmer(R.2 ~ Slope + TraitType2 + Paired + (1|Study.ID),
                              ])
 
 summary(trait.mod1)
-AIC(trait.mod1)  # 551.0687
 
-# Runs but singular fit... TraitType 2 is mostly Paired anyway... crap
+# Runs but singular fit... TraitType 2 is mostly Paired anyway...
 trait.mod2 <- glmer(R.2 ~ TraitType2 + Paired + (1|Study.ID), 
                        family = binomial,
                        data = data.for.models[
@@ -255,6 +274,10 @@ AIC(trait.mod2)  # 591.8565
 
 #### QUESTION 2. IS PARALLELISM DIFFERENT BETWEEN THE SEXES? ####
 
+# First, I am doing both "M" and "F" (i.e. not "both"Both", and not separate)
+
+# Broad effect:
+
 sex.mod1 <- glmer(R.2 ~ Sex*Slope + (1|Study.ID),
                    family = binomial, 
                    data = data.for.models[data.for.models$StudyType == "Wildcaught"
@@ -262,6 +285,7 @@ sex.mod1 <- glmer(R.2 ~ Sex*Slope + (1|Study.ID),
 summary(sex.mod1)
 AIC(sex.mod1) # 1995.517
 
+# This model probably makes the most sense out of the broad sex specific ones 
 sex.mod2 <- glmer(R.2 ~ Sex+Slope + (1|Study.ID),
                      family = binomial, 
                      data = data.for.models[data.for.models$StudyType == "Wildcaught"
@@ -276,6 +300,11 @@ sex.mod3 <- glmer(R.2 ~ Sex + (1|Study.ID),
 summary(sex.mod3)
 AIC(sex.mod3)  # 2387.036
 
+# SECOND - specific looking at sex and traits: 
+# Again, here both "M" and "F"
+# In this section I am NOT including colour or life history
+# Colour = only males
+# Life history = only females
 
 # This dude won't coverge
 sex.mod4 <- glmer(R.2 ~ Sex*TraitType2 + (1|Study.ID),
@@ -287,6 +316,7 @@ sex.mod4 <- glmer(R.2 ~ Sex*TraitType2 + (1|Study.ID),
 summary(sex.mod4)
 AIC(sex.mod4)
 
+# This one works
 sex.mod5 <- glmer(R.2 ~ Sex + TraitType2 + (1|Study.ID),
                   family = binomial, 
                   data =
@@ -296,9 +326,7 @@ sex.mod5 <- glmer(R.2 ~ Sex + TraitType2 + (1|Study.ID),
 summary(sex.mod5)
 AIC(sex.mod5)
 
-###
-
-
+# Singular fit
 sex.mod7.wc <- glmer(R.2 ~ Sex + (1|Study.ID/Slope),
                      family = binomial, 
                      data =
@@ -306,10 +334,13 @@ sex.mod7.wc <- glmer(R.2 ~ Sex + (1|Study.ID/Slope),
                                        & data.for.models$Sex %in% c("M", "F")
                                        & data.for.models$TraitType2 %in% c("Diet", "Morphometric", "Other", "Physiology", "Behaviour"),])
 summary(sex.mod7.wc)
-AIC(sex.mod7.wc)  # 1190/876
+AIC(sex.mod7.wc)  # 1190.9
 
-# Males
+# Now, looking at males and females separately (i.e. only "M" or only "F")
 
+# Males only ... 
+
+# Error
 trait.mod1.males <- glmer(R.2 ~ Slope + TraitType2 + Paired + (1|Study.ID), 
                           family = binomial,
                   data = data.for.models[
@@ -317,8 +348,6 @@ trait.mod1.males <- glmer(R.2 ~ Slope + TraitType2 + Paired + (1|Study.ID),
                     & data.for.models$Sex == "M",
                     ])
 
-summary(trait.mod1.males)
-AIC(trait.mod1.males)  # -1972.583
 
 trait.mod2.males <- glmer(R.2 ~ Slope + Paired + (1|Study.ID), 
                           family = binomial,
@@ -327,6 +356,7 @@ trait.mod2.males <- glmer(R.2 ~ Slope + Paired + (1|Study.ID),
 summary(trait.mod2.males)
 AIC(trait.mod2.males)  # 1307.4
 
+# This is the best one for M only I think
 trait.mod3.males <- glmer(R.2 ~ Slope + TraitType2 + (1|Study.ID), 
                           family = binomial,
                           data = data.for.models[
@@ -357,6 +387,8 @@ trait.mod5.males <- glmer(R.2 ~ TraitType2 + (1|Study.ID),
 summary(trait.mod5.males)
 AIC(trait.mod5.males)  # 1495.068
 
+# The next model is male only, and ONLY SOUTH
+
 trait.mod6.males <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
                           family = binomial,
                           data = data.for.models[
@@ -368,6 +400,7 @@ trait.mod6.males <- glmer(R.2 ~ TraitType2 + (1|Study.ID),
 summary(trait.mod6.males)
 AIC(trait.mod6.males)  # 806.9988
 
+# wont converge
 trait.mod7.males <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
                           family = binomial,
                           data = data.for.models[
@@ -377,12 +410,10 @@ trait.mod7.males <- glmer(R.2 ~ TraitType2 + (1|Study.ID),
                             ])
 
 summary(trait.mod7.males)
-AIC(trait.mod7.males)  # 806.9988
 
+# Females only... 
 
-
-# Females
-
+# wont converge
 trait.mod1.females <- glmer(R.2 ~ Slope + TraitType2 + Paired + (1|Study.ID), 
                             family = binomial,
                             data = data.for.models[
@@ -391,9 +422,9 @@ trait.mod1.females <- glmer(R.2 ~ Slope + TraitType2 + Paired + (1|Study.ID),
                               ])
 
 summary(trait.mod1.females)
-AIC(trait.mod1.females)  # 636.5785
 
 #### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
+# For this question, using only "Both" sexes #
 
 slope.mod1 <- glmer(R.2 ~ Slope + (1|Study.ID),
                      family = binomial, 
@@ -405,7 +436,7 @@ AIC(slope.mod1)  # 599.0427
 #### QUESTION 4. IS THERE REGRESSION TOWARDS THE MEAN ####
 ## Here, we are looking at both sexes and Collection_end ##
 
-# Honestly Allegra I don't know what to do about this mess below...
+# Honestly I don't know what to do about this...
 # Will also have to separate by TraitType too (?), which I forgot about here.
 
 # singular fit... 
@@ -421,7 +452,6 @@ time.mod2 <- glm(R.2 ~ Collection_end,
                  data = data.for.models[data.for.models$Sex == "Both" 
                                         & data.for.models$StudyType == "Wildcaught",])
 summary(time.mod2)
-
 
 data.for.models %>% 
   filter(Collection_end != "NA") %>% 
@@ -457,11 +487,3 @@ ggplot(data.reg2m, aes(x = Collection_end, y = meanR2)) +
   theme_classic() +
   stat_summary(aes(group = 1), fun = mean, colour = "red", geom = "line") +
   geom_hline(yintercept = 0.3770349, colour = "blue", linetype = "dashed")
-
-# These notes below are how you would calculate regression to the meet if you had two time points per id
-# From Mee and Chua - regression towards the mean and the paired sample t-test (1991)  
-
-# 1. Calculate X = Y1-??
-# 2. Estimate the parameters ?? 0 and ?? from the linear regression model of Y2 on X
-# 3. Estimate the treatment effect ??^ by subtracting ?? from ??^0, the estimate of ?? 0
-# 4. Calculate the test-statistic
