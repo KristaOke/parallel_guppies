@@ -10,6 +10,11 @@
 # Probably should exclude common garden (check cgtally)
 # Maybe include morphometric for CG?
 
+# For collapsing traits... 
+# Diet + Other + Physiology + Life History
+# But for "both" physiology makes up a bigger proportion in the North
+# For "both" maybe we can only look at South
+
 # LIBRARIES ---- 
 library(dplyr)
 library(tidyr)
@@ -77,12 +82,12 @@ data.for.models %>% filter(StudyType == "Wildcaught" & Sex == "Both" & Slope != 
 (cgtally <-
   data.for.models %>% 
   filter(StudyType %in% c("Common Garden (F1)", ("Common Garden (F2)")) & Slope %in% c("North", "South")) %>% 
-  group_by(Slope, Sex, TraitType2, Paired) %>% tally())
+  group_by(Slope, Sex, TraitType2) %>% tally())
 
 (wctally <-
   data.for.models %>% 
   filter(StudyType == "Wildcaught" & Slope %in% c("North", "South") & Sex %in% c("M", "F", "Both")) %>% 
-  group_by(Slope, Sex, TraitType2, Paired) %>% tally())
+  group_by(Slope, Sex, TraitType2) %>% tally())
 
 (slope.only.tally <-
 data.for.models %>% 
