@@ -1,11 +1,7 @@
 # GLMMs for parallel_guppies! 
 # 2020-08-31 AH
 
-# I've kept in all of the models that don't work, but you can DELETE THEM.
-# Just wanted them in so you could see what I've tried so far
-# 
-
-# 2020-09-08 comments AH
+# 2020-09-08 ah
 # We need to collapse categories - TraitType1/TraitType2
 # Probably should exclude common garden (check cgtally)
 # Maybe include morphometric for CG?
@@ -15,9 +11,12 @@
 # But for "both" physiology makes up a bigger proportion in the North
 # For "both" maybe we can only look at South
 
-# 2020-09-09 -- collapsed the traits and re-ran the models... 
+# 2020-09-09 ah
+# Collapsed the traits and re-ran the models... 
 
-# 2020-09-14 - is sex.mod6 the best model? ah
+# 2020-09-14 ah
+# Is sex.mod6 the best model? 
+# Deleted all models with 'Paired' as an effect
 
 # LIBRARIES ---- 
 library(dplyr)
@@ -204,18 +203,55 @@ tbl4 <- table(data.for.models$TraitType2, data.for.models$Sex)
 tbl4
 corrplot(tbl4, is.cor = FALSE)
 
+## These below are for regression to the mean
+
+data.for.models %>% 
+  filter(Collection_end != "NA") %>% 
+  group_by(Study.ID, Collection_end) %>% 
+  ggplot(aes(x = R.2)) + geom_histogram(binwidth = 0.03) 
+
+data.reg2m <- data.for.models %>% 
+  filter(Collection_end !="NA") %>% 
+  group_by(Collection_end, Study.ID) %>% 
+  summarise(meanR2 = mean(R.2))
+
+head(data.reg2m)
+
+# individual R2 for Collection_end years 
+# don't know what to do because not paired ... 
+
+R2 <- data.reg2m$meanR2
+names(R2) <- paste(data.reg2m$Collection_end)
+print(R2)
+mean(R2)  
+
+with(data.reg2m, plot(x = Collection_end, y = R2))
+
+(ggplot(data.reg2m, aes(x = meanR2)) + 
+    geom_density() +
+    geom_vline(aes(xintercept = mean(meanR2)), 
+               color = "blue",
+               linetype = "dashed",
+               size = 1))
+
+ggplot(data.reg2m, aes(x = Collection_end, y = meanR2)) +
+  geom_point() +
+  theme_classic() +
+  stat_summary(aes(group = 1), fun = mean, colour = "red", geom = "line") +
+  geom_hline(yintercept = 0.3770349, colour = "blue", linetype = "dashed")
+
 
 ##%######################################################%##
 #                                                          #
-####                  MODELS                            ####
+####                    GOOD MODELS                     ####
 #                                                          #
 ##%######################################################%##
 
+# I think that the best model overall is sex.mod6!! #
 
-#### QUESTION 1. IS THERE A DIFFERENCE OVERALL BETWEEN HIGH/LOW ####
-## Traittype2 is the fixed effect that we decided  we really care about here ## 
+### QUESTION 1. IS THERE A DIFFERENCE OVERALL BETWEEN HIGH/LOW ###
 
-# I think this one works THE BEST -- BUT only South
+# I think this one works THE BEST for Q1 -- BUT only South
 mod1.south <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
                        family = binomial,
               data = data.for.models[
@@ -225,6 +261,51 @@ mod1.south <- glmer(R.2 ~ TraitType2 + (1|Study.ID),
                 ])
 summary(mod1.south)
 AIC(mod1.south)  # 494.1767
+
+### QUESTION 2. IS PARALLELISM DIFFERENT BETWEEN THE SEXES? ###
+
+sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|Study.ID),
+                  family = binomial, 
+                  data =
+                    data.for.models[data.for.models$StudyType == "Wildcaught"
+                                    & data.for.models$Sex %in% c("M", "F"),])
+summary(sex.mod6)
+AIC(sex.mod6)
+
+#### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
+# For this question, using only "Both" sexes #
+
+slope.mod1 <- glmer(R.2 ~ Slope + (1|Study.ID),
+                     family = binomial, 
+                     data = data.for.models[data.for.models$StudyType == "Wildcaught"
+                                            & data.for.models$Sex == "Both",])
+summary(slope.mod1)
+AIC(slope.mod1)  # 599.0427
+
+#### QUESTION 4. IS THERE REGRESSION TOWARDS THE MEAN ####
+## Here, we are looking at both sexes and Collection_end ##
+
+time.mod1 <- glmer(R.2 ~ Collection_end + (1|Study.ID),
+                   family = binomial,
+                   data = data.for.models[data.for.models$Sex == "Both" 
+                                          & data.for.models$StudyType == "Wildcaught",])
+summary(time.mod1)
+
+# this one runs, but probably shouldn't ignore Study.ID?
+time.mod2 <- glm(R.2 ~ Collection_end, 
+                 family = binomial, 
+                 data = data.for.models[data.for.models$Sex == "Both" 
+                                        & data.for.models$StudyType == "Wildcaught",])
+summary(time.mod2)
+
+
+##%######################################################%##
+#                                                          #
+####                   OTHER MODELS                     ####
+#                                                          #
+##%######################################################%##
+
+## Q1 
 
 # has drainages, won't converge - crap
 mod1.drain <- glmer(R.2 ~ TraitType2 + (1|Study.ID/Drainage), 
@@ -249,51 +330,50 @@ AIC(mod1.slope)
 
 # Only North - Won't run (error) 
 mod1.north <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
-                           family = binomial,
-                           data = data.for.models[
-                             data.for.models$StudyType == "Wildcaught" 
-                             & data.for.models$Sex == "Both"
-                             & data.for.models$Slope == "North",
-                             ])
-summary(mod1.north)
-
-# Also doesn't run
-mod1b.north <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
                     family = binomial,
                     data = data.for.models[
                       data.for.models$StudyType == "Wildcaught" 
                       & data.for.models$Sex == "Both"
                       & data.for.models$Slope == "North",
                       ])
+summary(mod1.north)
+
+# Also doesn't run
+mod1b.north <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
+                     family = binomial,
+                     data = data.for.models[
+                       data.for.models$StudyType == "Wildcaught" 
+                       & data.for.models$Sex == "Both"
+                       & data.for.models$Slope == "North",
+                       ])
 summary(mod1b.north)
 
-#### QUESTION 2. IS PARALLELISM DIFFERENT BETWEEN THE SEXES? ####
-
-# First, I am doing both "M" and "F" (i.e. not "both"Both", and not separate)
-
-# Broad effect:
+## Q2
 
 sex.mod1 <- glmer(R.2 ~ Sex*Slope + (1|Study.ID),
-                   family = binomial, 
-                   data = data.for.models[data.for.models$StudyType == "Wildcaught"
-                                          & data.for.models$Sex %in% c("M", "F"),])
+                  family = binomial, 
+                  data = data.for.models[data.for.models$StudyType == "Wildcaught"
+                                         & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod1)
 AIC(sex.mod1) # 1995.517
 
-# This model probably makes the most sense out of the broad sex specific ones 
-sex.mod2 <- glmer(R.2 ~ Sex+Slope + (1|Study.ID),
-                     family = binomial, 
-                     data = data.for.models[data.for.models$StudyType == "Wildcaught"
-                                            & data.for.models$Sex %in% c("M", "F"),])
-summary(sex.mod2)
-AIC(sex.mod2)  # 1994.825
-
 sex.mod3 <- glmer(R.2 ~ Sex + (1|Study.ID),
-                     family = binomial, 
-                     data = data.for.models[data.for.models$StudyType == "Wildcaught"
-                                            & data.for.models$Sex %in% c("M", "F"),])
+                  family = binomial, 
+                  data = data.for.models[data.for.models$StudyType == "Wildcaught"
+                                         & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod3)
 AIC(sex.mod3)  # 2387.036
+
+# First, I am doing both "M" and "F" (i.e. not "both"Both", and not separate)
+
+# This model probably makes the most sense out of the broad sex specific ones 
+# sex*slope also runs (w other models down below)
+sex.mod2 <- glmer(R.2 ~ Sex+Slope + (1|Study.ID),
+                  family = binomial, 
+                  data = data.for.models[data.for.models$StudyType == "Wildcaught"
+                                         & data.for.models$Sex %in% c("M", "F"),])
+summary(sex.mod2)
+AIC(sex.mod2)  # 1994.825
 
 # SECOND - specific looking at sex and traits: 
 # Again, here both "M" and "F"
@@ -301,13 +381,13 @@ AIC(sex.mod3)  # 2387.036
 # Colour = only males
 # Life history = only females
 
-# This one?
+# This one??
 sex.mod4 <- glmer(R.2 ~ Sex*TraitType2 + (1|Study.ID),
-                     family = binomial, 
-                     data =
-                       data.for.models[data.for.models$StudyType == "Wildcaught"
-                                       & data.for.models$Sex %in% c("M", "F")
-                                       & data.for.models$TraitType2 %in% c("Diet", "Morphometric", "Other", "Physiology", "Behaviour"),])
+                  family = binomial, 
+                  data =
+                    data.for.models[data.for.models$StudyType == "Wildcaught"
+                                    & data.for.models$Sex %in% c("M", "F")
+                                    & data.for.models$TraitType2 %in% c("Diet", "Morphometric", "Other", "Physiology", "Behaviour"),])
 summary(sex.mod4)
 AIC(sex.mod4)
 
@@ -320,13 +400,6 @@ sex.mod5 <- glmer(R.2 ~ Sex + TraitType2 + (1|Study.ID),
 summary(sex.mod5)
 AIC(sex.mod5)
 
-sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|Study.ID),
-                  family = binomial, 
-                  data =
-                    data.for.models[data.for.models$StudyType == "Wildcaught"
-                                    & data.for.models$Sex %in% c("M", "F"),])
-summary(sex.mod6)
-AIC(sex.mod6)
 
 # Singular fit
 sex.mod7.wc <- glmer(R.2 ~ Sex + (1|Study.ID/Slope),
@@ -386,69 +459,3 @@ trait.mod7.males <- glmer(R.2 ~ TraitType2 + (1|Study.ID),
 
 summary(trait.mod7.males)
 
-# Females only... 
-
-#### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
-# For this question, using only "Both" sexes #
-
-slope.mod1 <- glmer(R.2 ~ Slope + (1|Study.ID),
-                     family = binomial, 
-                     data = data.for.models[data.for.models$StudyType == "Wildcaught"
-                                            & data.for.models$Sex == "Both",])
-summary(slope.mod1)
-AIC(slope.mod1)  # 599.0427
-
-#### QUESTION 4. IS THERE REGRESSION TOWARDS THE MEAN ####
-## Here, we are looking at both sexes and Collection_end ##
-
-# Honestly I don't know what to do about this...
-# Will also have to separate by TraitType too (?), which I forgot about here.
-
-# singular fit... 
-time.mod1 <- glmer(R.2 ~ Collection_end + (1|Study.ID),
-                   family = binomial,
-                   data = data.for.models[data.for.models$Sex == "Both" 
-                                          & data.for.models$StudyType == "Wildcaught",])
-summary(time.mod1)
-
-# this one runs, but probably shouldn't ignore Study.ID?
-time.mod2 <- glm(R.2 ~ Collection_end, 
-                 family = binomial, 
-                 data = data.for.models[data.for.models$Sex == "Both" 
-                                        & data.for.models$StudyType == "Wildcaught",])
-summary(time.mod2)
-
-data.for.models %>% 
-  filter(Collection_end != "NA") %>% 
-  group_by(Study.ID, Collection_end) %>% 
-  ggplot(aes(x = R.2)) + geom_histogram(binwidth = 0.03) 
-
-data.reg2m <- data.for.models %>% 
-  filter(Collection_end !="NA") %>% 
-  group_by(Collection_end, Study.ID) %>% 
-  summarise(meanR2 = mean(R.2))
-
-head(data.reg2m)
-
-# individual R2 for Collection_end years 
-# don't know what to do because not paired ... 
-
-R2 <- data.reg2m$meanR2
-names(R2) <- paste(data.reg2m$Collection_end)
-print(R2)
-mean(R2)  
-
-with(data.reg2m, plot(x = Collection_end, y = R2))
-
-(ggplot(data.reg2m, aes(x = meanR2)) + 
-    geom_density() +
-  geom_vline(aes(xintercept = mean(meanR2)), 
-             color = "blue",
-             linetype = "dashed",
-             size = 1))
-
-ggplot(data.reg2m, aes(x = Collection_end, y = meanR2)) +
-  geom_point() +
-  theme_classic() +
-  stat_summary(aes(group = 1), fun = mean, colour = "red", geom = "line") +
-  geom_hline(yintercept = 0.3770349, colour = "blue", linetype = "dashed")
