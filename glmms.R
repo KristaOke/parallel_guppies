@@ -267,27 +267,6 @@ mod1b.north <- glmer(R.2 ~ TraitType2 + (1|Study.ID),
                       ])
 summary(mod1b.north)
 
-# This follows totally to our original plan... again, model won't converge
-trait.mod1 <- glmer(R.2 ~ Slope + TraitType2 + Paired + (1|Study.ID), 
-                           family = binomial,
-                           data = data.for.models[
-                             data.for.models$StudyType == "Wildcaught" 
-                             & data.for.models$Sex == "Both",
-                             ])
-
-summary(trait.mod1)
-
-# Runs
-trait.mod2 <- glmer(R.2 ~ TraitType2 + Paired + (1|Study.ID), 
-                       family = binomial,
-                       data = data.for.models[
-                         data.for.models$StudyType == "Wildcaught"
-                         & data.for.models$Sex == "Both",
-                         ])
-
-summary(trait.mod2)
-AIC(trait.mod2)  
-
 #### QUESTION 2. IS PARALLELISM DIFFERENT BETWEEN THE SEXES? ####
 
 # First, I am doing both "M" and "F" (i.e. not "both"Both", and not separate)
@@ -363,21 +342,6 @@ AIC(sex.mod7.wc)
 
 # Males only ... 
 
-# Error
-trait.mod1.males <- glmer(R.2 ~ Slope + TraitType2 + Paired + (1|Study.ID), 
-                          family = binomial,
-                  data = data.for.models[
-                    data.for.models$StudyType == "Wildcaught" 
-                    & data.for.models$Sex == "M",
-                    ])
-
-trait.mod2.males <- glmer(R.2 ~ Slope + Paired + (1|Study.ID), 
-                          family = binomial,
-                          data = data.for.models[data.for.models$StudyType == "Wildcaught" & data.for.models$Sex == "M",])
-
-summary(trait.mod2.males)
-AIC(trait.mod2.males)  # 1307.4
-
 trait.mod3.males <- glmer(R.2 ~ Slope + TraitType2 + (1|Study.ID), 
                           family = binomial,
                           data = data.for.models[
@@ -387,16 +351,6 @@ trait.mod3.males <- glmer(R.2 ~ Slope + TraitType2 + (1|Study.ID),
 
 summary(trait.mod3.males)
 AIC(trait.mod3.males)  # 1292.874
-
-trait.mod4.males <- glmer(R.2 ~ TraitType2 + Paired + (1|Study.ID), 
-                          family = binomial,
-                          data = data.for.models[
-                            data.for.models$StudyType == "Wildcaught" 
-                            & data.for.models$Sex == "M",
-                            ])
-
-summary(trait.mod4.males)
-AIC(trait.mod4.males)  # 1497.781
 
 trait.mod5.males <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
                           family = binomial,
@@ -433,16 +387,6 @@ trait.mod7.males <- glmer(R.2 ~ TraitType2 + (1|Study.ID),
 summary(trait.mod7.males)
 
 # Females only... 
-
-# wont converge
-trait.mod1.females <- glmer(R.2 ~ Slope + TraitType2 + Paired + (1|Study.ID), 
-                            family = binomial,
-                            data = data.for.models[
-                              data.for.models$StudyType == "Wildcaught" 
-                              & data.for.models$Sex == "F",
-                              ])
-
-summary(trait.mod1.females)
 
 #### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
 # For this question, using only "Both" sexes #
