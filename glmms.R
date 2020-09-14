@@ -339,6 +339,14 @@ sex.mod5 <- glmer(R.2 ~ Sex + TraitType2 + (1|Study.ID),
 summary(sex.mod5)
 AIC(sex.mod5)
 
+sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|Study.ID),
+                  family = binomial, 
+                  data =
+                    data.for.models[data.for.models$StudyType == "Wildcaught"
+                                    & data.for.models$Sex %in% c("M", "F"),])
+summary(sex.mod6)
+AIC(sex.mod6)
+
 # Singular fit
 sex.mod7.wc <- glmer(R.2 ~ Sex + (1|Study.ID/Slope),
                      family = binomial, 
