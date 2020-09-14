@@ -9,8 +9,8 @@ library(tidyverse)
 library(ggplot2)
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
-new.data<- read.csv(paste(wd,'/data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved Aug 27
-r.squared<- read.csv(paste(wd,'/data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated Aug 26
+new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved Aug 27
+r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated Aug 26
 ```
 
 

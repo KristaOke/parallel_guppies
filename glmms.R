@@ -28,13 +28,15 @@ library(gridExtra)
 library(car)
 library(corrplot)
 library(tidyverse)
+library(fitdistrplus)
 
 # set working directory
 # setwd("")
+# wd<- getwd()
 
 # Import and tidy
-spreadsheet.data <- read.csv("MetaData_sexID.csv")
-R2.data <- read.csv("TraitR2_sexID.csv")
+spreadsheet.data <- read.csv(paste(wd,'/Data/MetaData_sexID.csv',sep=""), header=TRUE, sep=",")
+R2.data <- read.csv(paste(wd,'/Data/TraitR2_sexID.csv',sep=""), header=TRUE, sep=",")
 
 # spreadsheet.data is the data extracted for the meta-analysis
 # R2.data is the output of the ANOVA loop
@@ -239,7 +241,33 @@ ggplot(data.reg2m, aes(x = Collection_end, y = meanR2)) +
   theme_classic() +
   stat_summary(aes(group = 1), fun = mean, colour = "red", geom = "line") +
   geom_hline(yintercept = 0.3770349, colour = "blue", linetype = "dashed")
+##%######################################################%##
+#                                                          #
+####                   DISTRIBUTION                     ####
+#                                                          #
+##%######################################################%##
 
+dist.data.log<-R2.data$R.2+.001
+dist.data<-R2.data$R.2
+plot(dist.data, pch=20)
+#empirical data
+plotdist(dist.data, histo = TRUE, demp = TRUE)
+
+descdist(dist.data, discrete=FALSE, boot=500)
+
+fit_b<-fitdist(dist.data, "beta", method="mme")
+fit_bn<-fitdist(dist.data, "nbinom", method="mme")
+
+#log can't have 0s, so diff dataset
+fit_ln<-fitdist(dist.data.log, "lnorm", method="mme", discrete = TRUE)
+cdfcomp(fit_ln, xlogscale = TRUE, ylogscale = TRUE)
+
+par(mfrow=c(2,2))
+plot.legend <- c("beta", "nbinom")
+denscomp(list(fit_b, fit_bn), legendtext = plot.legend)
+cdfcomp (list(fit_b, fit_bn), legendtext = plot.legend)
+qqcomp  (list(fit_b, fit_bn), legendtext = plot.legend)
+ppcomp  (list(fit_b, fit_bn), legendtext = plot.legend)
 
 ##%######################################################%##
 #                                                          #

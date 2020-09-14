@@ -2,7 +2,7 @@ library(stats)
 
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
-new.data<- read.csv(paste(wd,'/data/MetaData.csv',sep=""), header=TRUE, sep=",")
+new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")
 
 #my data was read in as a csv file with columns: 
 
