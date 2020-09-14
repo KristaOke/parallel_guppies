@@ -247,6 +247,7 @@ ggplot(data.reg2m, aes(x = Collection_end, y = meanR2)) +
 #                                                          #
 ##%######################################################%##
 
+#log can't have 0s, so diff dataset
 dist.data.log<-R2.data$R.2+.001
 dist.data<-R2.data$R.2
 plot(dist.data, pch=20)
@@ -254,18 +255,37 @@ plot(dist.data, pch=20)
 plotdist(dist.data, histo = TRUE, demp = TRUE)
 
 descdist(dist.data, discrete=FALSE, boot=500)
+descdist(dist.data.log, discrete=FALSE, boot=500)
 
 fit_b<-fitdist(dist.data, "beta", method="mme")
-fit_bn<-fitdist(dist.data, "nbinom", method="mme")
+denscomp(fit_b, ylim=(1))
+cdfcomp (fit_b,ylim=(1))
+qqcomp  (fit_b)
+ppcomp  (fit_b)
 
-#log can't have 0s, so diff dataset
-fit_ln<-fitdist(dist.data.log, "lnorm", method="mme", discrete = TRUE)
-cdfcomp(fit_ln, xlogscale = TRUE, ylogscale = TRUE)
+
+fit_bn<-fitdist(dist.data, "nbinom", method="mme")
+denscomp(fit_bn,  ylim=(1))
+cdfcomp (fit_bn,  ylim=(1))
+qqcomp  (fit_bn ) #I cannot plot these two and I have no idea why
+ppcomp  (fit_bn)
+
+#diff datasets can't be compared to each other
+fit_ln<-fitdist(dist.data.log, "lnorm", method="mme")
+cdfcomp(fit_ln, xlogscale = TRUE, ylogscale = TRUE) 
+denscomp(fit_ln,  ylim=(1))
+qqcomp  (fit_ln )
+ppcomp  (fit_ln)
+#idk if I'm doing something wrong or this is a bad fit
+
+gofstat(fit_b)
+gofstat(fit_bn)
+gofstat(fit_ln)
 
 par(mfrow=c(2,2))
 plot.legend <- c("beta", "nbinom")
-denscomp(list(fit_b, fit_bn), legendtext = plot.legend)
-cdfcomp (list(fit_b, fit_bn), legendtext = plot.legend)
+denscomp(list(fit_b, fit_bn), legendtext = plot.legend, ylim=(1))
+cdfcomp (list(fit_b, fit_bn), legendtext = plot.legend, ylim=(1))
 qqcomp  (list(fit_b, fit_bn), legendtext = plot.legend)
 ppcomp  (list(fit_b, fit_bn), legendtext = plot.legend)
 
