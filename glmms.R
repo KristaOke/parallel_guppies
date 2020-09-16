@@ -339,6 +339,13 @@ time.mod1 <- glmer(R.2 ~ Collection_end + (1|Study.ID),
                                           & data.for.models$StudyType == "Wildcaught",])
 summary(time.mod1)
 
+time.mod2 <- glmer(R.2 ~ Collection_end + (1|Study.ID),
+                   family = binomial,
+                   data = data.for.models[data.for.models$Sex == "Both" 
+                                          & data.for.models$StudyType == "Wildcaught",])
+summary(time.mod2)
+
+
 # this one runs, but probably shouldn't ignore Study.ID?
 time.mod2 <- glm(R.2 ~ Collection_end, 
                  family = binomial, 
