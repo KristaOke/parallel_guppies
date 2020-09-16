@@ -101,6 +101,11 @@ data.for.models %>% filter(StudyType == "Wildcaught" & Sex == "Both" & Slope != 
   filter(StudyType == "Wildcaught" & Slope %in% c("North", "South") & Sex %in% c("M", "F", "Both")) %>% 
   group_by(Slope, Sex, TraitType2) %>% tally())
 
+(yeartally <-
+    data.for.models %>% 
+    filter(StudyType == "Wildcaught" & Slope %in% c("North", "South") & Sex %in% c("M", "F", "Both")) %>% 
+    group_by(Collection_end, Study.ID) %>% tally())
+
 (slope.only.tally <-
 data.for.models %>% 
   filter(Slope %in% c("North", "South") & Sex == "Both") %>% 
@@ -339,12 +344,19 @@ time.mod1 <- glmer(R.2 ~ Collection_end + (1|Study.ID),
                                           & data.for.models$StudyType == "Wildcaught",])
 summary(time.mod1)
 
+time.mod2 <- glmer(R.2 ~ Collection_end + (1|Study.ID),
+                   family = binomial,
+                   data = data.for.models[data.for.models$Sex %in% c("M", "F") 
+                                          & data.for.models$StudyType == "Wildcaught",])
+summary(time.mod2)
+
+
 # this one runs, but probably shouldn't ignore Study.ID?
-time.mod2 <- glm(R.2 ~ Collection_end, 
+time.mod3 <- glm(R.2 ~ Collection_end, 
                  family = binomial, 
                  data = data.for.models[data.for.models$Sex == "Both" 
                                         & data.for.models$StudyType == "Wildcaught",])
-summary(time.mod2)
+summary(time.mod3)
 
 
 ##%######################################################%##
