@@ -346,7 +346,11 @@ summary(time.mod1)
 
 time.mod2 <- glmer(R.2 ~ Collection_end + (1|Study.ID),
                    family = binomial,
+<<<<<<< HEAD
                    data = data.for.models[data.for.models$Sex %in% c("M", "F") 
+=======
+                   data = data.for.models[data.for.models$Sex == "Both" 
+>>>>>>> 4f2ed5060593629693bf31cda0892444db34b799
                                           & data.for.models$StudyType == "Wildcaught",])
 summary(time.mod2)
 
