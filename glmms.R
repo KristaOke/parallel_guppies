@@ -45,17 +45,18 @@ names(R2.data)[names(R2.data) == "TraitID"] <- "sex_TraitID"  # so same in both 
 
 
 str(spreadsheet.data)
+str(R2.data)
 
 spreadsheet.data$Study.ID <- as.factor(spreadsheet.data$Study.ID)
 spreadsheet.data$Collection_start <- as.factor(spreadsheet.data$Collection_start)
 spreadsheet.data$Collection_end <- as.factor(spreadsheet.data$Collection_end)
 spreadsheet.data$Published <- as.factor(spreadsheet.data$Published)
-spreadsheet.data$TraitID <- as.factor(spreadsheet.data$TraitID)
+spreadsheet.data$sex_TraitID <- as.factor(spreadsheet.data$sex_TraitID)
 
 R2.data$sex_TraitID <- as.factor(R2.data$sex_TraitID)
 
 # This (data.for.models) is the data to use
-data.for.models <- merge(spreadsheet.data, R2.data,  by = "sex_TraitID")
+data.for.models <- left_join(spreadsheet.data, R2.data,  by = "sex_TraitID")
 data.for.models$Sex <- gsub("Both (mostly juveniles)",  # this is just for now 
                             "Both", 
                             data.for.models$Sex, 
@@ -293,6 +294,7 @@ denscomp(list(fit_b, fit_bn), legendtext = plot.legend, ylim=(1))
 cdfcomp (list(fit_b, fit_bn), legendtext = plot.legend, ylim=(1))
 qqcomp  (list(fit_b, fit_bn), legendtext = plot.legend)
 ppcomp  (list(fit_b, fit_bn), legendtext = plot.legend)
+par(mfrow = c(1,1))
 
 ##%######################################################%##
 #                                                          #
@@ -323,7 +325,7 @@ sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|Study.ID),
                     data.for.models[data.for.models$StudyType == "Wildcaught"
                                     & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod6)
-AIC(sex.mod6)
+AIC(sex.mod6)  # 1956
 
 #### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
 # For this question, using only "Both" sexes #
@@ -338,7 +340,9 @@ AIC(slope.mod1)  # 599.0427
 #### QUESTION 4. IS THERE REGRESSION TOWARDS THE MEAN ####
 ## Here, we are looking at both sexes and Collection_end ##
 
-time.mod1 <- glmer(R.2 ~ Collection_end + (1|Study.ID),
+# updated so just a glm! 2020-09-29
+
+time.mod1 <- glm(R.2 ~ Collection_end,
                    family = binomial,
                    data = data.for.models[data.for.models$Sex == "Both" 
                                           & data.for.models$StudyType == "Wildcaught",])
@@ -346,11 +350,7 @@ summary(time.mod1)
 
 time.mod2 <- glmer(R.2 ~ Collection_end + (1|Study.ID),
                    family = binomial,
-<<<<<<< HEAD
                    data = data.for.models[data.for.models$Sex %in% c("M", "F") 
-=======
-                   data = data.for.models[data.for.models$Sex == "Both" 
->>>>>>> 4f2ed5060593629693bf31cda0892444db34b799
                                           & data.for.models$StudyType == "Wildcaught",])
 summary(time.mod2)
 
