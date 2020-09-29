@@ -62,6 +62,7 @@ data.for.models$Sex <- gsub("Both (mostly juveniles)",  # this is just for now
                             data.for.models$Sex, 
                             fixed = T)  # fixed in spreadsheet
 
+str(data.for.models)
 data.for.models$Sex <- as.factor(data.for.models$Sex)
 data.for.models$sex_TraitID <- as.factor(data.for.models$sex_TraitID)
 
@@ -342,17 +343,17 @@ AIC(slope.mod1)  # 599.0427
 
 # updated so just a glm! 2020-09-29
 
-time.mod1 <- glm(R.2 ~ Collection_end,
-                   family = binomial,
-                   data = data.for.models[data.for.models$Sex == "Both" 
-                                          & data.for.models$StudyType == "Wildcaught",])
-summary(time.mod1)
 
-time.mod2 <- glmer(R.2 ~ Collection_end + (1|Study.ID),
+# As per the advice of Guillaume from QCBS - switching to numeric.
+data.for.models$Collection_end <- as.numeric(paste(data.for.models$Collection_end))
+str(data.for.models)
+
+time.mod2 <- glm(R.2 ~ Collection_end,
                    family = binomial,
                    data = data.for.models[data.for.models$Sex %in% c("M", "F") 
                                           & data.for.models$StudyType == "Wildcaught",])
 summary(time.mod2)
+confint(time.mod2)
 
 
 # this one runs, but probably shouldn't ignore Study.ID?
@@ -522,4 +523,12 @@ trait.mod7.males <- glmer(R.2 ~ TraitType2 + (1|Study.ID),
                             ])
 
 summary(trait.mod7.males)
+
+# Q4 with "Both"
+
+time.mod1 <- glm(R.2 ~ Collection_end,
+                 family = binomial,
+                 data = data.for.models[data.for.models$Sex == "Both" 
+                                        & data.for.models$StudyType == "Wildcaught",])
+summary(time.mod1)
 
