@@ -9,7 +9,9 @@ library(tidyverse)
 library(ggplot2)
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
-new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved Aug 27
+new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")#MetaData saved oct 1st
+data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",") %>% 
+  select(StudyID:Comments) #this is the data from the spreadsheet, unedited populations etc. not needed
 r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated Aug 26
 ```
 
@@ -46,32 +48,60 @@ Silverstream
 Arena: Near the arena reservoir some place? thoroughly out of the mountains
 Vance: South West (from jackie outside the northern range, also in paper 23, but not listed in supplementary material as a site??)
 
+```{r population column}
+data$temp<-NA #temp columns
+data$pop<-data$PopulationRaw
+
+names<-c("Arima","Arena","Arouca","Aripo", "Quare", "Yarra", "Tompire", "Marianne", "Paria", "El Cedro", "Madamas",
+         "Oropuche", "Guanapo", "La Selva", "Turure", "Damier", "Tacarigua", "Mausica", "Manacal", "Ceniza", "Caroni",
+         "Valencia", "Oropuna", "Tunapuna", "Lopinot", "Guapo", "Vance", "Visigney", "Pilote", "Lizard",
+         "Silverstream", "Matura","Cunupia", "Coffee", "Maracas", "Caura", "Toco", "Manzanilla", "Mission", "Ricon",
+         "Balandra", "Brasso Seco", "Rio Grande", "Rio Barro", "Caroni Lower Dyke", "Cunupia Lower Dyke")
+for (i in names){ data<-mutate(data, pop = (ifelse(grepl(i, PopulationRaw), i,  temp)))
+data$temp<-ifelse(data$pop==i, i, data$temp)} #replaces variations of populations with the root, ie Aripo 4 -> Aripo
+
+data$pop<-ifelse(is.na(data$pop),data$PopulationRaw, data$pop) #fill NAs with the raw population data
+
+#fix typos
+data$pop<-gsub("ElCedro1", "El Cedro", data$pop)
+data$pop<-gsub("ElCedro2", "El Cedro", data$pop)
+data$pop<-gsub("Lower Guapo 1", "Guapo", data$pop)
+data$pop<-gsub("Lower Guapo 2", "Guapo", data$pop)
+data$pop<-gsub("Laseiva", "La Seiva", data$pop)
+data$pop<-gsub("Cenzina", "Ceniza", data$pop)
+data$pop<-gsub("Lower Trib 1", "Mayaro", data$pop)
+data$pop<-gsub("Lower Trib 2", "Mayaro", data$pop)
+data$pop<-gsub("Tompire 2", "Tompire", data$pop)
+data$pop<-gsub("guanapo", "Guanapo", data$pop)
+data$pop<-gsub("Lower La Seiva", "La Seiva", data$pop)
+data$pop<-gsub("Upper turure", "Turure", data$pop)
+data$pop<-gsub("Tacargua", "Tacarigua", data$pop)
+
+#data$pop<-ifelse(grepl("Dyke", data$PopulationRaw), data$PopulationRaw, data$pop)
+
+summary(as.factor(data$pop))
+data$Population<-data$pop
+data<-data %>% 
+  select(StudyID:Comments)
+```
+
+
+
 
 ```{r typos and river lists, eval=FALSE}
 #fix typos not previously found
-new.data$Population<-gsub("ElCedro1", "El Cedro", new.data$Population)
-new.data$Population<-gsub("ElCedro2", "El Cedro", new.data$Population)
-new.data$Population<-gsub("Lower Guapo 1", "Guapo", new.data$Population)
-new.data$Population<-gsub("Lower Guapo 2", "Guapo", new.data$Population)
-new.data$Population<-gsub("Laseiva", "La Seiva", new.data$Population)
-new.data$Population<-gsub("Cenzina", "Ceniza", new.data$Population)
-new.data$PopulationRaw<-gsub("Lower Trib 1", "Mayaro Lower Tributary 1", new.data$PopulationRaw)
-new.data$PopulationRaw<-gsub("Lower Trib 2", "Mayaro Lower Tributary 2", new.data$PopulationRaw)
-new.data$Population<-gsub("Lower Trib 1", "Mayaro", new.data$Population)
-new.data$Population<-gsub("Lower Trib 2", "Mayaro", new.data$Population)
-new.data$Population<-gsub("Tompire 2", "Tompire", new.data$Population)
+data$TraitType2<-gsub("Life-history", "Life history", new.data$TraitType2)
 
-new.data$TraitType2<-gsub("Life-history", "Life history", new.data$TraitType2)
-
-new.data$Population<-as.factor(new.data$Population)
-river.list<-new.data %>% 
-  filter(PopulationType=="Single") %>% 
+data$Population<-as.factor(data$Population)
+river.list<-data %>% 
   select(Population) %>% 
   unique()
 
 North<-c("Yarra", "Marianne", "Paria", "Madamas", "Damier", "Brasso Seco", "Balandra") #I think we should keep these together for drainage level, logistically it'll be easier and its how others do it (paper 2 is an example)
 
-Other<-c("Tompire", "Ricon", "Mission", "Toco", "Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro") #need to finalize with the new lower trib name and update with new papers
+Northeastern<- c("Tompire", "Ricon", "Mission", "Toco")
+
+Other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Caura", "Manzanilla", "Oropuna" ) #mostly southern range, jessica stephenson paper, but some others
 
 South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal", "Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura")  
 
@@ -81,29 +111,31 @@ Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Car
 Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura")
 
 #rivers not already sorted into north or south slope
-#unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South))) 
+#unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South| river.list$Population %in% Northeastern| river.list$Population %in% Other))) 
 ```
 
 
 
 ```{r Slope, Drainage, and TraitID columns, eval=FALSE}
-
+#new.data<-data
 new.data$Slope<-  case_when(
   new.data$Population %in% South ~ "South",
   new.data$Population %in% North ~ "North",
-  new.data$Population %in% Other ~ "Other"
+  new.data$Population %in% Other ~ "Other",
+  new.data$Population %in% Northeastern ~ "Northeastern"
 ) #labels all single populations as North or South Slope, and other for identified rivers not in this dichotomy
 
 new.data$Drainage<- case_when(
   new.data$Population %in% Caroni ~ "Caroni",
   new.data$Population %in% Oropuche ~ "Oropuche",
   new.data$Population %in% North ~ "Northern",
-  new.data$Population %in% Other ~ "Other"
+  new.data$Population %in% Other ~ "Other",
+  new.data$Population %in% Northeastern ~ "Other",
 )  #Labels all single populations as a specific drainage
 
 #coding the trait column, one ID for each trait measured in each study (regardless of sex)
 new.data<-new.data %>% 
-  arrange(Study.ID, Trait)
+  arrange(StudyID, Trait)
 lengths<-rle(as.character(new.data$Trait))
 new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
 
@@ -111,8 +143,8 @@ new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
 sex.length<-rle(as.character(paste(new.data$Trait,new.data$Sex)))  
 new.data$sex_TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
 
-#write_csv(new.data, path = "~/Documents/Masters/R scripts/Meta Analysis/data/MetaData.csv") #written aug 27th
-
+#write_csv(new.data, path = "~/Documents/Masters/R scripts/Meta Analysis/data/MetaData.csv") #written oct 1
+test<-new.data[is.na(new.data$Slope),]
 ```
 
 

@@ -10,44 +10,45 @@ new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")
 # "Standardization.type" "Paired."              "Study.type"           "Data.point"           "Treatment"            "Population"           "Mean"                
 # "N" 
 
-
 #select only entries with both predation levels
 a<-new.data
-a$High<- ifelse(new.data$Treatment== "High", print(new.data$TraitID), NA )
-a$Low<- ifelse(new.data$Treatment== "Low", print(new.data$TraitID), NA )
+a$High<- ifelse(new.data$Predation== "High", print(new.data$TraitID), NA )
+a$Low<- ifelse(new.data$Predation== "Low", print(new.data$TraitID), NA )
 
 a$High[!(a$High %in% a$Low)] #4
-a$Low[!(a$Low %in% a$High)] #630
+a$Low[!(a$Low %in% a$High)] #646
 
 #sex_TraitID column info
 a<-new.data
-a$High<- ifelse(new.data$Treatment== "High", print(new.data$sex_TraitID), NA )
-a$Low<- ifelse(new.data$Treatment== "Low", print(new.data$sex_TraitID), NA )
+a$High<- ifelse(new.data$Predation== "High", print(new.data$sex_TraitID), NA )
+a$Low<- ifelse(new.data$Predation== "Low", print(new.data$sex_TraitID), NA )
 
-a$High[!(a$High %in% a$Low)] #6 (previously 4), 208, 2
-a$Low[!(a$Low %in% a$High)] #618 (previously 630)
+a$High[!(a$High %in% a$Low)] #6 (TraitID = 4), 208, 2
+a$Low[!(a$Low %in% a$High)] #655 (TraitID = 646)
 
 
 #filter out incomplete entries, and entries with only two data points (will make R2 1.0)
 #NOTE: TraitID = 4,630 sex_TraitID = 682,6,208,2,618 (aug 30 two typos need to be fixed, one waiting for email)
 new.data<-new.data  %>% 
-  filter(!is.na(Treatment)) %>% 
-  filter(!is.na(Mean)) %>% 
+  filter(!is.na(Predation)) %>% 
+  filter(!is.na(MeanValue)) %>% 
   filter(PopulationType=="Single") %>% 
-  filter(!(sex_TraitID %in% c(682,6,208,2,618))) #these are entries that need to be excluded (only one pred level) 
+  filter(!(sex_TraitID %in% c(6,208,2,655))) #these are entries that need to be excluded (only one pred level) 
 
 
-new.data$Treatment<-as.factor(new.data$Treatment)
+new.data$Predation<-as.factor(new.data$Predation)
+new.data$MeanValue<-as.numeric(new.data$MeanValue)
 
 #how many traits/studies?
-length(unique(new.data$TraitID)) #782 as of Aug 26th (781 without 630)
-length(unique(new.data$Study.ID)) #33
+length(unique(new.data$TraitID)) #783 as of oct 1st (782 without 630)
+length(unique(new.data$sex_TraitID))#790 for sex_TraitID
+length(unique(new.data$StudyID)) #34
 
-#NOTES for sex specific trait IDs ->2 or less levels: 682 (emailed), 208 (typo trait labelled male only sex labelled F),
+#NOTES for sex specific trait IDs ->2 or less levels: 682 (emailed, no longer a problem?), 208 (typo trait labelled male only sex labelled F),
 # 6 (previously trait 4 only one entry), 2 (typo?)
 
 #set up a new function to loop through all data and run anova on Mean trait values for each trait
-#note this assumes we have just one covariate of interest: treatment (basically habitat, e.g. high/low predation)
+#note this assumes we have just one covariate of interest: predation(treatment) (basically habitat, e.g. high/low predation)
 #if we want more covariates we'll need to rethink this a bit
 
 #START FUNC
@@ -67,7 +68,7 @@ anova_loop <- function(dat=dat){
     
     print(i)
     
-    aov.mod   <- aov(Mean~Treatment,data=dat[dat$TraitID==levels(trait)[i],])
+    aov.mod   <- aov(MeanValue~Predation,data=dat[dat$TraitID==levels(trait)[i],])
     anova.mod <- stats:::anova.lm(aov.mod)
     mod.ss    <- anova.mod$"Sum Sq"
     mod.pes   <- mod.ss/(mod.ss+mod.ss[length(mod.ss)])          # calculate pes
