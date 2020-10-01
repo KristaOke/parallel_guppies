@@ -9,7 +9,9 @@ library(tidyverse)
 library(ggplot2)
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
-new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved Aug 27
+new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")#MetaData saved Aug 27
+data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",") %>% 
+  select(StudyID:Comments)
 r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated Aug 26
 ```
 
@@ -46,26 +48,49 @@ Silverstream
 Arena: Near the arena reservoir some place? thoroughly out of the mountains
 Vance: South West (from jackie outside the northern range, also in paper 23, but not listed in supplementary material as a site??)
 
+```{r}
+data$temp<-NA
+data$pop<-data$PopulationRaw
+
+names<-c("Arima","Arena","Arouca","Aripo", "Quare", "Yarra", "Tompire", "Marianne", "Paria", "El Cedro", "Madamas",
+         "Oropuche", "Guanapo", "La Selva", "Turure", "Damier", "Tacarigua", "Mausica", "Manacal", "Ceniza", "Caroni",
+         "Valencia", "Oropuna", "Tunapuna", "Lopinot", "Guapo", "Vance", "Visigney", "Pilote", "Lizard",
+         "Silverstream", "Matura","Cunupia", "Coffee", "Maracas", "Caura", "Toco", "Manzanilla", "Mission", "Ricon",
+         "Balandra", "Brasso Seco", "Rio Grande", "Rio Barro")
+for (i in names){ data<-mutate(data, pop = (ifelse(grepl(i, PopulationRaw), i,  temp)))
+data$temp<-ifelse(data$pop==i, i, data$temp)}
+
+data$pop<-ifelse(is.na(data$pop),data$PopulationRaw, data$pop)
+
+data$pop<-gsub("ElCedro1", "El Cedro", data$pop)
+data$pop<-gsub("ElCedro2", "El Cedro", data$pop)
+data$pop<-gsub("Lower Guapo 1", "Guapo", data$pop)
+data$pop<-gsub("Lower Guapo 2", "Guapo", data$pop)
+data$pop<-gsub("Laseiva", "La Seiva", data$pop)
+data$pop<-gsub("Cenzina", "Ceniza", data$pop)
+data$pop<-gsub("Lower Trib 1", "Mayaro", data$pop)
+data$pop<-gsub("Lower Trib 2", "Mayaro", data$pop)
+data$pop<-gsub("Tompire 2", "Tompire", data$pop)
+data$pop<-gsub("guanapo", "Guanapo", data$pop)
+data$pop<-gsub("Lower La Seiva", "La Seiva", data$pop)
+
+
+summary(as.factor(data$pop))
+data$Population<-data$pop
+data<-data %>% 
+  select(StudyID:Comments)
+```
+
+
+
+
 
 ```{r typos and river lists, eval=FALSE}
 #fix typos not previously found
-new.data$Population<-gsub("ElCedro1", "El Cedro", new.data$Population)
-new.data$Population<-gsub("ElCedro2", "El Cedro", new.data$Population)
-new.data$Population<-gsub("Lower Guapo 1", "Guapo", new.data$Population)
-new.data$Population<-gsub("Lower Guapo 2", "Guapo", new.data$Population)
-new.data$Population<-gsub("Laseiva", "La Seiva", new.data$Population)
-new.data$Population<-gsub("Cenzina", "Ceniza", new.data$Population)
-new.data$PopulationRaw<-gsub("Lower Trib 1", "Mayaro Lower Tributary 1", new.data$PopulationRaw)
-new.data$PopulationRaw<-gsub("Lower Trib 2", "Mayaro Lower Tributary 2", new.data$PopulationRaw)
-new.data$Population<-gsub("Lower Trib 1", "Mayaro", new.data$Population)
-new.data$Population<-gsub("Lower Trib 2", "Mayaro", new.data$Population)
-new.data$Population<-gsub("Tompire 2", "Tompire", new.data$Population)
-
 new.data$TraitType2<-gsub("Life-history", "Life history", new.data$TraitType2)
 
 new.data$Population<-as.factor(new.data$Population)
 river.list<-new.data %>% 
-  filter(PopulationType=="Single") %>% 
   select(Population) %>% 
   unique()
 
@@ -112,7 +137,7 @@ sex.length<-rle(as.character(paste(new.data$Trait,new.data$Sex)))
 new.data$sex_TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
 
 #write_csv(new.data, path = "~/Documents/Masters/R scripts/Meta Analysis/data/MetaData.csv") #written aug 27th
-
+test<-new.data[is.na(new.data$Slope),]
 ```
 
 
