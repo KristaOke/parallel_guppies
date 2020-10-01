@@ -12,7 +12,7 @@ wd <- getwd()
 new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")#MetaData saved oct 1st
 data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",") %>% 
   select(StudyID:Comments) #this is the data from the spreadsheet, unedited populations etc. not needed
-r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated Aug 26
+r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated oct 1st (& _sexID)
 ```
 
 
@@ -48,6 +48,7 @@ Silverstream
 Arena: Near the arena reservoir some place? thoroughly out of the mountains
 Vance: South West (from jackie outside the northern range, also in paper 23, but not listed in supplementary material as a site??)
 
+
 ```{r population column}
 data$temp<-NA #temp columns
 data$pop<-data$PopulationRaw
@@ -63,6 +64,7 @@ data$temp<-ifelse(data$pop==i, i, data$temp)} #replaces variations of population
 data$pop<-ifelse(is.na(data$pop),data$PopulationRaw, data$pop) #fill NAs with the raw population data
 
 #fix typos
+
 data$pop<-gsub("ElCedro1", "El Cedro", data$pop)
 data$pop<-gsub("ElCedro2", "El Cedro", data$pop)
 data$pop<-gsub("Lower Guapo 1", "Guapo", data$pop)
@@ -84,6 +86,7 @@ data$Population<-data$pop
 data<-data %>% 
   select(StudyID:Comments)
 ```
+
 
 
 
