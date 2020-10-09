@@ -38,7 +38,7 @@ library(tidyverse)
 # wd<- getwd()
 
 # Import and tidy
-spreadsheet.data <- read.csv(paste(wd,'/Data/metaanalysis_20201001.csv',sep=""), header=TRUE, sep=",")
+spreadsheet.data <- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")
 R2.data <- read.csv(paste(wd,'/Data/TraitR2_sex.csv',sep=""), header=TRUE, sep=",")
 
 # spreadsheet.data is the data extracted for the meta-analysis
@@ -50,7 +50,7 @@ names(R2.data)[names(R2.data) == "TraitID"] <- "sex_TraitID"  # so same in both 
 str(spreadsheet.data)
 str(R2.data)
 
-spreadsheet.data$Study.ID <- as.factor(spreadsheet.data$Study.ID)
+spreadsheet.data$StudyID <- as.factor(spreadsheet.data$StudyID)
 spreadsheet.data$Collection_start <- as.factor(spreadsheet.data$Collection_start)
 spreadsheet.data$Collection_end <- as.factor(spreadsheet.data$Collection_end)
 spreadsheet.data$Published <- as.factor(spreadsheet.data$Published)
