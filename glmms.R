@@ -60,10 +60,6 @@ R2.data$sex_TraitID <- as.factor(R2.data$sex_TraitID)
 
 # This (data.for.models) is the data to use
 data.for.models <- left_join(spreadsheet.data, R2.data,  by = "sex_TraitID")
-data.for.models$Sex <- gsub("Both (mostly juveniles)",  # this is just for now 
-                            "Both", 
-                            data.for.models$Sex, 
-                            fixed = T)  # fixed in spreadsheet
 
 str(data.for.models)
 data.for.models$Sex <- as.factor(data.for.models$Sex)
@@ -219,12 +215,12 @@ corrplot(tbl4, is.cor = FALSE)
 
 data.for.models %>% 
   filter(Collection_end != "NA") %>% 
-  group_by(Study.ID, Collection_end) %>% 
+  group_by(StudyID, Collection_end) %>% 
   ggplot(aes(x = R.2)) + geom_histogram(binwidth = 0.03) 
 
 data.reg2m <- data.for.models %>% 
   filter(Collection_end !="NA") %>% 
-  group_by(Collection_end, Study.ID) %>% 
+  group_by(Collection_end, StudyID) %>% 
   summarise(meanR2 = mean(R.2))
 
 head(data.reg2m)
@@ -317,7 +313,7 @@ par(mfrow = c(1,1))
 ### QUESTION 1. IS THERE A DIFFERENCE OVERALL BETWEEN HIGH/LOW ###
 
 # I think this one works THE BEST for Q1 -- BUT only South
-mod1.south <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
+mod1.south <- glmer(R.2 ~ TraitType2 + (1|StudyID), 
                        family = binomial,
               data = data.for.models[
                 data.for.models$StudyType == "Wildcaught" 
@@ -325,27 +321,27 @@ mod1.south <- glmer(R.2 ~ TraitType2 + (1|Study.ID),
                 & data.for.models$Slope == "South",
                 ])
 summary(mod1.south)
-AIC(mod1.south)  # 494.1767
+AIC(mod1.south)  # 553.72
 
 ### QUESTION 2. IS PARALLELISM DIFFERENT BETWEEN THE SEXES? ###
 
-sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|Study.ID),
+sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|StudyID),
                   family = binomial, 
                   data =
                     data.for.models[data.for.models$StudyType == "Wildcaught"
                                     & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod6)
-AIC(sex.mod6)  # 1956
+AIC(sex.mod6)  # 2303.729
 
 #### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
 # For this question, using only "Both" sexes #
 
-slope.mod1 <- glmer(R.2 ~ Slope + (1|Study.ID),
+slope.mod1 <- glmer(R.2 ~ Slope + (1|StudyID),
                      family = binomial, 
                      data = data.for.models[data.for.models$StudyType == "Wildcaught"
                                             & data.for.models$Sex == "Both",])
 summary(slope.mod1)
-AIC(slope.mod1)  # 599.0427
+AIC(slope.mod1)  # 695.6815
 
 #### QUESTION 4. IS THERE REGRESSION TOWARDS THE MEAN ####
 ## Here, we are looking at both sexes and Collection_end ##
@@ -382,7 +378,7 @@ summary(time.mod3)
 ## Q1 
 
 # has drainages, won't converge - crap
-mod1.drain <- glmer(R.2 ~ TraitType2 + (1|Study.ID/Drainage), 
+mod1.drain <- glmer(R.2 ~ TraitType2 + (1|StudyID/Drainage), 
                     family = binomial, 
                     data = data.for.models[
                       data.for.models$StudyType == "Wildcaught" 
@@ -391,7 +387,7 @@ mod1.drain <- glmer(R.2 ~ TraitType2 + (1|Study.ID/Drainage),
 summary(mod1.drain)
 
 # Again, this one won't converge - crappy crap
-mod1.slope <- glmer(R.2 ~ TraitType2 + (1|Study.ID/Slope), 
+mod1.slope <- glmer(R.2 ~ TraitType2 + (1|StudyID/Slope), 
                     family = binomial, 
                     data = data.for.models[
                       data.for.models$StudyType == "Wildcaught" 
@@ -403,7 +399,7 @@ AIC(mod1.slope)
 
 
 # Only North - Won't run (error) 
-mod1.north <- glmer(R.2 ~ TraitType2 + (1|Study.ID), 
+mod1.north <- glmer(R.2 ~ TraitType2 + (1|StudyID), 
                     family = binomial,
                     data = data.for.models[
                       data.for.models$StudyType == "Wildcaught" 
@@ -424,7 +420,7 @@ summary(mod1b.north)
 
 ## Q2
 
-sex.mod1 <- glmer(R.2 ~ Sex*Slope + (1|Study.ID),
+sex.mod1 <- glmer(R.2 ~ Sex*Slope + (1|StudyID),
                   family = binomial, 
                   data = data.for.models[data.for.models$StudyType == "Wildcaught"
                                          & data.for.models$Sex %in% c("M", "F"),])
@@ -442,7 +438,7 @@ AIC(sex.mod3)  # 2387.036
 
 # This model probably makes the most sense out of the broad sex specific ones 
 # sex*slope also runs (w other models down below)
-sex.mod2 <- glmer(R.2 ~ Sex+Slope + (1|Study.ID),
+sex.mod2 <- glmer(R.2 ~ Sex+Slope + (1|StudyID),
                   family = binomial, 
                   data = data.for.models[data.for.models$StudyType == "Wildcaught"
                                          & data.for.models$Sex %in% c("M", "F"),])
