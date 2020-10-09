@@ -29,6 +29,7 @@ library(car)
 library(corrplot)
 library(tidyverse)
 library(fitdistrplus)
+library(tidyverse)
 
 # set working directory
 # setwd("")
@@ -248,6 +249,12 @@ ggplot(data.reg2m, aes(x = Collection_end, y = meanR2)) +
   theme_classic() +
   stat_summary(aes(group = 1), fun = mean, colour = "red", geom = "line") +
   geom_hline(yintercept = 0.3770349, colour = "blue", linetype = "dashed")
+
+data.for.models %>%
+  ggplot(aes(x = R.2, group = TraitType2, color = TraitType2)) +
+  geom_density(alpha = 0.6) + theme_classic()
+
+
 ##%######################################################%##
 #                                                          #
 ####                   DISTRIBUTION                     ####
