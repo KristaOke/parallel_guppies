@@ -18,6 +18,8 @@
 # Is sex.mod6 the best model? 
 # Deleted all models with 'Paired' as an effect
 
+# changed file names -- NEW FILES ON DRIVE
+
 # LIBRARIES ---- 
 library(dplyr)
 library(tidyr)
@@ -36,8 +38,8 @@ library(tidyverse)
 # wd<- getwd()
 
 # Import and tidy
-spreadsheet.data <- read.csv(paste(wd,'/Data/MetaData_sexID.csv',sep=""), header=TRUE, sep=",")
-R2.data <- read.csv(paste(wd,'/Data/TraitR2_sexID.csv',sep=""), header=TRUE, sep=",")
+spreadsheet.data <- read.csv(paste(wd,'/Data/metaanalysis_20201001.csv',sep=""), header=TRUE, sep=",")
+R2.data <- read.csv(paste(wd,'/Data/TraitR2_sex.csv',sep=""), header=TRUE, sep=",")
 
 # spreadsheet.data is the data extracted for the meta-analysis
 # R2.data is the output of the ANOVA loop
