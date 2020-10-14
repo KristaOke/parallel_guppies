@@ -329,13 +329,15 @@ AIC(mod1.south)  # 553.72
 # 2020-10-14 omitting females from this formula
 # (there is the weird one where they added testonerone to see change in colour)
 # (I think it is making colour significant when it has not been)
+# (^ This is studyID 30, so trying to omit)
 
 
 sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|StudyID),
                   family = binomial, 
                   data =
                     data.for.models[data.for.models$StudyType == "Wildcaught"
-                                    & data.for.models$Sex %in% c("M", "F"),])
+                                    & data.for.models$Sex %in% c("M", "F")
+                                    & !(data.for.models$StudyID == 30),])
 summary(sex.mod6)
 AIC(sex.mod6)  # 2303.729
 
