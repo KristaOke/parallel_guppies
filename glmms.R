@@ -120,6 +120,7 @@ data.for.models %>%
     ggplot(aes(x = TraitType2, y = R.2)) +
     theme_bw() + 
     geom_violin(aes(fill = TraitType2)) + 
+    geom_jitter(width = 0.1, alpha = 0.6) +
     labs(x = "Trait type", y = "R2", title = "Both sexes, Wildcaught"))
 
 # CG
@@ -324,6 +325,11 @@ summary(mod1.south)
 AIC(mod1.south)  # 553.72
 
 ### QUESTION 2. IS PARALLELISM DIFFERENT BETWEEN THE SEXES? ###
+
+# 2020-10-14 omitting females from this formula
+# (there is the weird one where they added testonerone to see change in colour)
+# (I think it is making colour significant when it has not been)
+
 
 sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|StudyID),
                   family = binomial, 
