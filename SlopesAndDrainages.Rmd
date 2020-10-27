@@ -9,9 +9,8 @@ library(tidyverse)
 library(ggplot2)
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
-new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")#MetaData saved oct 1st
-data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",") %>% 
-  select(StudyID:Comments) #this is the data from the spreadsheet, unedited populations etc. not needed
+data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")%>% #MetaData saved oct 27th
+  select(StudyID:Comments) 
 r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated oct 1st (& _sexID)
 ```
 
@@ -120,7 +119,9 @@ Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande"
 
 
 ```{r Slope, Drainage, and TraitID columns, eval=FALSE}
-#new.data<-data
+
+#new.data<-data #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! don't forget this you dummy
+
 new.data$Slope<-  case_when(
   new.data$Population %in% South ~ "South",
   new.data$Population %in% North ~ "North",
@@ -137,16 +138,26 @@ new.data$Drainage<- case_when(
 )  #Labels all single populations as a specific drainage
 
 #coding the trait column, one ID for each trait measured in each study (regardless of sex)
+#new.data<-new.data %>% 
+  #arrange(StudyID, Trait)
+#lengths<-rle(as.character(new.data$Trait))
+#new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
 new.data<-new.data %>% 
-  arrange(StudyID, Trait)
-lengths<-rle(as.character(new.data$Trait))
-new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
+  arrange(StudyID, StudyType, Trait, Sex, Predation)
 
-#coding the trait column, one ID for each trait measured in each sex group in each study
-sex.length<-rle(as.character(paste(new.data$Trait,new.data$Sex)))  
-new.data$sex_TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
+#coding the trait column, one ID for each trait measured in each sex group in each study, THIS WAY IS BETTER
+sex.length<-rle(as.character(paste(new.data$Trait,new.data$Sex,new.data$StudyType)))  
+new.data$TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
 
-#write_csv(new.data, path = "~/Documents/Masters/R scripts/Meta Analysis/data/MetaData.csv") #written oct 1
+x<-as.data.frame(sex.length[["lengths"]])
+y<-x %>% 
+  subset(`sex.length[["lengths"]]`<3) #traits 3,6,59,84 have only 2 or 1 entry typos 28/29, 542 (not fixed yet)
+
+new.data %>% 
+  group_by(TraitID) %>% 
+  filter(all(c("Common Garden (F1)", "Wildcaught") %in% StudyType )) #I think this checks out!!
+
+#write_csv(new.data, path = "~/Documents/Masters/R scripts/Meta Analysis/data/MetaData.csv") #written oct 27
 test<-new.data[is.na(new.data$Slope),]
 ```
 
