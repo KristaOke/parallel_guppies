@@ -39,13 +39,14 @@ library(tidyverse)
 
 # Import and tidy
 spreadsheet.data <- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")
-R2.data <- read.csv(paste(wd,'/Data/TraitR2_sex.csv',sep=""), header=TRUE, sep=",")
+R2.data <- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",")
 
 # spreadsheet.data is the data extracted for the meta-analysis
 # R2.data is the output of the ANOVA loop
 
-names(R2.data)[names(R2.data) == "TraitID"] <- "sex_TraitID"  # so same in both spreadsheets
-
+# AH 2020-10-27 deleted because no longer diff between spreadsheets
+# names(R2.data)[names(R2.data) == "TraitID"] <- "sex_TraitID"  # so same in both spreadsheets
+# all other sex_TraitIDs below changed as well
 
 str(spreadsheet.data)
 str(R2.data)
@@ -54,16 +55,17 @@ spreadsheet.data$StudyID <- as.factor(spreadsheet.data$StudyID)
 spreadsheet.data$Collection_start <- as.factor(spreadsheet.data$Collection_start)
 spreadsheet.data$Collection_end <- as.factor(spreadsheet.data$Collection_end)
 spreadsheet.data$Published <- as.factor(spreadsheet.data$Published)
-spreadsheet.data$sex_TraitID <- as.factor(spreadsheet.data$sex_TraitID)
+spreadsheet.data$TraitID <- as.factor(spreadsheet.data$TraitID)
 
-R2.data$sex_TraitID <- as.factor(R2.data$sex_TraitID)
+R2.data$TraitID <- as.factor(R2.data$TraitID)
 
 # This (data.for.models) is the data to use
-data.for.models <- left_join(spreadsheet.data, R2.data,  by = "sex_TraitID")
+data.for.models <- left_join(spreadsheet.data, R2.data,  by = "TraitID")
 
-str(data.for.models)
 data.for.models$Sex <- as.factor(data.for.models$Sex)
-data.for.models$sex_TraitID <- as.factor(data.for.models$sex_TraitID)
+data.for.models$TraitID <- as.factor(data.for.models$TraitID)
+data.for.models$Slope <- as.factor(data.for.models$Slope)
+data.for.models$Drainage <- as.factor(data.for.models$Drainage)
 
 str(data.for.models)
 
@@ -120,7 +122,7 @@ data.for.models %>%
     ggplot(aes(x = TraitType2, y = R.2)) +
     theme_bw() + 
     geom_violin(aes(fill = TraitType2)) + 
-    geom_jitter(width = 0.1, alpha = 0.6) +
+    geom_jitter(alpha = 0.3) +
     labs(x = "Trait type", y = "R2", title = "Both sexes, Wildcaught"))
 
 # CG
@@ -232,7 +234,7 @@ head(data.reg2m)
 R2 <- data.reg2m$meanR2
 names(R2) <- paste(data.reg2m$Collection_end)
 print(R2)
-mean(R2)  
+mean(R2, na.rm = TRUE)  
 
 with(data.reg2m, plot(x = Collection_end, y = R2))
 
@@ -247,7 +249,7 @@ ggplot(data.reg2m, aes(x = Collection_end, y = meanR2)) +
   geom_point() +
   theme_classic() +
   stat_summary(aes(group = 1), fun = mean, colour = "red", geom = "line") +
-  geom_hline(yintercept = 0.3770349, colour = "blue", linetype = "dashed")
+  geom_hline(yintercept = 0.2381442, colour = "blue", linetype = "dashed")
 
 data.for.models %>%
   ggplot(aes(x = R.2, group = TraitType2, color = TraitType2)) +
@@ -336,10 +338,9 @@ sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|StudyID),
                   family = binomial, 
                   data =
                     data.for.models[data.for.models$StudyType == "Wildcaught"
-                                    & data.for.models$Sex %in% c("M", "F")
-                                    & !(data.for.models$StudyID == 30),])
+                                    & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod6)
-AIC(sex.mod6)  # 2303.729
+AIC(sex.mod6)  
 
 #### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
 # For this question, using only "Both" sexes #
