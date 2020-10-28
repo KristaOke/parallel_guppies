@@ -111,11 +111,6 @@ data.for.models %>% filter(StudyType == "Wildcaught" & Sex == "Both" & Slope != 
     filter(StudyType == "Wildcaught" & Slope %in% c("North", "South") & Sex %in% c("M", "F", "Both")) %>% 
     group_by(Collection_end, StudyID) %>% tally())
 
-(slope.only.tally <-
-data.for.models %>% 
-  filter(Slope %in% c("North", "South") & Sex == "Both") %>% 
-  group_by(Slope, Sex, TraitType2) %>% tally())
-
 ## MOD 1 Traits/both sexes
 
 # WC 
@@ -251,11 +246,16 @@ ggplot(data.reg2m, aes(x = Collection_end, y = meanR2)) +
   geom_point() +
   theme_classic() +
   stat_summary(aes(group = 1), fun = mean, colour = "red", geom = "line") +
-  geom_hline(yintercept = 0.2381442, colour = "blue", linetype = "dashed")
+  geom_hline(yintercept = 0.3467688, colour = "blue", linetype = "dashed")
 
 data.for.models %>%
   ggplot(aes(x = R.2, group = TraitType2, color = TraitType2)) +
-  geom_density(alpha = 0.6) + theme_classic()
+  geom_density(alpha = 0.6) + theme_classic() +
+  theme(axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 16),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 14))
 
 
 ##%######################################################%##
