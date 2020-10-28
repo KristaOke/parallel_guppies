@@ -75,6 +75,7 @@ data.for.models$TraitType2[data.for.models$TraitType2 == "Diet"] <- "Other"
 data.for.models$TraitType2[data.for.models$TraitType2 == "Physiology"] <- "Other"
 data.for.models$TraitType2[data.for.models$TraitType2 == "Life history"] <- "Other"
 
+hist(data.for.models$R.2)
 
 ##%######################################################%##
 #                                                          #
@@ -108,7 +109,7 @@ data.for.models %>% filter(StudyType == "Wildcaught" & Sex == "Both" & Slope != 
 (yeartally <-
     data.for.models %>% 
     filter(StudyType == "Wildcaught" & Slope %in% c("North", "South") & Sex %in% c("M", "F", "Both")) %>% 
-    group_by(Collection_end, Study.ID) %>% tally())
+    group_by(Collection_end, StudyID) %>% tally())
 
 (slope.only.tally <-
 data.for.models %>% 
