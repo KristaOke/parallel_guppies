@@ -463,21 +463,19 @@ AIC(sex.mod2)  # 1994.825
 # Life history = only females
 
 # This one??
-sex.mod4 <- glmer(R.2 ~ Sex*TraitType2 + (1|Study.ID),
+sex.mod4 <- glmer(R.2 ~ Sex*TraitType2 + (1|StudyID),
                   family = binomial, 
                   data =
                     data.for.models[data.for.models$StudyType == "Wildcaught"
-                                    & data.for.models$Sex %in% c("M", "F")
-                                    & data.for.models$TraitType2 %in% c("Diet", "Morphometric", "Other", "Physiology", "Behaviour"),])
+                                    & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod4)
 AIC(sex.mod4)
 
-sex.mod5 <- glmer(R.2 ~ Sex + TraitType2 + (1|Study.ID),
+sex.mod5 <- glmer(R.2 ~ Sex + TraitType2 + (1|StudyID),
                   family = binomial, 
                   data =
                     data.for.models[data.for.models$StudyType == "Wildcaught"
-                                    & data.for.models$Sex %in% c("M", "F")
-                                    & data.for.models$TraitType2 %in% c("Diet", "Morphometric", "Other", "Physiology", "Behaviour"),])
+                                    & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod5)
 AIC(sex.mod5)
 
