@@ -124,7 +124,7 @@ data.for.models %>%
     ggplot(aes(x = TraitType2, y = R.2)) +
     theme_bw() + 
     geom_violin(aes(fill = TraitType2)) + 
-    geom_jitter(alpha = 0.3) +
+    geom_jitter(width = 0.2, alpha = 0.3) +
     labs(x = "Trait type", y = "R2", title = "Both sexes, Wildcaught"))
 
 # CG
