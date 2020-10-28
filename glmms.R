@@ -44,14 +44,10 @@ R2.data <- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",")
 # spreadsheet.data is the data extracted for the meta-analysis
 # R2.data is the output of the ANOVA loop
 
-<<<<<<< HEAD
-#names(R2.data)[names(R2.data) == "TraitID"] <- "sex_TraitID"  # so same in both spreadsheets, not needed anymore
 
-=======
 # AH 2020-10-27 deleted because no longer diff between spreadsheets
 # names(R2.data)[names(R2.data) == "TraitID"] <- "sex_TraitID"  # so same in both spreadsheets
 # all other sex_TraitIDs below changed as well
->>>>>>> 3f00195551b03b99373c39415f7f2de47dc45a16
 
 str(spreadsheet.data)
 str(R2.data)
@@ -66,10 +62,7 @@ R2.data$TraitID <- as.factor(R2.data$TraitID)
 
 # This (data.for.models) is the data to use
 data.for.models <- left_join(spreadsheet.data, R2.data,  by = "TraitID")
-<<<<<<< HEAD
-=======
-data.for.models2 <- merge(spreadsheet.data, R2.data, by = "TraitID")
->>>>>>> 3f00195551b03b99373c39415f7f2de47dc45a16
+
 
 data.for.models$Sex <- as.factor(data.for.models$Sex)
 data.for.models$TraitID <- as.factor(data.for.models$TraitID)
@@ -350,11 +343,8 @@ sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|StudyID),
                     data.for.models[data.for.models$StudyType == "Wildcaught"
                                     & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod6)
-<<<<<<< HEAD
-AIC(sex.mod6)  # 2303.729, Oct 28th 2162.2
-=======
-AIC(sex.mod6)  
->>>>>>> 3f00195551b03b99373c39415f7f2de47dc45a16
+AIC(sex.mod6)  #2162.201 Oct 28th (AP)
+
 
 #### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
 # For this question, using only "Both" sexes #
