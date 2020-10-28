@@ -61,6 +61,7 @@ R2.data$TraitID <- as.factor(R2.data$TraitID)
 
 # This (data.for.models) is the data to use
 data.for.models <- left_join(spreadsheet.data, R2.data,  by = "TraitID")
+data.for.models2 <- merge(spreadsheet.data, R2.data, by = "TraitID")
 
 data.for.models$Sex <- as.factor(data.for.models$Sex)
 data.for.models$TraitID <- as.factor(data.for.models$TraitID)
