@@ -39,12 +39,12 @@ library(tidyverse)
 
 # Import and tidy
 spreadsheet.data <- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")
-R2.data <- read.csv(paste(wd,'/Data/TraitR2_sex.csv',sep=""), header=TRUE, sep=",")
+R2.data <- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",")
 
 # spreadsheet.data is the data extracted for the meta-analysis
 # R2.data is the output of the ANOVA loop
 
-names(R2.data)[names(R2.data) == "TraitID"] <- "sex_TraitID"  # so same in both spreadsheets
+#names(R2.data)[names(R2.data) == "TraitID"] <- "sex_TraitID"  # so same in both spreadsheets, not needed anymore
 
 
 str(spreadsheet.data)
@@ -54,12 +54,12 @@ spreadsheet.data$StudyID <- as.factor(spreadsheet.data$StudyID)
 spreadsheet.data$Collection_start <- as.factor(spreadsheet.data$Collection_start)
 spreadsheet.data$Collection_end <- as.factor(spreadsheet.data$Collection_end)
 spreadsheet.data$Published <- as.factor(spreadsheet.data$Published)
-spreadsheet.data$sex_TraitID <- as.factor(spreadsheet.data$sex_TraitID)
+spreadsheet.data$TraitID <- as.factor(spreadsheet.data$TraitID)
 
-R2.data$sex_TraitID <- as.factor(R2.data$sex_TraitID)
+R2.data$TraitID <- as.factor(R2.data$TraitID)
 
 # This (data.for.models) is the data to use
-data.for.models <- left_join(spreadsheet.data, R2.data,  by = "sex_TraitID")
+data.for.models <- left_join(spreadsheet.data, R2.data,  by = "TraitID")
 
 str(data.for.models)
 data.for.models$Sex <- as.factor(data.for.models$Sex)
@@ -339,7 +339,7 @@ sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|StudyID),
                                     & data.for.models$Sex %in% c("M", "F")
                                     & !(data.for.models$StudyID == 30),])
 summary(sex.mod6)
-AIC(sex.mod6)  # 2303.729
+AIC(sex.mod6)  # 2303.729, Oct 28th 2162.2
 
 #### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
 # For this question, using only "Both" sexes #

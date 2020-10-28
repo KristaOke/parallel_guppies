@@ -1,4 +1,5 @@
 library(stats)
+library(tidyverse)
 
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
@@ -33,19 +34,18 @@ new.data<-new.data  %>%
   filter(!is.na(Predation)) %>% 
   filter(!is.na(MeanValue)) %>% 
   filter(PopulationType=="Single") %>% 
-  filter(!(sex_TraitID %in% c(6,208,2,655))) #these are entries that need to be excluded (only one pred level) 
+  filter(!(TraitID %in% c(3,6,28,29,59,84,467,542))) #these are entries that need to be excluded (only one pred level) 
 
 
 new.data$Predation<-as.factor(new.data$Predation)
 new.data$MeanValue<-as.numeric(new.data$MeanValue)
 
 #how many traits/studies?
-length(unique(new.data$TraitID)) #783 as of oct 1st (782 without 630)
-length(unique(new.data$sex_TraitID))#790 for sex_TraitID
+length(unique(new.data$TraitID))#585 for TraitID (without typos traits) oct 27th
 length(unique(new.data$StudyID)) #34
 
 #NOTES for sex specific trait IDs ->2 or less levels: 682 (emailed, no longer a problem?), 208 (typo trait labelled male only sex labelled F),
-# 6 (previously trait 4 only one entry), 2 (typo?)
+# 6 (previously trait 4 only one entry), 2
 
 #set up a new function to loop through all data and run anova on Mean trait values for each trait
 #note this assumes we have just one covariate of interest: predation(treatment) (basically habitat, e.g. high/low predation)
@@ -103,7 +103,9 @@ hist(as.numeric(as.character(output.all$F)))
 hist(as.numeric(as.character(output.all$justr)))
 
 
-#write results to a csv file for further analyses
-#write.table(output.all, file = "TraitR2.csv",row.names=FALSE,col.names=TRUE, sep=",")
+#write results to a csv file for further analyses DONT FORGET TO MOVE AND OVERWRITE saves inside repo not data folder
+#write.table(output.all, file = "TraitR2.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+
+
 
 
