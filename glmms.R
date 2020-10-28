@@ -44,8 +44,14 @@ R2.data <- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",")
 # spreadsheet.data is the data extracted for the meta-analysis
 # R2.data is the output of the ANOVA loop
 
+<<<<<<< HEAD
 #names(R2.data)[names(R2.data) == "TraitID"] <- "sex_TraitID"  # so same in both spreadsheets, not needed anymore
 
+=======
+# AH 2020-10-27 deleted because no longer diff between spreadsheets
+# names(R2.data)[names(R2.data) == "TraitID"] <- "sex_TraitID"  # so same in both spreadsheets
+# all other sex_TraitIDs below changed as well
+>>>>>>> 3f00195551b03b99373c39415f7f2de47dc45a16
 
 str(spreadsheet.data)
 str(R2.data)
@@ -60,10 +66,15 @@ R2.data$TraitID <- as.factor(R2.data$TraitID)
 
 # This (data.for.models) is the data to use
 data.for.models <- left_join(spreadsheet.data, R2.data,  by = "TraitID")
+<<<<<<< HEAD
+=======
+data.for.models2 <- merge(spreadsheet.data, R2.data, by = "TraitID")
+>>>>>>> 3f00195551b03b99373c39415f7f2de47dc45a16
 
-str(data.for.models)
 data.for.models$Sex <- as.factor(data.for.models$Sex)
-data.for.models$sex_TraitID <- as.factor(data.for.models$sex_TraitID)
+data.for.models$TraitID <- as.factor(data.for.models$TraitID)
+data.for.models$Slope <- as.factor(data.for.models$Slope)
+data.for.models$Drainage <- as.factor(data.for.models$Drainage)
 
 str(data.for.models)
 
@@ -72,6 +83,7 @@ data.for.models$TraitType2[data.for.models$TraitType2 == "Diet"] <- "Other"
 data.for.models$TraitType2[data.for.models$TraitType2 == "Physiology"] <- "Other"
 data.for.models$TraitType2[data.for.models$TraitType2 == "Life history"] <- "Other"
 
+hist(data.for.models$R.2)
 
 ##%######################################################%##
 #                                                          #
@@ -105,12 +117,7 @@ data.for.models %>% filter(StudyType == "Wildcaught" & Sex == "Both" & Slope != 
 (yeartally <-
     data.for.models %>% 
     filter(StudyType == "Wildcaught" & Slope %in% c("North", "South") & Sex %in% c("M", "F", "Both")) %>% 
-    group_by(Collection_end, Study.ID) %>% tally())
-
-(slope.only.tally <-
-data.for.models %>% 
-  filter(Slope %in% c("North", "South") & Sex == "Both") %>% 
-  group_by(Slope, Sex, TraitType2) %>% tally())
+    group_by(Collection_end, StudyID) %>% tally())
 
 ## MOD 1 Traits/both sexes
 
@@ -120,7 +127,7 @@ data.for.models %>%
     ggplot(aes(x = TraitType2, y = R.2)) +
     theme_bw() + 
     geom_violin(aes(fill = TraitType2)) + 
-    geom_jitter(width = 0.1, alpha = 0.6) +
+    geom_jitter(width = 0.2, alpha = 0.3) +
     labs(x = "Trait type", y = "R2", title = "Both sexes, Wildcaught"))
 
 # CG
@@ -232,7 +239,7 @@ head(data.reg2m)
 R2 <- data.reg2m$meanR2
 names(R2) <- paste(data.reg2m$Collection_end)
 print(R2)
-mean(R2)  
+mean(R2, na.rm = TRUE)  
 
 with(data.reg2m, plot(x = Collection_end, y = R2))
 
@@ -247,11 +254,16 @@ ggplot(data.reg2m, aes(x = Collection_end, y = meanR2)) +
   geom_point() +
   theme_classic() +
   stat_summary(aes(group = 1), fun = mean, colour = "red", geom = "line") +
-  geom_hline(yintercept = 0.3770349, colour = "blue", linetype = "dashed")
+  geom_hline(yintercept = 0.3467688, colour = "blue", linetype = "dashed")
 
 data.for.models %>%
   ggplot(aes(x = R.2, group = TraitType2, color = TraitType2)) +
-  geom_density(alpha = 0.6) + theme_classic()
+  geom_density(alpha = 0.6) + theme_classic() +
+  theme(axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 16),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 14))
 
 
 ##%######################################################%##
@@ -336,10 +348,13 @@ sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|StudyID),
                   family = binomial, 
                   data =
                     data.for.models[data.for.models$StudyType == "Wildcaught"
-                                    & data.for.models$Sex %in% c("M", "F")
-                                    & !(data.for.models$StudyID == 30),])
+                                    & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod6)
+<<<<<<< HEAD
 AIC(sex.mod6)  # 2303.729, Oct 28th 2162.2
+=======
+AIC(sex.mod6)  
+>>>>>>> 3f00195551b03b99373c39415f7f2de47dc45a16
 
 #### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
 # For this question, using only "Both" sexes #
@@ -460,21 +475,19 @@ AIC(sex.mod2)  # 1994.825
 # Life history = only females
 
 # This one??
-sex.mod4 <- glmer(R.2 ~ Sex*TraitType2 + (1|Study.ID),
+sex.mod4 <- glmer(R.2 ~ Sex*TraitType2 + (1|StudyID),
                   family = binomial, 
                   data =
                     data.for.models[data.for.models$StudyType == "Wildcaught"
-                                    & data.for.models$Sex %in% c("M", "F")
-                                    & data.for.models$TraitType2 %in% c("Diet", "Morphometric", "Other", "Physiology", "Behaviour"),])
+                                    & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod4)
 AIC(sex.mod4)
 
-sex.mod5 <- glmer(R.2 ~ Sex + TraitType2 + (1|Study.ID),
+sex.mod5 <- glmer(R.2 ~ Sex + TraitType2 + (1|StudyID),
                   family = binomial, 
                   data =
                     data.for.models[data.for.models$StudyType == "Wildcaught"
-                                    & data.for.models$Sex %in% c("M", "F")
-                                    & data.for.models$TraitType2 %in% c("Diet", "Morphometric", "Other", "Physiology", "Behaviour"),])
+                                    & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod5)
 AIC(sex.mod5)
 
