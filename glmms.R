@@ -85,7 +85,8 @@ hist(data.for.models$R.2)
 ##%######################################################%##
 
 
-plot(table(data.for.models$R.2), ylab = "Frequency", xlab = "R.2")
+plot(table(data.for.models$R.2), ylab = "Frequency", xlab = "R.2",
+     main = "Frequency of R2 values", cex.lab = 1.5, cex.main = 1.5)
 
 data.for.models %>% filter(StudyType == "Wildcaught" & Sex == "Both" & Drainage != "NA") %>% 
   ggplot(aes(x = TraitType2, y = R.2)) +
