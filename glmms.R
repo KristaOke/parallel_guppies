@@ -549,3 +549,21 @@ time.mod1 <- glm(R.2 ~ Collection_end,
                                         & data.for.models$StudyType == "Wildcaught",])
 summary(time.mod1)
 
+##%######################################################%##
+#                                                          #
+####                   ALEXIS' FIGS                     ####
+#                                                          #
+##%######################################################%##
+
+# these are for my term paper
+
+# 1 ecology (slope)
+data.for.models %>% filter(StudyType == "Wildcaught" & Sex %in% c("M", "F") & Slope %in% c("North", "South")) %>% 
+  ggplot(aes(x = TraitType2, y = R.2)) +
+  geom_boxplot() +
+  facet_wrap(~Slope)
+
+# 2 evolutionary history
+# 3 time [NA]
+# 4 trait types
+# 5 sex
