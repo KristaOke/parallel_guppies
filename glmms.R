@@ -584,3 +584,16 @@ data.for.models %>%
         legend.title = element_text(size = 14))
 
 # 5 sex
+data.for.models %>% filter(StudyType == "Wildcaught" & Sex %in% c("M", "F")) %>% 
+  ggplot(aes(x = TraitType2, y = R.2, color = TraitType2)) +
+  geom_boxplot() +
+  theme_classic() +
+  theme(legend.position = "none") +
+  theme(axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14)) +
+  facet_wrap(~Sex, ncol = 1)
+
+# 6. wc v cg
+
+data.for.models %>% filter(Sex %in% c("M", "F")) %>% 
+  ggplot(aes(x = StudyType, y = R.2)) + geom_boxplot() +
