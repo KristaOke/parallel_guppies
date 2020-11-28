@@ -564,6 +564,19 @@ data.for.models %>% filter(StudyType == "Wildcaught" & Sex %in% c("M", "F") & Sl
   facet_wrap(~Slope)
 
 # 2 evolutionary history
+data.for.models %>% filter(StudyType == "Wildcaught" & Sex %in% c("M", "F") & Drainage %in% c("Caroni", "Oropuche")) %>% 
+  ggplot(aes(x = TraitType2, y = R.2)) +
+  geom_boxplot() +
+  facet_wrap(~Drainage)
+
 # 3 time [NA]
 # 4 trait types
+data.for.models %>%
+  ggplot(aes(R.2, color = TraitType2)) +
+  geom_freqpoly() + theme_classic() + 
+  theme(axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        legend.text  = element_text(size = 12),
+        legend.title = element_text(size = 14))
+
 # 5 sex
