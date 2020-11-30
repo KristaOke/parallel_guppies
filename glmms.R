@@ -328,7 +328,7 @@ mod1.south <- glmer(R.2 ~ TraitType2 + (1|StudyID),
                 & data.for.models$Slope == "South",
                 ])
 summary(mod1.south)
-AIC(mod1.south)  # 553.72
+AIC(mod1.south)  # 441.87
 
 ### QUESTION 2. IS PARALLELISM DIFFERENT BETWEEN THE SEXES? ###
 
