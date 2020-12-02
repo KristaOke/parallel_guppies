@@ -346,6 +346,15 @@ sex.mod6 <- glmer(R.2 ~ Sex + TraitType2 + Slope + (1|StudyID),
 summary(sex.mod6)
 AIC(sex.mod6)  #2162.201 Oct 28th (AP)
 
+## with slope type column (this indicates if purely south or purely north or mixed)
+
+sex.mod7 <- glmer(R.2 ~ Sex + TraitType2 + Slope.type + (1|StudyID),
+                  family = binomial, 
+                  data =
+                    data.for.models[data.for.models$StudyType == "Wildcaught"
+                                    & data.for.models$Sex %in% c("M", "F"),])
+summary(sex.mod7)
+AIC(sex.mod7)  #2152.358 Dec 2nd (AP)
 
 #### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
 # For this question, using only "Both" sexes #

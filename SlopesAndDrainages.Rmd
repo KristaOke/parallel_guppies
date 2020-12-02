@@ -156,7 +156,6 @@ new.data %>%
   group_by(TraitID) %>% 
   filter(all(c("Common Garden (F1)", "Wildcaught") %in% StudyType )) #I think this checks out!!
 
-#write_csv(new.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written oct 28
 test<-new.data[is.na(new.data$Slope),]
 ```
 
@@ -174,6 +173,8 @@ summary(as.factor(slope.data$Slope.type))
 x<-slope.data[!duplicated(slope.data$TraitID),]
 summary(as.factor(x$unique_slopes))
 summary(as.factor(x$Slope.type))
+
+#write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written dec 2nd
 ```
 
 gonna create a loop to determine the ratio of north to south within weach trait
