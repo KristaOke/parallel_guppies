@@ -163,7 +163,6 @@ test<-new.data[is.na(new.data$Slope),]
 
 testing a slope column that indicates if within a trait populations are all from the southern slope (south), are all from northern slope (north), or are from both (mixed). Also need to know how many of each we have
 ```{r overall slope column}
-<<<<<<< HEAD
 slope.data<-new.data %>% 
   group_by(TraitID) %>% 
   mutate(unique_slopes = n_distinct(Slope))
@@ -175,9 +174,6 @@ summary(as.factor(slope.data$Slope.type))
 x<-slope.data[!duplicated(slope.data$TraitID),]
 summary(as.factor(x$unique_slopes))
 summary(as.factor(x$Slope.type))
-=======
-new.data
->>>>>>> 926e31161ed99e8697ee7f1abc565e2b14c7ca47
 ```
 
 
