@@ -176,6 +176,16 @@ summary(as.factor(x$unique_slopes))
 summary(as.factor(x$Slope.type))
 ```
 
+gonna create a loop to determine the ratio of north to south within weach trait
+```{r ratio of north and south}
+slope.ratio<-slope.data %>% 
+  group_by(TraitID) %>% 
+  summarise(South = sum(Slope=="South"), North = sum(Slope=="North"), ratio = North/South)
+slope.ratio<-slope.ratio %>% 
+  subset(ratio > 0 & ratio < 1)
+hist(slope.ratio$ratio)
+```
+
 
 
 ### visualising year data and spread for collection years
