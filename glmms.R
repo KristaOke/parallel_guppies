@@ -32,6 +32,7 @@ library(corrplot)
 library(tidyverse)
 library(fitdistrplus)
 library(tidyverse)
+library(sjPlot)
 
 # set working directory
 # setwd("")
@@ -355,6 +356,8 @@ sex.mod7 <- glmer(R.2 ~ Sex + TraitType2 + Slope.type + (1|StudyID),
                                     & data.for.models$Sex %in% c("M", "F"),])
 summary(sex.mod7)
 AIC(sex.mod7)  #2152.358 Dec 2nd (AP)
+tab_model(sex.mod7)
+
 
 #### QUESTION 3 - IS THERE A DIFFERENCE BETWEEN THE SLOPES? ####
 # For this question, using only "Both" sexes #
