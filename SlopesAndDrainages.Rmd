@@ -89,8 +89,6 @@ data<-data %>%
 
 
 
-
-
 ```{r typos and river lists, eval=FALSE}
 #fix typos not previously found
 data$TraitType2<-gsub("Life-history", "Life history", data$TraitType2)
@@ -162,6 +160,21 @@ new.data %>%
 test<-new.data[is.na(new.data$Slope),]
 ```
 
+
+testing a slope column that indicates if within a trait populations are all from the southern slope (south), are all from northern slope (north), or are from both (mixed). Also need to know how many of each we have
+```{r overall slope column}
+slope.data<-new.data %>% 
+  group_by(TraitID) %>% 
+  mutate(unique_slopes = n_distinct(Slope))
+slope.data$Slope.type<-ifelse(slope.data$unique_slopes==1, slope.data$Slope, "Mixed")
+
+summary(as.factor(slope.data$unique_slopes))
+summary(as.factor(slope.data$Slope.type))
+
+x<-slope.data[!duplicated(slope.data$TraitID),]
+summary(as.factor(x$unique_slopes))
+summary(as.factor(x$Slope.type))
+```
 
 
 
