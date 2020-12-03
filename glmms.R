@@ -589,23 +589,44 @@ data.for.models %>% filter(StudyType == "Wildcaught" & Sex %in% c("M", "F") & Dr
 
 # 3 time [NA]
 # 4 trait types
+
+data.for.models %>% filter(Sex %in% c("M", "F") & Slope %in% c("North", "South")) %>% 
+  ggplot(aes(x = R.2, y = TraitType2, color = TraitType2)) +
+  geom_boxplot(size = 1.25) + 
+  geom_jitter(width = 0.1, alpha = 0.2) +
+  xlab("R2") + ylab("Trait type \n") +
+  xlim(0,1) +
+  theme(legend.position = "none") +
+  theme_classic() +
+  facet_wrap(~Sex)
+
+data.for.models %>% filter(Sex %in% c("M", "F") & Slope %in% c("North", "South")) %>% 
+  ggplot(aes(x = R.2, y = TraitType2, color = TraitType2)) +
+  geom_boxplot(size = 1.25) + 
+  geom_jitter(width = 0.1, alpha = 0.2) +
+  xlab("R2") + ylab("Trait type \n") +
+  xlim(0,1) +
+  theme(legend.position = "none") +
+  theme_classic() +
+  facet_wrap(~Slope)
+
 data.for.models %>%
   ggplot(aes(R.2, color = TraitType2)) +
   geom_freqpoly() + theme_classic() + 
   theme(axis.title.x = element_text(size = 14),
         axis.title.y = element_text(size = 14),
         legend.text  = element_text(size = 12),
-        legend.title = element_text(size = 14))
+        legend.title = element_text(size = 14)) 
 
 # 5 sex
 data.for.models %>% filter(StudyType == "Wildcaught" & Sex %in% c("M", "F")) %>% 
-  ggplot(aes(x = TraitType2, y = R.2, color = TraitType2)) +
-  geom_boxplot() +
+  ggplot(aes(x = Sex, y = R.2, color = Sex)) +
+  geom_boxplot(size = 1.25) +
+  geom_jitter(width = 0.1, alpha = 0.2) +
   theme_classic() +
   theme(legend.position = "none") +
   theme(axis.title.x = element_text(size = 14),
-        axis.title.y = element_text(size = 14)) +
-  facet_wrap(~Sex, ncol = 1)
+        axis.title.y = element_text(size = 14))
 
 # 6. wc v cg
 
