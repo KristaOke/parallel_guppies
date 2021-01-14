@@ -265,7 +265,22 @@ ggplot( aes(x = TraitType1, y = R.2, fill = Sex)) + geom_violin()
 ```
 
 
+### Mapping miscellaneous ###
 
+```{r mapping prep}
+location.data<-new.data[!is.na(new.data$Location),]
+coordinates<-location.data[!duplicated(location.data$Location),] %>% 
+  select(1:3,13:22,32)
+
+#write_csv(coordinates, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.csv")
+Coordinates <- read_excel("~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.xlsx")
+Coordinates<-Coordinates %>% 
+  select(11:13) %>% 
+  rename(Location = 3)
+Coordinates<-separate(Coordinates, Location, into = c("Easting", "Northing"), sep = 6, remove = FALSE)
+Coordinates$ID<-1:94
+#write_csv(Coordinates, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.csv")
+```
 
 
 
