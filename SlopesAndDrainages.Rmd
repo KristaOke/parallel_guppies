@@ -188,6 +188,28 @@ hist(slope.ratio$ratio)
 ```
 
 
+```{r numbers for questions}
+test<-new.data %>% 
+  filter(!is.na(MeanValue)) %>% 
+  filter(!is.na(Number)) %>% 
+  filter(!is.na(SD) | !is.na(SE))
+
+new.data[!duplicated(new.data$TraitID),] %>% 
+  group_by(Slope.type) %>%
+  summarize(count = n())
+
+test<-new.data %>% 
+  filter(Slope.type == "South") %>% 
+  group_by(TraitID) %>% 
+  mutate(unique_drainages = n_distinct(Drainage))
+
+test$Drainage.type<-ifelse(test$unique_drainages==1, test$Drainage, "Mixed")
+
+test[!duplicated(test$TraitID),] %>% 
+  group_by(Drainage.type) %>%
+  summarize(count = n())
+```
+
 
 ### visualising year data and spread for collection years
 ```{r years, eval=FALSE}
@@ -281,6 +303,7 @@ Coordinates<-separate(Coordinates, Location, into = c("Easting", "Northing"), se
 Coordinates$ID<-1:94
 #write_csv(Coordinates, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.csv")
 ```
+
 
 
 
