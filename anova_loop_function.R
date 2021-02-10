@@ -16,7 +16,7 @@ a<-new.data
 a$High<- ifelse(new.data$Predation== "High", print(new.data$TraitID), NA )
 a$Low<- ifelse(new.data$Predation== "Low", print(new.data$TraitID), NA )
 
-a$High[!(a$High %in% a$Low)] #28 (will rerun soon)
+a$High[!(a$High %in% a$Low)] #none feb 10th
 a$Low[!(a$Low %in% a$High)] #none
 
 test<-new.data %>% 
@@ -29,18 +29,16 @@ test<-new.data %>%
 new.data<-new.data  %>% 
   filter(!is.na(Predation)) %>% 
   filter(!is.na(MeanValue)) %>% 
-  filter(PopulationType=="Single") %>% 
-  filter(!(TraitID %in% c(28))) #these are entries that need to be excluded (only one pred level) 
+  filter(PopulationType=="Single") #%>% 
+  #filter(!(TraitID %in% c(??))) #these are entries that need to be excluded (only one pred level) 
 
 
 new.data$Predation<-as.factor(new.data$Predation)
 new.data$MeanValue<-as.numeric(new.data$MeanValue)
 
 #how many traits/studies?
-length(unique(new.data$TraitID))#551 for TraitID (without typos traits) feb 10th
-length(unique(new.data$StudyID)) #42
-
-#NOTES for sex specific trait IDs ->3 or less levels: 447 439 219 77 52 29 25 22 18 15 12 2
+length(unique(new.data$TraitID))#529 for TraitID (without typos traits) feb 10th
+length(unique(new.data$StudyID)) #43
 
 #set up a new function to loop through all data and run anova on Mean trait values for each trait
 #note this assumes we have just one covariate of interest: predation(treatment) (basically habitat, e.g. high/low predation)
