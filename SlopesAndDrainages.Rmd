@@ -10,7 +10,7 @@ library(ggplot2)
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
 new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved oct 27th
-data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",")%>% #Data.csv is saved straight from .xlsx
+data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",")%>% #Data.csv is saved straight from .xlsx feb 10th
   select(StudyID:Comments) 
 r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated oct 1st (& _sexID)
 ```
@@ -102,7 +102,7 @@ North<-c("Yarra", "Marianne", "Paria", "Madamas", "Damier", "Brasso Seco", "Bala
 
 Northeastern<- c("Tompire", "Ricon", "Mission", "Toco")
 
-Other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Caura", "Manzanilla", "Oropuna" ) #mostly southern range, jessica stephenson paper, but some others
+Other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Caura", "Manzanilla", "Oropuna", "Hollis", "Saint Joseph" ) #mostly southern range, jessica stephenson paper, but some others
 
 South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal", "Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura")  
 
@@ -174,7 +174,7 @@ x<-slope.data[!duplicated(slope.data$TraitID),]
 summary(as.factor(x$unique_slopes))
 summary(as.factor(x$Slope.type))
 
-#write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written dec 2nd
+#write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written feb 10th
 ```
 
 gonna create a loop to determine the ratio of north to south within weach trait
