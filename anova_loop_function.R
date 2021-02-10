@@ -16,36 +16,31 @@ a<-new.data
 a$High<- ifelse(new.data$Predation== "High", print(new.data$TraitID), NA )
 a$Low<- ifelse(new.data$Predation== "Low", print(new.data$TraitID), NA )
 
-a$High[!(a$High %in% a$Low)] #4
-a$Low[!(a$Low %in% a$High)] #646
+a$High[!(a$High %in% a$Low)] #28 (will rerun soon)
+a$Low[!(a$Low %in% a$High)] #none
 
-#sex_TraitID column info
-a<-new.data
-a$High<- ifelse(new.data$Predation== "High", print(new.data$sex_TraitID), NA )
-a$Low<- ifelse(new.data$Predation== "Low", print(new.data$sex_TraitID), NA )
-
-a$High[!(a$High %in% a$Low)] #6 (TraitID = 4), 208, 2
-a$Low[!(a$Low %in% a$High)] #655 (TraitID = 646)
+test<-new.data %>% 
+  group_by(TraitID, Predation) %>% 
+  tally() %>% 
+  filter(n<2) #looks for Traits with less than 4 (2 high and 2 low) populations
 
 
-#filter out incomplete entries, and entries with only two data points (will make R2 1.0)
-#NOTE: TraitID = 4,630 sex_TraitID = 682,6,208,2,618 (aug 30 two typos need to be fixed, one waiting for email)
+#filter out incomplete entries, and entries with only one data point for either high or low (will make R2 1.0)
 new.data<-new.data  %>% 
   filter(!is.na(Predation)) %>% 
   filter(!is.na(MeanValue)) %>% 
   filter(PopulationType=="Single") %>% 
-  filter(!(TraitID %in% c(3,6,28,29,59,84,467,542))) #these are entries that need to be excluded (only one pred level) 
+  filter(!(TraitID %in% c(28))) #these are entries that need to be excluded (only one pred level) 
 
 
 new.data$Predation<-as.factor(new.data$Predation)
 new.data$MeanValue<-as.numeric(new.data$MeanValue)
 
 #how many traits/studies?
-length(unique(new.data$TraitID))#585 for TraitID (without typos traits) oct 27th
-length(unique(new.data$StudyID)) #34
+length(unique(new.data$TraitID))#551 for TraitID (without typos traits) feb 10th
+length(unique(new.data$StudyID)) #42
 
-#NOTES for sex specific trait IDs ->2 or less levels: 682 (emailed, no longer a problem?), 208 (typo trait labelled male only sex labelled F),
-# 6 (previously trait 4 only one entry), 2
+#NOTES for sex specific trait IDs ->3 or less levels: 447 439 219 77 52 29 25 22 18 15 12 2
 
 #set up a new function to loop through all data and run anova on Mean trait values for each trait
 #note this assumes we have just one covariate of interest: predation(treatment) (basically habitat, e.g. high/low predation)

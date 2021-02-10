@@ -215,7 +215,7 @@ ggplot(traitData, aes(as.Date(YearStart, format = "%Y"), R.2))+geom_point()
 ```
 
 
-### plots??
+### plots?? R2
 ```{r R2 prep}
 r.squared$TraitID<-as.numeric(r.squared$traitID)
 
