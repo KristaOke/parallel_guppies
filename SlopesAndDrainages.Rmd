@@ -102,12 +102,12 @@ North<-c("Yarra", "Marianne", "Paria", "Madamas", "Damier", "Brasso Seco", "Bala
 
 Northeastern<- c("Tompire", "Ricon", "Mission", "Toco")
 
-Other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Caura", "Manzanilla", "Oropuna", "Hollis", "Saint Joseph" ) #mostly southern range, jessica stephenson paper, but some others
+Other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Caura", "Manzanilla", "Oropuna", "Hollis") #mostly southern range, jessica stephenson paper, but some others
 
-South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal", "Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura", "Hollis")  
+South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal", "Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura", "Hollis", "Saint Joseph")  
 
 #Drainage level
-Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal")
+Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Cuara", "Manacal", "Saint Joseph")
 
 Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Visigney", "Valencia", "Matura", "Hollis")
 
@@ -174,7 +174,7 @@ x<-slope.data[!duplicated(slope.data$TraitID),]
 summary(as.factor(x$unique_slopes))
 summary(as.factor(x$Slope.type))
 
-#write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written feb 10th
+#write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written feb 11th
 ```
 
 gonna create a loop to determine the ratio of north to south within each trait
@@ -187,6 +187,28 @@ slope.ratio<-slope.ratio %>%
 hist(slope.ratio$ratio)
 ```
 
+
+```{r numbers for questions}
+test<-new.data %>% 
+  filter(!is.na(MeanValue)) %>% 
+  filter(!is.na(Number)) %>% 
+  filter(!is.na(SD) | !is.na(SE))
+
+new.data[!duplicated(new.data$TraitID),] %>% 
+  group_by(Slope.type) %>%
+  summarize(count = n())
+
+test<-new.data %>% 
+  filter(Slope.type == "South") %>% 
+  group_by(TraitID) %>% 
+  mutate(unique_drainages = n_distinct(Drainage))
+
+test$Drainage.type<-ifelse(test$unique_drainages==1, test$Drainage, "Mixed")
+
+test[!duplicated(test$TraitID),] %>% 
+  group_by(Drainage.type) %>%
+  summarize(count = n())
+```
 
 
 ### visualising year data and spread for collection years
@@ -281,6 +303,7 @@ Coordinates<-separate(Coordinates, Location, into = c("Easting", "Northing"), se
 Coordinates$ID<-1:94
 #write_csv(Coordinates, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.csv")
 ```
+
 
 
 
