@@ -30,7 +30,7 @@ new.data<-new.data  %>%
   filter(!is.na(Predation)) %>% 
   filter(!is.na(MeanValue)) %>% 
   filter(PopulationType=="Single") #%>% 
-  #filter(!(TraitID %in% c(??))) #these are entries that need to be excluded (only one pred level), none feb 10th
+  #filter(!(TraitID %in% c(??))) #these are entries that need to be excluded (only one pred level), none feb 10
 
 
 new.data$Predation<-as.factor(new.data$Predation)
