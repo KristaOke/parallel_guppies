@@ -63,7 +63,8 @@ R2.data$TraitID <- as.factor(R2.data$TraitID)
 
 # This (data.for.models) is the data to use
 data.for.models <- left_join(spreadsheet.data, R2.data,  by = "TraitID")
-
+data.for.models <- data.for.models[!duplicated(data.for.models$TraitID),]
+hist(data.for.models$R.2)  
 
 data.for.models$Sex <- as.factor(data.for.models$Sex)
 data.for.models$TraitID <- as.factor(data.for.models$TraitID)
@@ -197,20 +198,20 @@ data.for.models %>% filter(StudyType == "Wildcaught"
 
 # Correlation plots! 
 
-tbl1 <- table(data.for.models$TraitType2, data.for.models$Slope)
+(tbl1 <- table(data.for.models$TraitType2, data.for.models$Slope))
 chisq.test(tbl1)  
 
-tbl2 <- table(data.for.models$TraitType2, data.for.models$Paired)
+(tbl2 <- table(data.for.models$TraitType2, data.for.models$Paired))
 chisq.test(tbl2)  
 
-tbl3 <- table(data.for.models$Paired, data.for.models$Slope)
+(tbl3 <- table(data.for.models$Paired, data.for.models$Slope))
 chisq.test(tbl3)  
 
 corrplot(tbl1, is.cor = FALSE)
 corrplot(tbl2, is.cor = FALSE)
 corrplot(tbl3, is.cor = FALSE)
 
-tbl4 <- table(data.for.models$TraitType2, data.for.models$Sex)
+(tbl4 <- table(data.for.models$TraitType2, data.for.models$Sex))
 tbl4
 corrplot(tbl4, is.cor = FALSE)
 
