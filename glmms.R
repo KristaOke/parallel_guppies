@@ -63,7 +63,6 @@ R2.data$TraitID <- as.factor(R2.data$TraitID)
 
 # This (data.for.models) is the data to use
 data.for.models <- left_join(spreadsheet.data, R2.data,  by = "TraitID")
-data.for.models <- data.for.models[!duplicated(data.for.models$TraitID),]
 hist(data.for.models$R.2)  
 
 data.for.models$Sex <- as.factor(data.for.models$Sex)
@@ -79,6 +78,9 @@ data.for.models$TraitType2[data.for.models$TraitType2 == "Physiology"] <- "Other
 data.for.models$TraitType2[data.for.models$TraitType2 == "Life history"] <- "Other"
 
 hist(data.for.models$R.2)
+
+# data.for.models <- data.for.models[!duplicated(data.for.models$TraitID),]
+# this line gets rid of duplicates - but also lots of detail
 
 ##%######################################################%##
 #                                                          #
