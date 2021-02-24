@@ -15,7 +15,7 @@ data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",")%>% #Dat
 r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated feb 11th 
 ```
 
-
+###Misc Notes on populations
 North: 
 Yarra, Marianne, Paria, Madamas, Damier, Brasso Seco, Balandra *Tompire*, *Ricon*, *Mission*, *Toco* (*northeast?*)
 
@@ -48,7 +48,7 @@ Silverstream
 Arena: Near the arena reservoir some place? thoroughly out of the mountains
 Vance: South West (from jackie outside the northern range, also in paper 23, but not listed in supplementary material as a site??)
 
-
+### Formatting columns
 ```{r population column}
 data$temp<-NA #temp columns
 data$pop<-data$PopulationRaw
@@ -177,42 +177,8 @@ summary(as.factor(x$Slope.type))
 #write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written feb 11th
 ```
 
-gonna create a loop to determine the ratio of north to south within each trait
-```{r ratio of north and south}
-slope.ratio<-slope.data %>% 
-  group_by(TraitID) %>% 
-  summarise(South = sum(Slope=="South"), North = sum(Slope=="North"), ratio = North/South)
-slope.ratio<-slope.ratio %>% 
-  subset(ratio > 0 & ratio < 1)
-hist(slope.ratio$ratio)
-```
 
-
-```{r numbers for questions}
-test<-new.data %>% 
-  filter(!is.na(MeanValue)) %>% 
-  filter(!is.na(Number)) %>% 
-  filter(!is.na(SD) | !is.na(SE))
-
-new.data[!duplicated(new.data$TraitID),] %>% 
-  group_by(Slope.type) %>%
-  summarize(count = n())
-
-test<-new.data %>% 
-  filter(Slope.type == "South") %>% 
-  group_by(TraitID) %>% 
-  mutate(unique_drainages = n_distinct(Drainage))
-
-test$Drainage.type<-ifelse(test$unique_drainages==1, test$Drainage, "Mixed")
-
-test[!duplicated(test$TraitID),] %>% 
-  group_by(Drainage.type) %>%
-  summarize(count = n())
-  
-```
-
-
-### visualising year data and spread for collection years
+### yeardata formatting (no longer needed, integrated into metaData)
 ```{r years, eval=FALSE}
 year<-new.data %>% 
   mutate(duration =  (as.numeric(str_sub(CollectionYear, -4))) - (as.numeric(str_sub(CollectionYear, start = 0, 4)))) %>% 
@@ -227,68 +193,7 @@ traitData<-traitData[!duplicated(traitData$TraitID),]
 ```
 
 
-```{r year plots, eval=FALSE}
-ggplot(year, aes(YearStart))+geom_histogram(stat = "count")
-
-ggplot(year, aes(as.Date(YearStart, format = "%Y"), as.Date(YearEnd, format = "%Y")))+geom_point()+ geom_abline(intercept = 0, slope = 1) +  scale_x_date(date_labels = "%Y")
-
-
-ggplot(traitData, aes(as.Date(YearStart, format = "%Y"), R.2))+geom_point()
-
-```
-
-
-### plots?? R2
-```{r R2 prep}
-r.squared$TraitID<-as.numeric(r.squared$traitID)
-
-slope.info<-new.data %>% 
-  group_by(TraitID) %>%
-  summarise(n_distinct(Slope))
-summary(as.factor(slope.info$`n_distinct(Slope)`), maxsum = 100)
-
-new.data<-left_join(new.data, r.squared, by = "TraitID")
-new.data<-left_join(new.data, slope.info, by = "TraitID")
-new.data$R.2<-as.numeric(new.data$R.2)
-```
-
-
-
-```{r plots violin}
-ggplot(data = new.data, aes(x=TraitType2, y = R.2, fill = TraitType2)) + geom_violin() 
-ggplot(data = new.data, aes(x=TraitType1, y = R.2, fill = TraitType1)) + geom_violin() 
-
-new.data %>% 
-  filter(`n_distinct(Slope)`==1) %>% 
-ggplot(aes(x=Slope, y = R.2, fill = Slope)) + geom_violin() 
-
-new.data %>% 
-  filter(`n_distinct(Slope)`==1) %>% 
-ggplot(aes(x=TraitType2, y = R.2, fill = Slope)) + geom_violin()
-
-new.data %>% 
-  filter(`n_distinct(Slope)`==1) %>% 
-ggplot(aes(x=TraitType1, y = R.2, fill = Slope)) + geom_violin()
-
-#ggplot(data = new.data, aes(x=StudyType, y = R.2, fill = StudyType)) + geom_violin() 
-
-#sex specific plots
-new.data %>% 
-  filter(Sex == "M" | Sex == "F") %>% 
-ggplot( aes(x = Sex, y = R.2, fill = Sex)) + geom_violin()
-
-new.data %>% 
-  filter(Sex == "M" | Sex == "F") %>% 
-ggplot( aes(x = TraitType2, y = R.2, fill = Sex)) + geom_violin()
-
-new.data %>% 
-  filter(Sex == "M" | Sex == "F") %>% 
-ggplot( aes(x = TraitType1, y = R.2, fill = Sex)) + geom_violin()
-
-```
-
-
-### Mapping miscellaneous ###
+### Mapping miscellaneous
 
 ```{r mapping prep}
 location.data<-new.data[!is.na(new.data$Location),]
