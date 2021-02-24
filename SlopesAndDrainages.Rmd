@@ -15,7 +15,7 @@ data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",")%>% #Dat
 r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated feb 11th 
 ```
 
-
+###Misc Notes on populations
 North: 
 Yarra, Marianne, Paria, Madamas, Damier, Brasso Seco, Balandra *Tompire*, *Ricon*, *Mission*, *Toco* (*northeast?*)
 
@@ -48,7 +48,7 @@ Silverstream
 Arena: Near the arena reservoir some place? thoroughly out of the mountains
 Vance: South West (from jackie outside the northern range, also in paper 23, but not listed in supplementary material as a site??)
 
-
+### Formatting columns
 ```{r population column}
 data$temp<-NA #temp columns
 data$pop<-data$PopulationRaw
@@ -177,42 +177,8 @@ summary(as.factor(x$Slope.type))
 #write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written feb 11th
 ```
 
-gonna create a loop to determine the ratio of north to south within each trait
-```{r ratio of north and south}
-slope.ratio<-slope.data %>% 
-  group_by(TraitID) %>% 
-  summarise(South = sum(Slope=="South"), North = sum(Slope=="North"), ratio = North/South)
-slope.ratio<-slope.ratio %>% 
-  subset(ratio > 0 & ratio < 1)
-hist(slope.ratio$ratio)
-```
 
-
-```{r numbers for questions}
-test<-new.data %>% 
-  filter(!is.na(MeanValue)) %>% 
-  filter(!is.na(Number)) %>% 
-  filter(!is.na(SD) | !is.na(SE))
-
-new.data[!duplicated(new.data$TraitID),] %>% 
-  group_by(Slope.type) %>%
-  summarize(count = n())
-
-test<-new.data %>% 
-  filter(Slope.type == "South") %>% 
-  group_by(TraitID) %>% 
-  mutate(unique_drainages = n_distinct(Drainage))
-
-test$Drainage.type<-ifelse(test$unique_drainages==1, test$Drainage, "Mixed")
-
-test[!duplicated(test$TraitID),] %>% 
-  group_by(Drainage.type) %>%
-  summarize(count = n())
-  
-```
-
-
-### visualising year data and spread for collection years
+### yeardata formatting (no longer needed, integrated into metaData)
 ```{r years, eval=FALSE}
 year<-new.data %>% 
   mutate(duration =  (as.numeric(str_sub(CollectionYear, -4))) - (as.numeric(str_sub(CollectionYear, start = 0, 4)))) %>% 
@@ -227,18 +193,7 @@ traitData<-traitData[!duplicated(traitData$TraitID),]
 ```
 
 
-```{r year plots, eval=FALSE}
-ggplot(year, aes(YearStart))+geom_histogram(stat = "count")
-
-ggplot(year, aes(as.Date(YearStart, format = "%Y"), as.Date(YearEnd, format = "%Y")))+geom_point()+ geom_abline(intercept = 0, slope = 1) +  scale_x_date(date_labels = "%Y")
-
-
-ggplot(traitData, aes(as.Date(YearStart, format = "%Y"), R.2))+geom_point()
-
-```
-
-
-### plots?? R2
+### R2 plots
 ```{r R2 prep}
 r.squared$TraitID<-as.numeric(r.squared$traitID)
 
