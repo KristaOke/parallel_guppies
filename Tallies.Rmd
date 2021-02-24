@@ -56,14 +56,22 @@ slope.ratio %>%
 #can we use a subset to look at traits that have enough north and south to have a R2 for each?
 test<-slope.ratio %>% 
   filter((South>4 & North>4) |  (North == 0 | South == 0 )) #302 with over 4 in each slope or only one slope
+<<<<<<< HEAD
  #231 south only with 4+ pops
  #29 north only with 4+ pops
+=======
+test %>% 
+  filter(North==0) #231 south only with 4+ pops
+test %>% 
+  filter(South==0) #29 north only with 4+ pops
+>>>>>>> b1c6acaf058d7d2b9c2df8a91cd2e06773c4fe8f
 traits<-test %>% 
   filter(South>4 & North>4) %>% 
   select(TraitID)
 
 traits<-left_join(traits, new.data, by = "TraitID")
 summary(as.factor(traits$StudyID)) #only 2 studies :(
+<<<<<<< HEAD
 
 #Caroni and Oropuche Question, how many traits have more than 2 hp and lp in both oropuche and caroni?
 traits_s<-new.data %>% 
@@ -76,6 +84,8 @@ traits_s %>%
   group_by(TraitID) %>% 
   tally() %>% 
   filter(n>3) #so there's 10 traits with 2 hp and lp in both caroni and oropuche
+=======
+>>>>>>> b1c6acaf058d7d2b9c2df8a91cd2e06773c4fe8f
 ```
 ##
 Visualization and Plots
