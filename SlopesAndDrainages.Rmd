@@ -206,11 +206,10 @@ coordinates<-location.data[!duplicated(location.data$Location),] %>%
 ```{r mapping prep2}
 Coordinates <- read_csv("~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.csv")
 Coordinates<-Coordinates %>% 
-  select(11:13) %>% 
-  rename(Location = 3)
+  select(1:4,19,21:26)
 Coordinates<-separate(Coordinates, Location, into = c("Easting", "Northing"), sep = 6, remove = FALSE)
-Coordinates$ID<-1:94
-#write_csv(Coordinates, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.csv")
+Coordinates$ID<-2:194
+#write_csv(Coordinates, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates2.csv")
 ```
 
 
