@@ -65,11 +65,9 @@ traits<-test %>%
 
 traits<-left_join(traits, new.data, by = "TraitID")
 summary(as.factor(traits$StudyID)) #only 2 studies :(
-<<<<<<< HEAD
 ```
 
-=======
->>>>>>> d97abc5f1b699f8f2d40e8fd03a44c10b6ffaaab
+
 
 ```{r caroni and oropuche question}
 #Caroni and Oropuche Question, how many traits have more than 2 hp and lp in both oropuche and caroni?
