@@ -44,7 +44,7 @@ test[!duplicated(test$TraitID),] %>%
 ## North vs South Slope
 Looked at the ratio of north to south in traits with both populations (histogram)
 Also looked at how many traits have over 4 populations on both the north and south slope (48)
-```{r ratio of north and south}
+```{r ratio of north and south slope pops}
 slope.ratio<-new.data %>% 
   group_by(TraitID) %>% 
   summarise(South = sum(Slope=="South"), North = sum(Slope=="North"), ratio = North/South)
@@ -56,23 +56,19 @@ slope.ratio %>%
 #can we use a subset to look at traits that have enough north and south to have a R2 for each?
 test<-slope.ratio %>% 
   filter((South>4 & North>4) |  (North == 0 | South == 0 )) #302 with over 4 in each slope or only one slope
-<<<<<<< HEAD
+
  #231 south only with 4+ pops
  #29 north only with 4+ pops
-=======
-test %>% 
-  filter(North==0) #231 south only with 4+ pops
-test %>% 
-  filter(South==0) #29 north only with 4+ pops
->>>>>>> b1c6acaf058d7d2b9c2df8a91cd2e06773c4fe8f
 traits<-test %>% 
   filter(South>4 & North>4) %>% 
   select(TraitID)
 
 traits<-left_join(traits, new.data, by = "TraitID")
 summary(as.factor(traits$StudyID)) #only 2 studies :(
-<<<<<<< HEAD
+```
 
+
+```{r caroni and oropuche question}
 #Caroni and Oropuche Question, how many traits have more than 2 hp and lp in both oropuche and caroni?
 traits_s<-new.data %>% 
   group_by(TraitID, Drainage, Predation) %>% 
@@ -83,12 +79,25 @@ traits_s<-new.data %>%
 traits_s %>% 
   group_by(TraitID) %>% 
   tally() %>% 
-  filter(n>3) #so there's 10 traits with 2 hp and lp in both caroni and oropuche
-=======
->>>>>>> b1c6acaf058d7d2b9c2df8a91cd2e06773c4fe8f
+  filter(n>3) #so there's 10 traits with 2 hp and lp in both caroni and oropuche, not appropriate for anova
 ```
+## Introductions
+We need to tag sites that are known introductions (Damier, Turure, El Cedro, Arima post 2001 etc) with a tage different from studies that knowingly compare intro sites to their source population
+```{r Introduction counts}
+#just to start, how many traits have an introduction
+new.data %>% 
+  group_by(StudyID, TraitID) %>% 
+  filter(Poptype=="Introduction") %>% 
+  count(StudyID)
+  tally() %>% 
+  
+#there's 111 traits with at least one introduction in them, 11 StudyIDs
+```
+
 ##
+
 Visualization and Plots
+
 ## R2 plots (old school visualization)
 ```{r R2 prep}
 new.data<-left_join(new.data,r.squared, by = "TraitID")
