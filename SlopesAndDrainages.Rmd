@@ -192,8 +192,7 @@ traitData<-left_join(r.squared, year, by = "TraitID")
 traitData<-traitData[!duplicated(traitData$TraitID),]
 ```
 
-
-### Mapping miscellaneous
+### Mapping miscellaneous ###
 
 ```{r mapping prep}
 location.data<-new.data[!is.na(new.data$Location),]
