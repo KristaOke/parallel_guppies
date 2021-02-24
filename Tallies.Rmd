@@ -1,0 +1,94 @@
+---
+title: "Tallies"
+output: html_notebook
+---
+
+```{r read in}
+library(tidyverse)
+library(ggplot2)
+#setwd("<YOURPATHWAY>")
+wd <- getwd()
+new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved feb 11th
+data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",")%>% #Data.csv is saved .xlsx feb 10th
+  select(StudyID:Comments) 
+r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated feb 11th 
+```
+
+## Effect Size
+using only traits we can calculate cohen's d for...
+```{r numbers for cohens d}
+#traits with data needed for cohen's d
+test<-new.data %>% 
+  filter(!is.na(MeanValue)) %>% 
+  filter(!is.na(Number)) %>% 
+  filter(!is.na(SD) | !is.na(SE))
+
+new.data[!duplicated(new.data$TraitID),] %>% 
+  group_by(Slope.type) %>%
+  summarize(count = n())
+
+test<-new.data %>% 
+  filter(Slope.type == "South") %>% 
+  group_by(TraitID) %>% 
+  mutate(unique_drainages = n_distinct(Drainage))
+
+test$Drainage.type<-ifelse(test$unique_drainages==1, test$Drainage, "Mixed")
+
+test[!duplicated(test$TraitID),] %>% 
+  group_by(Drainage.type) %>%
+  summarize(count = n())
+  
+```
+
+## North vs South Slope
+gonna create a loop to determine the ratio of north to south within each trait
+```{r ratio of north and south}
+slope.ratio<-slope.data %>% 
+  group_by(TraitID) %>% 
+  summarise(South = sum(Slope=="South"), North = sum(Slope=="North"), ratio = North/South)
+slope.ratio<-slope.ratio %>% 
+  subset(ratio > 0 & ratio < 1)
+hist(slope.ratio$ratio)
+```
+
+## R2 plots (old school visualization)
+```{r R2 prep}
+new.data<-left_join(new.data,r.squared, by = "TraitID")
+new.data$R.2<-as.numeric(new.data$R.2)
+```
+
+
+
+```{r plots violin}
+ggplot(data = new.data, aes(x=TraitType2, y = R.2, fill = TraitType2)) + geom_violin() 
+ggplot(data = new.data, aes(x=TraitType1, y = R.2, fill = TraitType1)) + geom_violin() 
+
+new.data %>% 
+  filter(unique_slopes==1) %>% 
+ggplot(aes(x=Slope, y = R.2, fill = Slope)) + geom_violin() 
+
+new.data %>% 
+  filter(unique_slopes==1) %>% 
+ggplot(aes(x=TraitType2, y = R.2, fill = Slope)) + geom_violin()
+
+new.data %>% 
+  filter(unique_slopes==1) %>% 
+ggplot(aes(x=TraitType1, y = R.2, fill = Slope)) + geom_violin()
+
+#ggplot(data = new.data, aes(x=StudyType, y = R.2, fill = StudyType)) + geom_violin() 
+
+#sex specific plots
+new.data %>% 
+  filter(Sex == "M" | Sex == "F") %>% 
+ggplot( aes(x = Sex, y = R.2, fill = Sex)) + geom_violin()
+
+new.data %>% 
+  filter(Sex == "M" | Sex == "F") %>% 
+ggplot( aes(x = TraitType2, y = R.2, fill = Sex)) + geom_violin()
+
+new.data %>% 
+  filter(Sex == "M" | Sex == "F") %>% 
+ggplot( aes(x = TraitType1, y = R.2, fill = Sex)) + geom_violin()
+
+```
+##
