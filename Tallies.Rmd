@@ -14,6 +14,7 @@ data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",")%>% #Dat
 r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated feb 11th 
 ```
 
+Tallies and Counts
 ## Effect Size
 using only traits we can calculate cohen's d for...
 ```{r numbers for cohens d}
@@ -41,16 +42,43 @@ test[!duplicated(test$TraitID),] %>%
 ```
 
 ## North vs South Slope
-gonna create a loop to determine the ratio of north to south within each trait
+Looked at the ratio of north to south in traits with both populations (histogram)
+Also looked at how many traits have over 4 populations on both the north and south slope (48)
 ```{r ratio of north and south}
-slope.ratio<-slope.data %>% 
+slope.ratio<-new.data %>% 
   group_by(TraitID) %>% 
   summarise(South = sum(Slope=="South"), North = sum(Slope=="North"), ratio = North/South)
-slope.ratio<-slope.ratio %>% 
-  subset(ratio > 0 & ratio < 1)
-hist(slope.ratio$ratio)
-```
+#visualize only mixed slopes traits by the ratio of north to south, are they evenly mixed or mostly one?
+slope.ratio %>% 
+  subset(ratio > 0 & !(ratio == Inf)) %>% 
+  ggplot(aes(x = ratio)) + geom_histogram()
 
+#can we use a subset to look at traits that have enough north and south to have a R2 for each?
+test<-slope.ratio %>% 
+  filter((South>4 & North>4) |  (North == 0 | South == 0 )) #302 with over 4 in each slope or only one slope
+ #231 south only with 4+ pops
+ #29 north only with 4+ pops
+traits<-test %>% 
+  filter(South>4 & North>4) %>% 
+  select(TraitID)
+
+traits<-left_join(traits, new.data, by = "TraitID")
+summary(as.factor(traits$StudyID)) #only 2 studies :(
+
+#Caroni and Oropuche Question, how many traits have more than 2 hp and lp in both oropuche and caroni?
+traits_s<-new.data %>% 
+  group_by(TraitID, Drainage, Predation) %>% 
+  tally() %>% 
+  filter(n>2) %>% 
+  filter(Drainage == "Caroni" | Drainage == "Oropuche")
+
+traits_s %>% 
+  group_by(TraitID) %>% 
+  tally() %>% 
+  filter(n>3) #so there's 10 traits with 2 hp and lp in both caroni and oropuche
+```
+##
+Visualization and Plots
 ## R2 plots (old school visualization)
 ```{r R2 prep}
 new.data<-left_join(new.data,r.squared, by = "TraitID")
