@@ -65,8 +65,11 @@ traits<-test %>%
 
 traits<-left_join(traits, new.data, by = "TraitID")
 summary(as.factor(traits$StudyID)) #only 2 studies :(
+<<<<<<< HEAD
 ```
 
+=======
+>>>>>>> d97abc5f1b699f8f2d40e8fd03a44c10b6ffaaab
 
 ```{r caroni and oropuche question}
 #Caroni and Oropuche Question, how many traits have more than 2 hp and lp in both oropuche and caroni?
@@ -82,6 +85,7 @@ traits_s %>%
   filter(n>3) #so there's 10 traits with 2 hp and lp in both caroni and oropuche, not appropriate for anova
 ```
 ## Introductions
+
 We need to tag sites that are known introductions (Damier, Turure, El Cedro, Arima post 2001 etc) with a tage different from studies that knowingly compare intro sites to their source population
 ```{r Introduction counts}
 #just to start, how many traits have an introduction
