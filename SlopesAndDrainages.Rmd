@@ -54,11 +54,7 @@ Vance: South West (from jackie outside the northern range, also in paper 23, but
 data$temp<-NA #temp columns
 data$pop<-data$PopulationRaw
 
-names<-c("Arima","Arena","Arouca","Aripo", "Quare", "Yarra", "Tompire", "Marianne", "Paria", "El Cedro", "Madamas",
-         "Oropuche", "Guanapo", "La Selva", "Turure", "Damier", "Tacarigua", "Mausica", "Manacal", "Ceniza", "Caroni",
-         "Valencia", "Oropuna", "Tunapuna", "Lopinot", "Guapo", "Vance", "Visigney", "Pilote", "Lizard",
-         "Silverstream", "Matura","Cunupia", "Coffee", "Maracas", "Caura", "Toco", "Manzanilla", "Mission", "Ricon",
-         "Balandra", "Brasso Seco", "Rio Grande", "Rio Barro", "Caroni Lower Dyke", "Cunupia Lower Dyke")
+names<-c("Arima","Arena","Arouca","Aripo", "Quare", "Yarra", "Tompire", "Marianne", "Paria", "El Cedro", "Madamas", "Oropuche", "Guanapo", "La Selva", "Turure", "Damier", "Tacarigua", "Mausica", "Manacal", "Ceniza", "Caroni", "Valencia", "Oropuna", "Tunapuna", "Lopinot", "Guapo", "Vance", "Visigney", "Pilote", "Lizard", "Silverstream", "Matura","Cunupia", "Coffee", "Maracas", "Caura", "Toco", "Manzanilla", "Mission", "Ricon", "Balandra", "Brasso Seco", "Rio Grande", "Rio Barro", "Caroni Lower Dyke", "Cunupia Lower Dyke")
 for (i in names){ data<-mutate(data, pop = (ifelse(grepl(i, PopulationRaw), i,  temp)))
 data$temp<-ifelse(data$pop==i, i, data$temp)} #replaces variations of populations with the root, ie Aripo 4 -> Aripo
 
