@@ -153,6 +153,9 @@ new.data$Kingsolver_traits<-ifelse(new.data$TraitID %in% c(41:42,62:79,81:82,89:
                                ifelse(new.data$TraitID %in% c(27:28,33:34,377,472), "Other_life_history",
                                ifelse(new.data$TraitID %in% c(471,473), "Other_morphology", new.data$Kingsolver_traits)))
 
+#changing intro sites
+new.data$Poptype<-ifelse(new.data$Population %in% c("Damier", "Turure", "El Cedro"), "Introduction", new.data$Poptype)
+
 #tests
 x<-as.data.frame(sex.length[["lengths"]])
 x<-x %>% 
@@ -162,7 +165,7 @@ new.data %>%
   group_by(TraitID) %>% 
   filter(all(c("Common Garden (F1)", "Wildcaught") %in% StudyType )) #I think this checks out!!
 
-test<-new.data[is.na(new.data$Slope),]
+new.data[is.na(new.data$Slope),]
 ```
 
 
@@ -180,7 +183,7 @@ x<-slope.data[!duplicated(slope.data$TraitID),]
 summary(as.factor(x$unique_slopes))
 summary(as.factor(x$Slope.type))
 
-#write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written feb 25th
+#write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written Mar 10th
 ```
 
 
