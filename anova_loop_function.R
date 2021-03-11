@@ -28,8 +28,7 @@ test<-new.data %>%
 #filter out incomplete entries, and entries with only one data point for either high or low (will make R2 1.0)
 new.data<-new.data  %>% 
   filter(!is.na(Predation)) %>% 
-  filter(!is.na(MeanValue)) %>% 
-  filter(PopulationType=="Single") #%>% 
+  filter(!is.na(MeanValue)) 
   #filter(!(TraitID %in% c(??))) #these are entries that need to be excluded (only one pred level), none feb 10
 
 
@@ -37,8 +36,8 @@ new.data$Predation<-as.factor(new.data$Predation)
 new.data$MeanValue<-as.numeric(new.data$MeanValue)
 
 #how many traits/studies?
-length(unique(new.data$TraitID))#529 for TraitID (without typos traits) feb 10th
-length(unique(new.data$StudyID)) #43
+length(unique(new.data$TraitID))#556 for TraitID (without typos traits) mar 10th
+length(unique(new.data$StudyID)) #49
 
 #set up a new function to loop through all data and run anova on Mean trait values for each trait
 #note this assumes we have just one covariate of interest: predation(treatment) (basically habitat, e.g. high/low predation)
