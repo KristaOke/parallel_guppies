@@ -90,6 +90,11 @@ data<-data %>%
 #fix typos not previously found
 data$TraitType2<-gsub("Life-history", "Life history", data$TraitType2)
 
+data$Kingsolver_traits<-ifelse(data$TraitID %in% c(41:42,62:79,81:82,89:91,119:121,295:297,301:303,554), "Physiology", 
+                               ifelse(data$TraitID %in% c(27:28,33:34,377,472), "Other_life_history",
+                               ifelse(data$TraitID %in% c(471,473), "Other_morphology", data$Kingsolver_traits)))
+
+
 data$Population<-as.factor(data$Population)
 river.list<-data %>% 
   select(Population) %>% 
