@@ -10,7 +10,7 @@ library(ggplot2)
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
 new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved feb 11th
-data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",")%>% #Data.csv is saved straight from .xlsx feb 25th
+data<- read.csv(paste(wd,'/Data/Data_final.csv',sep=""), header=TRUE, sep=",")%>% #Data.csv is saved straight from .xlsx feb 25th
   select(StudyID:Comments) 
 r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated feb 11th 
 ```
@@ -75,7 +75,9 @@ data$pop<-gsub("guanapo", "Guanapo", data$pop)
 data$pop<-gsub("Lower La Seiva", "La Seiva", data$pop)
 data$pop<-gsub("Upper turure", "Turure", data$pop)
 data$pop<-gsub("Tacargua", "Tacarigua", data$pop)
-
+data$pop<-gsub("Oropouche", "Oropuche", data$pop)
+data$pop<-gsub("St Joseph", "Saint Joseph", data$pop)
+data$pop<-gsub("Tac/Tig", "Tacarigua", data$pop) # Need to confirm this!!!!
 #data$pop<-ifelse(grepl("Dyke", data$PopulationRaw), data$PopulationRaw, data$pop)
 
 summary(as.factor(data$pop))
@@ -89,6 +91,7 @@ data<-data %>%
 ```{r typos and river lists, eval=FALSE}
 #fix typos not previously found
 data$TraitType2<-gsub("Life-history", "Life history", data$TraitType2)
+data$PopulationRaw<-gsub("Oropouche", "Oropuche", data$PopulationRaw)
 
 data$Population<-as.factor(data$Population)
 river.list<-data %>% 
@@ -145,9 +148,15 @@ new.data<-new.data %>%
 sex.length<-rle(as.character(paste(new.data$Trait,new.data$Sex,new.data$StudyType)))  
 new.data$TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
 
+#fixes some kingsolver trait mis-sorting (March 10th meeting)
+new.data$Kingsolver_traits<-ifelse(new.data$TraitID %in% c(41:42,62:79,81:82,89:91,119:121,295:297,301:303,554), "Physiology", 
+                               ifelse(new.data$TraitID %in% c(27:28,33:34,377,472), "Other_life_history",
+                               ifelse(new.data$TraitID %in% c(471,473), "Other_morphology", new.data$Kingsolver_traits)))
+
+#tests
 x<-as.data.frame(sex.length[["lengths"]])
-y<-x %>% 
-  subset(`sex.length[["lengths"]]`<3) #traits 3,6,59,84 have only 2 or 1 entry typos 28/29, 542 (not fixed yet)
+x<-x %>% 
+  subset(`sex.length[["lengths"]]`<3) # check for traits with less than the min 4 pops
 
 new.data %>% 
   group_by(TraitID) %>% 
