@@ -43,7 +43,8 @@ test[!duplicated(test$TraitID),] %>%
 
 ## North vs South Slope
 Looked at the ratio of north to south in traits with both populations (histogram)
-Also looked at how many traits have over 4 populations on both the north and south slope (48)
+Also looked at how many traits have over 4 populations on both the north and south slope
+How many traits are eligible for within and among slope analyses
 ```{r ratio of north and south slope pops}
 slope.ratio<-new.data %>% 
   group_by(TraitID) %>% 
@@ -55,16 +56,24 @@ slope.ratio %>%
 
 #can we use a subset to look at traits that have enough north and south to have a R2 for each?
 test<-slope.ratio %>% 
-  filter((South>4 & North>4) |  (North == 0 | South == 0 )) #302 with over 4 in each slope or only one slope
+  filter((South>4 & North>4) |  (North == 0 | South == 0 )) #220 with over 4 in each slope or only one slope
 
- #231 south only with 4+ pops
- #29 north only with 4+ pops
-traits<-test %>% 
-  filter(South>4 & North>4) %>% 
-  select(TraitID)
+test<-slope.ratio %>% 
+  filter((South>3 | North>3)) #326 traits with 4+
 
-traits<-left_join(traits, new.data, by = "TraitID")
-summary(as.factor(traits$StudyID)) #only 2 studies :(
+ #326 south only with 4+ pops
+ #4 north only with 4+ pops (these all are also 4+ for south, two studies)
+
+traits.info<-new.data %>% 
+  group_by(TraitID, Slope) %>% 
+  summarise(South = sum(Slope=="South"), North = sum(Slope=="North"), HighPred = sum(Predation=="High"), LowPred = sum(Predation=="Low"))
+
+traits<-traits.info %>% 
+  filter(HighPred>1 & LowPred>1) %>% 
+  drop_na() %>% 
+  filter(Slope=="South")
+
+traits<-left_join(traits, new.data, by = "TraitID") #use this for within slope R2
 ```
 
 
