@@ -73,7 +73,13 @@ traits<-traits.info %>%
   drop_na() %>% 
   filter(Slope=="South")
 
-traits<-left_join(traits, new.data, by = "TraitID") #use this for within slope R2
+traits_N<-traits.info %>% 
+  filter(HighPred>1 & LowPred>1) %>% 
+  drop_na() %>% 
+  filter(Slope=="North")
+
+traits<-left_join(traits, new.data, by = "TraitID") #use this for within slope R2 (named TraitR2_South.csv)
+traits_N<-left_join(traits_N, new.data, by = "TraitID") #use this for within slope R2 (named TraitR2_North.csv)
 ```
 
 
