@@ -81,7 +81,7 @@ traits_N<-traits.info %>%
 traits<-left_join(traits, new.data, by = "TraitID") #use this for within slope R2 (named TraitR2_South.csv)
 traits_N<-left_join(traits_N, new.data, by = "TraitID") #use this for within slope R2 (named TraitR2_North.csv)
 ```
-
+these two traits are used for the within slope question and run through the anova loop
 
 
 ```{r caroni and oropuche question}
