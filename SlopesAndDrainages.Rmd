@@ -162,7 +162,9 @@ new.data %>%
   group_by(TraitID) %>% 
   filter(all(c("Common Garden (F1)", "Wildcaught") %in% StudyType )) #I think this checks out!!
 
-test<-new.data[is.na(new.data$Slope),]
+new.data[is.na(new.data$Slope),]
+
+new.data$Poptype<-ifelse(new.data$Population %in% c("Damier", "Turure", "El Cedro"), "Introduction", new.data$Poptype)
 ```
 
 
