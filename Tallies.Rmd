@@ -69,6 +69,7 @@ summary(as.factor(traits$StudyID)) #only 2 studies :(
 
 
 ```{r caroni and oropuche question }
+
 #Caroni and Oropuche Question, how many traits have more than 2 hp and lp in both oropuche and caroni?
 traits_s<-new.data %>% 
   group_by(TraitID, Drainage, Predation) %>% 
@@ -81,6 +82,7 @@ traits_s %>%
   tally() %>% 
   filter(n>3) #so there's 10 traits with 2 hp and lp in both caroni and oropuche, not appropriate for anova
 ```
+
 ## Introductions
 
 We need to tag sites that are known introductions (Damier, Turure, El Cedro, Arima post 2001 etc) with a stage different from studies that knowingly compare intro sites to their source population
