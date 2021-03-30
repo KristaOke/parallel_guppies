@@ -117,7 +117,7 @@ traits_s<-new.data %>%
   filter(TraitID %in% ids$TraitID) %>% 
   filter(Slope== "South") # 204 traits, done and on drive
 
-# How many pops have more than 2 hp and lp in caroni
+# How many pops have more than 2 hp and lp in caroni, and their own comparison R2 prep (excluding north pops from those traits if there are any)
 ids_south<-new.data %>%
   group_by(TraitID, Slope, Predation) %>%
   tally() %>% 
@@ -145,8 +145,12 @@ traits_d<-new.data %>%
   filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
   filter(Drainage == "Caroni") # 317 traits
 
-#Introductions
+#this will be used as the among drainage comparisons to control for variation between slopes
+traits_d_all<-new.data %>%
+  filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
+  filter(Slope == "South")
 
+#Introductions
 ids_i<-new.data %>% 
   group_by(TraitID, Poptype, Predation) %>%
   tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
