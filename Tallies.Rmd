@@ -43,8 +43,7 @@ test[!duplicated(test$TraitID),] %>%
 
 ## North vs South Slope
 Looked at the ratio of north to south in traits with both populations (histogram)
-Also looked at how many traits have over 4 populations on both the north and south slope
-How many traits are eligible for within and among slope analyses
+Also looked at how many traits have over 4 populations on both the north and south slope (48)
 ```{r ratio of north and south slope pops}
 slope.ratio<-new.data %>% 
   group_by(TraitID) %>% 
@@ -56,35 +55,20 @@ slope.ratio %>%
 
 #can we use a subset to look at traits that have enough north and south to have a R2 for each?
 test<-slope.ratio %>% 
-  filter((South>4 & North>4) |  (North == 0 | South == 0 )) #220 with over 4 in each slope or only one slope
+  filter((South>4 & North>4) |  (North == 0 | South == 0 )) #302 with over 4 in each slope or only one slope
 
-test<-slope.ratio %>% 
-  filter((South>3 | North>3)) #326 traits with 4+
+ #231 south only with 4+ pops
+ #29 north only with 4+ pops
+traits<-test %>% 
+  filter(South>4 & North>4) %>% 
+  select(TraitID)
 
- #326 south only with 4+ pops
- #4 north only with 4+ pops (these all are also 4+ for south, two studies)
-
-traits.info<-new.data %>% 
-  group_by(TraitID, Slope) %>% 
-  summarise(South = sum(Slope=="South"), North = sum(Slope=="North"), HighPred = sum(Predation=="High"), LowPred = sum(Predation=="Low"))
-
-traits<-traits.info %>% 
-  filter(HighPred>1 & LowPred>1) %>% 
-  drop_na() %>% 
-  filter(Slope=="South")
-
-traits_N<-traits.info %>% 
-  filter(HighPred>1 & LowPred>1) %>% 
-  drop_na() %>% 
-  filter(Slope=="North")
-
-traits<-left_join(traits, new.data, by = "TraitID") #use this for within slope R2 (named TraitR2_South.csv)
-traits_N<-left_join(traits_N, new.data, by = "TraitID") #use this for within slope R2 (named TraitR2_North.csv)
+traits<-left_join(traits, new.data, by = "TraitID")
+summary(as.factor(traits$StudyID)) #only 2 studies :(
 ```
-these two traits are used for the within slope question and run through the anova loop
 
 
-```{r caroni and oropuche question}
+```{r caroni and oropuche question }
 #Caroni and Oropuche Question, how many traits have more than 2 hp and lp in both oropuche and caroni?
 traits_s<-new.data %>% 
   group_by(TraitID, Drainage, Predation) %>% 
@@ -99,18 +83,83 @@ traits_s %>%
 ```
 ## Introductions
 
-We need to tag sites that are known introductions (Damier, Turure, El Cedro, Arima post 2001 etc) with a tage different from studies that knowingly compare intro sites to their source population
+We need to tag sites that are known introductions (Damier, Turure, El Cedro, Arima post 2001 etc) with a stage different from studies that knowingly compare intro sites to their source population
 ```{r Introduction counts}
 #just to start, how many traits have an introduction
 new.data %>% 
   group_by(StudyID, TraitID) %>% 
   filter(Poptype=="Introduction") %>% 
-  count(StudyID)
-  tally() %>% 
+  count(StudyID)  %>%
+  tally() 
   
 #there's 111 traits with at least one introduction in them, 11 StudyIDs
 ```
 
+## Subsets for Among and Within
+
+rewrite traits_s or traits_d as new.data and run through anova loop!
+```{r subsets for among and within questions}
+# How many pops have more than 2 hp and lp in south
+ids<-new.data %>%
+  group_by(TraitID, Slope, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for each Slope within a trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Slope))>1) %>% #selects traits with multiple slopes
+  filter(Slope == "South") %>% #select only South pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  select(TraitID)
+
+traits_s<-new.data %>% 
+  filter(TraitID %in% ids$TraitID) %>% 
+  filter(Slope== "South") # 204 traits, done and on drive
+
+# How many pops have more than 2 hp and lp in caroni
+ids_south<-new.data %>%
+  group_by(TraitID, Slope, Predation) %>%
+  tally() %>% 
+  group_by(TraitID) %>% 
+  filter(Slope == "South") %>%
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>%
+  filter(!duplicated(TraitID)) %>% 
+  select(TraitID) #432 traits total, use this to select traits with enough south pops to be viable for drainage analysis
+
+ids_d<-new.data %>%
+  filter(TraitID %in% ids_south$TraitID) %>% 
+  filter(Slope == "South") %>% #only use south pops
+  group_by(TraitID, Drainage, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for each driange within a trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Drainage))>1) %>% #selects traits with both drainages
+  filter(Drainage == "Caroni") %>% #select only caroni pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  select(TraitID)
+
+traits_d<-new.data %>%
+  filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
+  filter(Drainage == "Caroni") # 317 traits
+
+#Introductions
+
+ids_i<-new.data %>% 
+  group_by(TraitID, Poptype, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Poptype))>1) %>% #selects traits with both natural and introduction populations
+  filter(Poptype == "Natural") %>% #select only natural pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  select(TraitID)
+
+traits_i<-new.data %>% 
+  filter(TraitID %in% ids_i$TraitID) %>% 
+  filter(Poptype == "Natural") #232 traits, done and on drive
+```
 ##
 
 Visualization and Plots
@@ -156,3 +205,24 @@ ggplot( aes(x = TraitType1, y = R.2, fill = Sex)) + geom_violin()
 
 ```
 ##
+
+
+```{r temp}
+library(tidyverse)
+dat <- read_excel("~/Downloads/metaanalysis_finaltraits.xlsx")
+dat<-dat %>% 
+  arrange(StudyID, StudyType, Trait, Sex, Predation)
+sex.length<-rle(as.character(paste(dat$Trait,dat$Sex,dat$StudyType)))  
+dat$TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
+
+test<-dat %>% 
+  group_by(Kingsolver_traits) %>% 
+  subset(!duplicated(TraitID))
+
+summary(as.factor(test$Kingsolver_traits))
+
+x<-subset(test, test$Kingsolver_traits=="Behaviour")
+
+
+```
+
