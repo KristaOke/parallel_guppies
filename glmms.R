@@ -166,14 +166,18 @@ data.for.models.nat.intro <- data.for.models.nat.intro[!duplicated(data.for.mode
 #                                                          #
 ##%######################################################%##
 
+## note that I have excluded 'Other' for all of the trait models
+## the values are super high so it's always significant and there have been some 
+## issues w convergence
 
 ## full models
 
 ## we can just use data.for.models.across because that is for both slopes
 full.trait.model <- glmer(R.2 ~ Kingsolver_traits + (1|Sex) + (1|StudyID), family = binomial, 
                           data = data.for.models.across[data.for.models.across$Kingsolver_traits %in% 
-                                                          c("Other_morphology", "Size", "Physiology", "Behaviour", "Other_life_history",
-                                                            "Colour"),])  # we don't include Other because it messes everything up
+                                                          c("Other_morphology", "Size", 
+                                                            "Physiology", "Behaviour", 
+                                                            "Other_life_history", "Colour"),])  
 full.sex.model <- glmer(R.2 ~ Sex + (1| Kingsolver_traits) +(1|StudyID), family = binomial, data = data.for.models.across)
 
 summary(full.trait.model)
@@ -181,9 +185,18 @@ summary(full.sex.model)
 
 ## these we run just to check (so we can say that even tho we had 2 models it would have been the same w one)
 full.trait.intxs <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial,
-                          data = data.for.models.across)
+                          data = data.for.models.across[data.for.models.across$Kingsolver_traits %in% 
+                                                          c("Other_morphology", "Size", 
+                                                            "Physiology", "Behaviour", 
+                                                            "Other_life_history", "Colour"),])
 full.trait.no.intxs <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial,
-                             data = data.for.models.across)
+                             data = data.for.models.across[data.for.models.across$Kingsolver_traits %in% 
+                                                             c("Other_morphology", "Size", 
+                                                               "Physiology", "Behaviour", 
+                                                               "Other_life_history","Colour"),])
+
+summary(full.trait.model)
+summary(full.trait.no.intxs)
 
 data.for.models %>% 
   filter(Kingsolver_traits != "Other") %>% 
@@ -203,35 +216,55 @@ data.for.models %>%
 
 hist(data.for.models.across$R.2)
 
-across.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, data = data.for.models.across)
-across.model.2 <- glmer(R.2 ~ Sex + (1|StudyID), family = binomial, data = data.for.models.across)
-across.model.3 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID), family = binomial, data = data.for.models.across)
-across.model.4 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), family = binomial, 
-                        data =data.for.models.across[data.for.models.across$Kingsolver_traits %in% c(
-                          "Other_morphology", "Size", "Physiology", "Behaviour", "Other_life_history", "Colour"
-                        ),])
-across.model.5 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.across)
-## rank deficient/doesn't converge
-#across.model.6 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, data = data.for.models.across)
+across.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
+                      data = data.for.models.across[data.for.models.across$Kingsolver_traits %in%
+                                                      c("Other_morphology", "Size", 
+                                                        "Physiology", "Behaviour", 
+                                                        "Other_life_history", "Colour"),])
 
-summary(across.model.4)
-summary(across.model.5)
+across.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), family = binomial, 
+                        data =data.for.models.across[data.for.models.across$Kingsolver_traits %in%
+                                                       c("Other_morphology", "Size", 
+                                                         "Physiology", "Behaviour", 
+                                                         "Other_life_history", "Colour"),])
+
+across.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.across)
+
+## rank deficient/doesn't converge
+across.model.4 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, 
+                        data = data.for.models.across[data.for.models.across$Kingsolver_traits %in%
+                                                        c("Other_morphology", "Size", 
+                                                              "Physiology", "Behaviour", 
+                                                              "Other_life_history", "Colour"),])
+
+summary(across.model.2)
+summary(across.model.3)
 
 hist(data.for.models.south$R.2)
 
-south.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, data = data.for.models.south)
-south.model.2 <- glmer(R.2 ~ Sex + (1|StudyID), family = binomial, data = data.for.models.south)
-south.model.3 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID), family = binomial, data = data.for.models.south)
-south.model.4 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), family = binomial, 
-                       data =data.for.models.south[data.for.models.south$Kingsolver_traits %in% c(
-                         "Other_morphology", "Size", "Physiology", "Behaviour", "Other_life_history", "Colour"
-                       ),])
-south.model.5 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.south)
-## rank deficient/wont converge
-# south.model.6 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, data = data.for.models.south)
+south.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
+                     data = data.for.models.south[data.for.models.south$Kingsolver_traits %in% 
+                                                    c( "Other_morphology", "Size", 
+                                                       "Physiology", "Behaviour", 
+                                                       "Other_life_history", "Colour"),])
 
-summary(south.model.4)  # note the million warning messages???
-summary(south.model.5)
+south.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), family = binomial, 
+                       data =data.for.models.south[data.for.models.south$Kingsolver_traits %in% 
+                                                     c( "Other_morphology", "Size", 
+                                                        "Physiology", "Behaviour", 
+                                                        "Other_life_history", "Colour"),])
+
+south.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, 
+                       data = data.for.models.south)
+
+soouth.model.4 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, 
+                        data = data.for.models.south[data.for.models.south$Kingsolver_traits %in% 
+                                                       c( "Other_morphology", "Size", 
+                                                          "Physiology", "Behaviour", 
+                                                          "Other_life_history", "Colour"),])
+
+summary(south.model.2)  # note the million warning messages???
+summary(south.model.3)
 
 data.for.models.south %>% 
   filter(Kingsolver_traits !="Other") %>% 
@@ -248,11 +281,15 @@ data.for.models.south %>%
   theme_bw()
 
 ggplot(data = data.for.models.across[data.for.models.across$Kingsolver_traits %in% 
-                                       c("Colour", "Behaviour", "Other_morphology", "Other_life_history", "Physiology", "Size"),],
+                                       c("Colour", "Behaviour", 
+                                         "Other_morphology", "Other_life_history", 
+                                         "Physiology", "Size"),],
        aes(y = R.2, color = "Across")) +
   geom_boxplot() +
   geom_boxplot(data = data.for.models.south[data.for.models.south$Kingsolver_traits %in% 
-                                              c("Colour", "Behaviour", "Other_morphology", "Other_life_history", "Physiology", "Size"),]
+                                              c("Colour", "Behaviour", 
+                                                "Other_morphology", "Other_life_history", 
+                                                "Physiology", "Size"),]
                , aes(x = 1, y = R.2, color = "South"), position = position_dodge2()) +
   facet_wrap(~Kingsolver_traits) +
   theme_classic()
@@ -266,19 +303,30 @@ ggplot(data = data.for.models.across, aes(y = R.2, color = "Across")) +
 
 ## intro question
 
-intro.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, data = data.for.models.intro)
-intro.model.2 <- glmer(R.2 ~ Sex + (1|StudyID), family = binomial, data = data.for.models.intro)
-intro.model.3 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID), family = binomial, data = data.for.models.intro)
-intro.model.4 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), 
-                       family = binomial, 
-                       data =data.for.models.intro[data.for.models.intro$Kingsolver_traits %in% c(
-                         "Other_morphology", "Size", "Physiology", "Behaviour", "Other_life_history", "Colour"
-                       ),])
-intro.model.5 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.intro)
-intro.model.6 <- glmer(R.2 ~ Sex*Kingsolver_traits + (1|StudyID), family = binomial, data = data.for.models.intro)
+intro.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
+                     data = data.for.models.intro[data.for.models.intro$Kingsolver_traits %in%
+                                                    c("Other_morphology", "Size", 
+                                                      "Physiology", "Behaviour", 
+                                                      "Other_life_history", "Colour"),])
 
-summary(intro.model.4)
-summary(intro.model.5)
+intro.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), 
+                       family = binomial, 
+                       data =data.for.models.intro[data.for.models.intro$Kingsolver_traits %in% 
+                                                     c("Other_morphology", "Size", 
+                                                       "Physiology", "Behaviour", 
+                                                       "Other_life_history", "Colour"),])
+
+intro.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, 
+                       data = data.for.models.intro)
+
+intro.model.4 <- glmer(R.2 ~ Sex*Kingsolver_traits + (1|StudyID), family = binomial, 
+                       data = data.for.models.intro[data.for.models.intro$Kingsolver_traits %in%
+                                                      c("Other_morphology", "Size", 
+                                                        "Physiology", "Behaviour", 
+                                                        "Other_life_history", "Colour"),])
+
+summary(intro.model.2)
+summary(intro.model.3)
 
 ggplot(data = data.for.models.across, aes(y = R.2, color = "Both")) +
   geom_boxplot() + 
@@ -293,37 +341,55 @@ ggplot(data = data.for.models.across, aes(x = 0, y = R.2, color = "Both")) +
 
 ## evolutionary history question
 
-among.drainage.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, data = data.for.models.among.drainage)
-among.drainage.model.2 <- glmer(R.2 ~ Sex + (1|StudyID), family = binomial, data = data.for.models.among.drainage)
-among.drainage.model.3 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID), family = binomial, data = data.for.models.among.drainage)
-among.drainage.model.4 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), 
+## there are some issues w convergence in caroni.model.2 but these go away if we exclude colour
+
+among.drainage.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
+                              data = data.for.models.among.drainage[data.for.models.among.drainage$Kingsolver_traits %in% 
+                                                                      c( "Other_morphology", "Size", 
+                                                                         "Physiology", "Behaviour", 
+                                                                         "Other_life_history", "Colour"),])
+
+among.drainage.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), 
                                 family = binomial, 
-                                data =data.for.models.among.drainage[data.for.models.among.drainage$Kingsolver_traits %in% c(
-                                  "Other_morphology", "Size", "Physiology", "Behaviour", "Other_life_history"
-                                  #, "Colour"
-                                ),])
-among.drainage.model.5 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.among.drainage)
+                                data =data.for.models.among.drainage[data.for.models.among.drainage$Kingsolver_traits %in% 
+                                                                       c( "Other_morphology", "Size", 
+                                                                          "Physiology", "Behaviour", 
+                                                                          "Other_life_history", "Colour"),])
 
-summary(among.drainage.model.4)
-summary(among.drainage.model.5)
+among.drainage.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.among.drainage)
 
-caroni.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, data = data.for.models.caroni)
-caroni.model.2 <- glmer(R.2 ~ Sex + (1|StudyID), family = binomial, data = data.for.models.caroni)
-caroni.model.3 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID), family = binomial, data = data.for.models.caroni)
-caroni.model.4 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), 
+among.drainage.model.4 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, 
+                              data = data.for.models.among.drainage[data.for.models.among.drainage$Kingsolver_traits %in% 
+                                                                      c("Other_morphology", "Size", 
+                                                                         "Physiology", "Behaviour", 
+                                                                         "Other_life_history", "Colour"),])
+
+summary(among.drainage.model.2)
+summary(among.drainage.model.3)
+
+caroni.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
+                      data = data.for.models.caroni[data.for.models.caroni$Kingsolver_traits %in% 
+                                                      c("Other_morphology", "Size",
+                                                        "Physiology",  "Behaviour", 
+                                                        "Other_life_history",  "Colour"),])
+
+caroni.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), 
                         family = binomial, 
-                        data =data.for.models.caroni[data.for.models.caroni$Kingsolver_traits %in% c(
-                          "Other_morphology", 
-                          "Size", 
-                          "Physiology", 
-                          "Behaviour", 
-                          "Other_life_history" 
-                          # , "Colour"
-                        ),])
-caroni.model.5 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.caroni)
+                        data =data.for.models.caroni[data.for.models.caroni$Kingsolver_traits %in% 
+                                                       c("Other_morphology", "Size",
+                                                         "Physiology",  "Behaviour", 
+                                                         "Other_life_history",  "Colour"),])
 
-summary(caroni.model.4)
-summary(caroni.model.5)
+caroni.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.caroni)
+
+caroni.model.4 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, 
+                      data = data.for.models.caroni[data.for.models.caroni$Kingsolver_traits %in% 
+                                                      c("Other_morphology", "Size",
+                                                        "Physiology",  "Behaviour", 
+                                                        "Other_life_history",  "Colour"),])
+
+summary(caroni.model.2)
+summary(caroni.model.3)
 
 data.for.models.among.drainage %>% 
   filter(Kingsolver_traits != "Other") %>% 
