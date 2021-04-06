@@ -41,17 +41,13 @@ library(sjPlot)
 # setwd("")
 # wd<- getwd()
 
+
+## import and tidy 
+
 # These are all the updated sheets on the Drive
 # spreadsheet.data is the data extracted for the meta-analysis
 # R2.data.among are the output of the ANOVA loops
 
-
-
-# set working directory
-# setwd("")
-# wd<- getwd()
-
-# Import and tidy
 spreadsheet.data <- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")
 R2.data.among <- read.csv(paste(wd,'/Data/TraitR2_among.csv',sep=""), header=TRUE, sep=",")
 R2.data.south <- read.csv(paste(wd,'/Data/TraitR2_south.csv',sep=""), header=TRUE, sep=",")
@@ -97,7 +93,7 @@ data.for.models.south <- left_join(spreadsheet.data, R2.data.south,  by = "Trait
 ## again, filter by sex to remove duplicates
 data.for.models.south <- filter(data.for.models.south, Sex %in% c("M", "F"))
 
-## here, filter by slope (doesn't really matter? Because ANOVA loops values are only for South)
+## here, filter by slope (doesn't really matter? Because ANOVA calculated only for South and TraitID not slope specific)
 data.for.models.south <- data.for.models.south %>% filter(Slope == "South")
 
 ## remove duplicates so that we only have one R2 value per trait
@@ -109,9 +105,6 @@ data.for.models.across <- semi_join(data.for.models.across, data.for.models.sout
 
 ## remove duplicates in the across model, again so only 1 R2 per traitID
 data.for.models.across <- data.for.models.across[!duplicated(data.for.models.across$TraitID),]
-
-## compare the data frames to make sure I didn't muck it up
-summary(comparedf(data.for.models.across, data.for.models.south))
 
 ## QUESTION 2 EVOUTIONARY HISTORY
 
@@ -139,9 +132,6 @@ data.for.models.among.drainage <- semi_join(data.for.models.among.drainage, data
 
 ## remove duplicates so only 1 R2 per traitID
 data.for.models.among.drainage <- data.for.models.among.drainage[!duplicated(data.for.models.among.drainage$TraitID),]
-
-## make sure everything is mostly the same except R2
-summary(comparedf(data.for.models.caroni, data.for.models.among.drainage))
 
 ## QUESTION 3 INTRODUCTIONS
 
