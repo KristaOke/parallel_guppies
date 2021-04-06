@@ -68,6 +68,12 @@ spreadsheet.data$Collection_end <- as.factor(spreadsheet.data$Collection_end)
 spreadsheet.data$Published <- as.factor(spreadsheet.data$Published)
 spreadsheet.data$TraitID <- as.factor(spreadsheet.data$TraitID)
 
+spreadsheet.data$Sex <- as.factor(spreadsheet.data$Sex)
+spreadsheet.data$TraitID <- as.factor(spreadsheet.data$TraitID)
+spreadsheet.data$Slope <- as.factor(spreadsheet.data$Slope)
+spreadsheet.data$Drainage <- as.factor(spreadsheet.data$Drainage)
+spreadsheet.data$Kingsolver_traits <- as.factor(spreadsheet.data$Kingsolver_traits)
+
 ## QUESTION 1 ECOLOGY
 
 # First we make an "across" data frame for both slopes
@@ -77,12 +83,6 @@ data.for.models <- left_join(spreadsheet.data, R2.data.among,  by = "TraitID")
 
 ## filter by sex (because duplicates in 'Both')
 data.for.models <- filter(data.for.models, Sex %in% c("M", "F"))
-
-data.for.models$Sex <- as.factor(data.for.models$Sex)
-data.for.models$TraitID <- as.factor(data.for.models$TraitID)
-data.for.models$Slope <- as.factor(data.for.models$Slope)
-data.for.models$Drainage <- as.factor(data.for.models$Drainage)
-data.for.models$Kingsolver_traits <- as.factor(data.for.models$Kingsolver_traits)
 
 hist(data.for.models$R.2)  
 
@@ -102,12 +102,6 @@ data.for.models.south <- data.for.models.south %>% filter(Slope == "South")
 
 ## remove duplicates so that we only have one R2 value per trait
 data.for.models.south <- data.for.models.south[!duplicated(data.for.models.south$TraitID),]
-
-data.for.models.south$Sex <- as.factor(data.for.models.south$Sex)
-data.for.models.south$TraitID <- as.factor(data.for.models.south$TraitID)
-data.for.models.south$Slope <- as.factor(data.for.models.south$Slope)
-data.for.models.south$Drainage <- as.factor(data.for.models.south$Drainage)
-data.for.models.south$Kingsolver_traits <- as.factor(data.for.models.south$Kingsolver_traits)
 
 ## semi-join (return all values in across where there are matches in south)
 ## (this ensures that the TraitIDs are the same in both data frames)
@@ -134,12 +128,6 @@ data.for.models.caroni <- data.for.models.caroni %>% filter(Drainage == "Caroni"
 ## remove duplicates so only 1 R2 per traitID
 data.for.models.caroni <- data.for.models.caroni[!duplicated(data.for.models.caroni$TraitID),]
 
-data.for.models.caroni$Sex <- as.factor(data.for.models.caroni$Sex)
-data.for.models.caroni$TraitID <- as.factor(data.for.models.caroni$TraitID)
-data.for.models.caroni$Slope <- as.factor(data.for.models.caroni$Slope)
-data.for.models.caroni$Drainage <- as.factor(data.for.models.caroni$Drainage)
-data.for.models.caroni$Kingsolver_traits <- as.factor(data.for.models.caroni$Kingsolver_traits)
-
 ## now we make a data frame for both caroni/oropuche
 ## combine R2 and spreadsheet data
 R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
@@ -151,12 +139,6 @@ data.for.models.among.drainage <- semi_join(data.for.models.among.drainage, data
 
 ## remove duplicates so only 1 R2 per traitID
 data.for.models.among.drainage <- data.for.models.among.drainage[!duplicated(data.for.models.among.drainage$TraitID),]
-
-data.for.models.among.drainage$Sex <- as.factor(data.for.models.among.drainage$Sex)
-data.for.models.among.drainage$TraitID <- as.factor(data.for.models.among.drainage$TraitID)
-data.for.models.among.drainage$Slope <- as.factor(data.for.models.among.drainage$Slope)
-data.for.models.among.drainage$Drainage <- as.factor(data.for.models.among.drainage$Drainage)
-data.for.models.among.drainage$Kingsolver_traits <- as.factor(data.for.models.among.drainage$Kingsolver_traits)
 
 ## make sure everything is mostly the same except R2
 summary(comparedf(data.for.models.caroni, data.for.models.among.drainage))
@@ -176,12 +158,6 @@ data.for.models.intro <- filter(data.for.models.intro, Poptype == "Introduction"
 
 ## remove duplciates so only 1 R2 per traitID
 data.for.models.intro <- data.for.models.intro[!duplicated(data.for.models.intro$TraitID),]
-
-data.for.models.intro$Sex <- as.factor(data.for.models.intro$Sex)
-data.for.models.intro$TraitID <- as.factor(data.for.models.intro$TraitID)
-data.for.models.intro$Slope <- as.factor(data.for.models.intro$Slope)
-data.for.models.intro$Drainage <- as.factor(data.for.models.intro$Drainage)
-data.for.models.intro$Kingsolver_traits <- as.factor(data.for.models.intro$Kingsolver_traits)
 
 ## now we make intro and natural
 ## same as above so can just use data.for.models
