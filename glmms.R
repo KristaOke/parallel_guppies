@@ -115,7 +115,7 @@ data.for.models.caroni <- left_join(spreadsheet.data, R2.data.caroni,  by = "Tra
 ## filter by sex to remove duplicates from ('Both')
 data.for.models.caroni <- filter(data.for.models.caroni, Sex %in% c("M", "F"))
 
-## caroni only (again, idk if this really matters cuz ANOVA was run w only caroni)
+## caroni only (again, idk if this really matters cuz ANOVA was run w only caroni and TraitID not specific 2 drainage)
 data.for.models.caroni <- data.for.models.caroni %>% filter(Drainage == "Caroni")
 
 ## remove duplicates so only 1 R2 per traitID
