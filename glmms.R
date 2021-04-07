@@ -85,20 +85,12 @@ data.for.models <- filter(data.for.models, Sex %in% c("M", "F"))
 # rename across slope set - because data.for.models will be used below too
 data.for.models.across <- data.for.models
 
-## remove duplicates so that we only have one R2 value per trait
-data.for.models.south <- data.for.models.south[!duplicated(data.for.models.south$TraitID),]
-
-## semi-join (return all values in across where there are matches in south)
-## (this ensures that the TraitIDs are the same in both data frames)
-data.for.models.across <- semi_join(data.for.models.across, data.for.models.south, by = "TraitID")
-
-## remove duplicates in the across model, again so only 1 R2 per traitID
-data.for.models.across <- data.for.models.across[!duplicated(data.for.models.across$TraitID),]
-
 ## QUESTION 2 EVOUTIONARY HISTORY
 
 ## first, make a data frame for caroni only
 R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
+R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
+
 data.for.models.caroni <- left_join(spreadsheet.data, R2.data.caroni,  by = "TraitID")
 
 ## filter by sex to remove duplicates from ('Both')
@@ -109,18 +101,6 @@ data.for.models.caroni <- data.for.models.caroni %>% filter(Drainage == "Caroni"
 
 ## remove duplicates so only 1 R2 per traitID
 data.for.models.caroni <- data.for.models.caroni[!duplicated(data.for.models.caroni$TraitID),]
-
-## now we make a data frame for both caroni/oropuche
-## combine R2 and spreadsheet data
-R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
-data.for.models.among.drainage <- left_join(spreadsheet.data, R2.data.among.drainage,  by = "TraitID")
-
-## semi_join to return all values from both drainages that match values for caroni
-## to make sure that the traitIDs are the same
-data.for.models.among.drainage <- semi_join(data.for.models.among.drainage, data.for.models.caroni, by = "TraitID")
-
-## remove duplicates so only 1 R2 per traitID
-data.for.models.among.drainage <- data.for.models.among.drainage[!duplicated(data.for.models.among.drainage$TraitID),]
 
 ## QUESTION 3 INTRODUCTIONS
 
