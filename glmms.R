@@ -75,6 +75,8 @@ spreadsheet.data$Kingsolver_traits <- as.factor(spreadsheet.data$Kingsolver_trai
 # First we make an "across" data frame for both slopes
 ## combine R2 and spreadsheet data
 R2.data.among$TraitID <- as.factor(R2.data.among$TraitID)
+R2.data.among$method <- "all"
+R2.data.south$method <- "south"
 data.for.models <- left_join(spreadsheet.data, R2.data.among,  by = "TraitID")
 
 ## filter by sex (because duplicates in 'Both')
