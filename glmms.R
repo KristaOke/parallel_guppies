@@ -75,28 +75,15 @@ spreadsheet.data$Kingsolver_traits <- as.factor(spreadsheet.data$Kingsolver_trai
 # First we make an "across" data frame for both slopes
 ## combine R2 and spreadsheet data
 R2.data.among$TraitID <- as.factor(R2.data.among$TraitID)
+R2.data.south$TraitID <- as.factor(R2.data.south$TraitID)
 R2.data.among$method <- "all"
 R2.data.south$method <- "south"
-data.for.models <- left_join(spreadsheet.data, R2.data.among,  by = "TraitID")
 
 ## filter by sex (because duplicates in 'Both')
 data.for.models <- filter(data.for.models, Sex %in% c("M", "F"))
 
-hist(data.for.models$R.2)  
-
 # rename across slope set - because data.for.models will be used below too
 data.for.models.across <- data.for.models
-
-## now we make a South only data  frame
-## combine R2 and spreadsheet data
-R2.data.south$TraitID <- as.factor(R2.data.south$TraitID)
-data.for.models.south <- left_join(spreadsheet.data, R2.data.south,  by = "TraitID")
-
-## again, filter by sex to remove duplicates
-data.for.models.south <- filter(data.for.models.south, Sex %in% c("M", "F"))
-
-## here, filter by slope (doesn't really matter? Because ANOVA calculated only for South and TraitID not slope specific)
-data.for.models.south <- data.for.models.south %>% filter(Slope == "South")
 
 ## remove duplicates so that we only have one R2 value per trait
 data.for.models.south <- data.for.models.south[!duplicated(data.for.models.south$TraitID),]
