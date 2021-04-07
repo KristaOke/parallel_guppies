@@ -79,6 +79,8 @@ R2.data.south$TraitID <- as.factor(R2.data.south$TraitID)
 R2.data.among$method <- "all"
 R2.data.south$method <- "south"
 
+#### merge spreadsheet data w BOTH of these R2 to get an ecology data spreadsheet
+
 ## filter by sex (because duplicates in 'Both')
 data.for.models <- filter(data.for.models, Sex %in% c("M", "F"))
 
