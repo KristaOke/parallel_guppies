@@ -183,6 +183,9 @@ full.sex.model <- glmer(R.2 ~ Sex + (1| Kingsolver_traits) +(1|StudyID), family 
 summary(full.trait.model)
 summary(full.sex.model)
 
+library(car)
+Anova(full.trait.model, type = "III")
+
 ## these we run just to check (so we can say that even tho we had 2 models it would have been the same w one)
 full.trait.intxs <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial,
                           data = data.for.models.across[data.for.models.across$Kingsolver_traits %in% 
@@ -194,6 +197,10 @@ full.trait.no.intxs <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family
                                                              c("Other_morphology", "Size", 
                                                                "Physiology", "Behaviour", 
                                                                "Other_life_history","Colour"),])
+
+Anova(full.trait.intxs, type = "III")  # justify removing the interaction 
+Anova(full.trait.no.intxs, type = "III")
+
 
 summary(full.trait.model)
 summary(full.trait.no.intxs)
@@ -217,18 +224,22 @@ data.for.models %>%
 hist(data.for.models.across$R.2)
 
 across.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
+                      control = glmerControl(optimizer = "bobyqa"),
                       data = data.for.models.across[data.for.models.across$Kingsolver_traits %in%
                                                       c("Other_morphology", "Size", 
                                                         "Physiology", "Behaviour", 
                                                         "Other_life_history", "Colour"),])
 
 across.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), family = binomial, 
+                        control = glmerControl(optimizer = "bobyqa"),
                         data =data.for.models.across[data.for.models.across$Kingsolver_traits %in%
                                                        c("Other_morphology", "Size", 
                                                          "Physiology", "Behaviour", 
                                                          "Other_life_history", "Colour"),])
 
-across.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.across)
+across.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, 
+                        control = glmerControl(optimizer = "bobyqa"),
+                        data = data.for.models.across)
 
 ## rank deficient/doesn't converge
 across.model.4 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, 
@@ -241,6 +252,7 @@ summary(across.model.2)
 summary(across.model.3)
 
 hist(data.for.models.south$R.2)
+
 
 south.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
                      data = data.for.models.south[data.for.models.south$Kingsolver_traits %in% 
