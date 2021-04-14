@@ -72,336 +72,117 @@ spreadsheet.data$Kingsolver_traits <- as.factor(spreadsheet.data$Kingsolver_trai
 
 ## QUESTION 1 ECOLOGY
 
-# First we make an "across" data frame for both slopes
 ## combine R2 and spreadsheet data
 R2.data.among$TraitID <- as.factor(R2.data.among$TraitID)
 R2.data.south$TraitID <- as.factor(R2.data.south$TraitID)
 R2.data.among$method <- "all"
 R2.data.south$method <- "south"
 
-#### merge spreadsheet data w BOTH of these R2 to get an ecology data spreadsheet
+data.for.models <- left_join(spreadsheet.data, R2.data.among, by = "TraitID")
+data.for.ecology.models <- merge(data.for.models, R2.data.south[, c("TraitID", "R.2", "method")], by = "TraitID")
 
-## filter by sex (because duplicates in 'Both')
-data.for.models <- filter(data.for.models, Sex %in% c("M", "F"))
+## remove duplicates so one traitID (yes - I know I need to fix this!)
+data.for.ecology.models <- data.for.ecology.models[!duplicated(data.for.ecology.models$TraitID),]
 
-# rename across slope set - because data.for.models will be used below too
-data.for.models.across <- data.for.models
+## rename so that we can identify which R2 is from across and which from south
+data.for.ecology.models <- rename(data.for.ecology.models, R2south = R.2.y)
+data.for.ecology.models <- rename(data.for.ecology.models, R2across = R.2.x)
 
-## QUESTION 2 EVOUTIONARY HISTORY
+## convert to long so that there are two R2 values per traitID
+data.for.ecology.models <- data.for.ecology.models %>% 
+  pivot_longer(c("R2south", "R2across"), names_to = "R2source", values_to = "R2")
 
-## first, make a data frame for caroni only
-R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
-R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
+## create separate dataframes for M/F
+ecology.data.males <- data.for.ecology.models %>% filter(Sex == "M" & Kingsolver_traits !="Other")
+ecology.data.females <- data.for.ecology.models %>% filter(Sex == "F" & Kingsolver_traits !="Other")
 
-data.for.models.caroni <- left_join(spreadsheet.data, R2.data.caroni,  by = "TraitID")
+## models
+## remember that R2 source tells us if R2 was calculated across or within (here: across/south)
 
-## filter by sex to remove duplicates from ('Both')
-data.for.models.caroni <- filter(data.for.models.caroni, Sex %in% c("M", "F"))
+(ecology.model.males <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+                              data = ecology.data.males)) %>% summary()
 
-## caroni only (again, idk if this really matters cuz ANOVA was run w only caroni and TraitID not specific 2 drainage)
-data.for.models.caroni <- data.for.models.caroni %>% filter(Drainage == "Caroni")
+(ecology.model.females <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+                                data = ecology.data.females)) %>% summary()
 
-## remove duplicates so only 1 R2 per traitID
-data.for.models.caroni <- data.for.models.caroni[!duplicated(data.for.models.caroni$TraitID),]
+(ecology.males.glm <- glm(R2 ~ R2source, family = binomial,
+                          data = ecology.data.males)) %>% summary()
 
-## QUESTION 3 INTRODUCTIONS
+(ecology.females.glm <- glm(R2 ~ R2source, family = binomial,
+                            data = ecology.data.females)) %>% summary()
 
-## first we will make intro only spreadsheet
-## combine spreadsheet data w R2 for intro only ANOVA
+## QUESTION TIME FRAMES (INTROS VS NATURAL)
 R2.data.intro$TraitID <- as.factor(R2.data.intro$TraitID)
-data.for.models.intro <- left_join(spreadsheet.data, R2.data.intro,  by = "TraitID")
+R2.data.intro$method <- "intro"
 
-## filter for M/F so no duplicates for 'Both'
-data.for.models.intro <- data.for.models.intro %>% filter(Sex %in% c("M", "F"))
+data.for.time.models <- merge(data.for.models, R2.data.intro[, c("TraitID", "R.2", "method")], by = "TraitID")
 
-## only intro
-data.for.models.intro <- filter(data.for.models.intro, Poptype == "Introduction")
+## remove duplicates so one traitID (yes - I know I need to fix this!)
+data.for.time.models <- data.for.time.models[!duplicated(data.for.time.models$TraitID),]
 
-## remove duplciates so only 1 R2 per traitID
-data.for.models.intro <- data.for.models.intro[!duplicated(data.for.models.intro$TraitID),]
+## rename so that we can identify which R2 is from across and which from intro
+data.for.time.models <- rename(data.for.time.models, R2intro = R.2.y)
+data.for.time.models <- rename(data.for.time.models, R2across = R.2.x)
 
-## now we make intro and natural
-## same as above so can just use data.for.models
-data.for.models.nat.intro <- data.for.models
+## convert to long so that there are two R2 values per traitID
+data.for.time.models <- data.for.time.models %>% 
+  pivot_longer(c("R2intro", "R2across"), names_to = "R2source", values_to = "R2")
 
-## semi_join to return all values for both nat/intro that match traitID for intro
-data.for.models.nat.intro <- semi_join(data.for.models.nat.intro, data.for.models.intro, by = "TraitID")
+## create separate dataframes for M/F
+time.data.males <- data.for.time.models %>% filter(Sex == "M" & Kingsolver_traits !="Other")
+time.data.females <- data.for.time.models %>% filter(Sex == "F" & Kingsolver_traits !="Other")
 
-## remove duplicates so only 1 R2 per traitID
-data.for.models.nat.intro <- data.for.models.nat.intro[!duplicated(data.for.models.nat.intro$TraitID),]
+## models
+## remember that R2 source tells us if R2 was calculated across or within (across/intro)
+(time.model.males <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+                           data = time.data.males)) %>% summary()
 
+(time.model.females <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+                             data = time.data.females)) %>% summary()
 
-##%######################################################%##
-#                                                          #
-####                    GOOD MODELS                     ####
-#                                                          #
-##%######################################################%##
+(time.males.glm <- glm(R2 ~ R2source, family = binomial,
+                       data = time.data.males)) %>% summary()
 
-## note that I have excluded 'Other' for all of the trait models
-## the values are super high so it's always significant and there have been some 
-## issues w convergence
+(time.females.glm <- glm(R2 ~ R2source, family = binomial,
+                         data = time.data.females)) %>% summary()
 
-## full models
+## QUESTION EVOLUTIONARY HISTORY (CARONI VS OROPUCHE)
+R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
+R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
+R2.data.among.drainage$method <- "both.drainages"
+R2.data.caroni$method <- "caroni"
 
-## we can just use data.for.models.across because that is for both slopes
-full.trait.model <- glmer(R.2 ~ Kingsolver_traits + (1|Sex) + (1|StudyID), family = binomial, 
-                          data = data.for.models.across[data.for.models.across$Kingsolver_traits %in% 
-                                                          c("Other_morphology", "Size", 
-                                                            "Physiology", "Behaviour", 
-                                                            "Other_life_history", "Colour"),])  
-full.sex.model <- glmer(R.2 ~ Sex + (1| Kingsolver_traits) +(1|StudyID), family = binomial, data = data.for.models.across)
+R2.data.among.drainage <- left_join(spreadsheet.data, R2.data.among.drainage, by = "TraitID")
+data.for.evolhist.models <- merge(data.for.models, R2.data.caroni[, c("TraitID", "R.2", "method")], by = "TraitID")
 
-summary(full.trait.model)
-summary(full.sex.model)
+## remove duplicates so one traitID (yes - I know I need to fix this!)
+data.for.evolhist.models <- data.for.evolhist.models[!duplicated(data.for.evolhist.models$TraitID),]
 
-library(car)
-Anova(full.trait.model, type = "III")
+## rename so that we can identify which R2 is from across and which from south
+data.for.evolhist.models <- rename(data.for.evolhist.models, R2caroni = R.2.y)
+data.for.evolhist.models <- rename(data.for.evolhist.models, R2bothdrainages = R.2.x)
 
-## these we run just to check (so we can say that even tho we had 2 models it would have been the same w one)
-full.trait.intxs <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial,
-                          data = data.for.models.across[data.for.models.across$Kingsolver_traits %in% 
-                                                          c("Other_morphology", "Size", 
-                                                            "Physiology", "Behaviour", 
-                                                            "Other_life_history", "Colour"),])
-full.trait.no.intxs <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial,
-                             data = data.for.models.across[data.for.models.across$Kingsolver_traits %in% 
-                                                             c("Other_morphology", "Size", 
-                                                               "Physiology", "Behaviour", 
-                                                               "Other_life_history","Colour"),])
+## convert to long so that there are two R2 values per traitID
+data.for.evolhist.models <- data.for.evolhist.models %>% 
+  pivot_longer(c("R2caroni", "R2bothdrainages"), names_to = "R2source", values_to = "R2")
 
-Anova(full.trait.intxs, type = "III")  # justify removing the interaction 
-Anova(full.trait.no.intxs, type = "III")
+## create separate dataframes for M/F
+evolhist.data.males <- data.for.evolhist.models %>% filter(Sex == "M" & Kingsolver_traits !="Other")
+evolhist.data.females <- data.for.evolhist.models %>% filter(Sex == "F" & Kingsolver_traits !="Other")
 
+##models
+## remember that R2 source tells us if R2 was calculated across or within (caroni+oropuche/caroni)
+(evolhist.model.males <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+                               data = evolhist.data.males)) %>% summary()
 
-summary(full.trait.model)
-summary(full.trait.no.intxs)
+(evolhist.model.females <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+                                 data = evolhist.data.females)) %>% summary()
 
-data.for.models %>% 
-  filter(Kingsolver_traits != "Other") %>% 
-  ggplot(aes(x = Kingsolver_traits, y = R.2, color = Kingsolver_traits)) +
-  geom_boxplot() +
-  theme_bw()
+(evolhist.males.glm <- glm(R2 ~ R2source, family = binomial,
+                           data = evolhist.data.males)) %>% summary()
 
-data.for.models %>% 
-  filter(Sex %in% c("M", "F")) %>% 
-  ggplot(aes(x = Sex, y = R.2, color = Sex)) +
-  geom_boxplot() +
-  theme_bw()
-
-## ecology question
-
-## this is the same as above I did it twice so they could have diff names lol
-
-hist(data.for.models.across$R.2)
-
-across.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
-                      control = glmerControl(optimizer = "bobyqa"),
-                      data = data.for.models.across[data.for.models.across$Kingsolver_traits %in%
-                                                      c("Other_morphology", "Size", 
-                                                        "Physiology", "Behaviour", 
-                                                        "Other_life_history", "Colour"),])
-
-across.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), family = binomial, 
-                        control = glmerControl(optimizer = "bobyqa"),
-                        data =data.for.models.across[data.for.models.across$Kingsolver_traits %in%
-                                                       c("Other_morphology", "Size", 
-                                                         "Physiology", "Behaviour", 
-                                                         "Other_life_history", "Colour"),])
-
-across.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, 
-                        control = glmerControl(optimizer = "bobyqa"),
-                        data = data.for.models.across)
-
-## rank deficient/doesn't converge
-across.model.4 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, 
-                        data = data.for.models.across[data.for.models.across$Kingsolver_traits %in%
-                                                        c("Other_morphology", "Size", 
-                                                              "Physiology", "Behaviour", 
-                                                              "Other_life_history", "Colour"),])
-
-summary(across.model.2)
-summary(across.model.3)
-
-hist(data.for.models.south$R.2)
-
-
-south.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
-                     data = data.for.models.south[data.for.models.south$Kingsolver_traits %in% 
-                                                    c( "Other_morphology", "Size", 
-                                                       "Physiology", "Behaviour", 
-                                                       "Other_life_history", "Colour"),])
-
-south.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), family = binomial, 
-                       data =data.for.models.south[data.for.models.south$Kingsolver_traits %in% 
-                                                     c( "Other_morphology", "Size", 
-                                                        "Physiology", "Behaviour", 
-                                                        "Other_life_history", "Colour"),])
-
-south.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, 
-                       data = data.for.models.south)
-
-soouth.model.4 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, 
-                        data = data.for.models.south[data.for.models.south$Kingsolver_traits %in% 
-                                                       c( "Other_morphology", "Size", 
-                                                          "Physiology", "Behaviour", 
-                                                          "Other_life_history", "Colour"),])
-
-summary(south.model.2)  # note the million warning messages???
-summary(south.model.3)
-
-data.for.models.south %>% 
-  filter(Kingsolver_traits !="Other") %>% 
-  ggplot(aes(x = Kingsolver_traits, y = R.2)) +
-  geom_boxplot(aes(color = Kingsolver_traits)) +
-  theme(legend.position = "none") +
-  theme_bw()
-
-data.for.models.south %>% 
-  filter(Sex %in% c("M", "F")) %>% 
-  ggplot(aes(x = Sex, y = R.2)) +
-  geom_boxplot(aes(color = Sex)) +
-  theme(legend.position = "none") +
-  theme_bw()
-
-ggplot(data = data.for.models.across[data.for.models.across$Kingsolver_traits %in% 
-                                       c("Colour", "Behaviour", 
-                                         "Other_morphology", "Other_life_history", 
-                                         "Physiology", "Size"),],
-       aes(y = R.2, color = "Across")) +
-  geom_boxplot() +
-  geom_boxplot(data = data.for.models.south[data.for.models.south$Kingsolver_traits %in% 
-                                              c("Colour", "Behaviour", 
-                                                "Other_morphology", "Other_life_history", 
-                                                "Physiology", "Size"),]
-               , aes(x = 1, y = R.2, color = "South"), position = position_dodge2()) +
-  facet_wrap(~Kingsolver_traits) +
-  theme_classic()
-
-ggplot(data = data.for.models.across, aes(y = R.2, color = "Across")) +
-  geom_boxplot() +
-  geom_boxplot(data = data.for.models.south, 
-               aes(x = 1, y = R.2, color = "South"), position = position_dodge2()) +
-  theme_classic() +
-  facet_wrap(~Sex)
-
-## intro question
-
-intro.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
-                     data = data.for.models.intro[data.for.models.intro$Kingsolver_traits %in%
-                                                    c("Other_morphology", "Size", 
-                                                      "Physiology", "Behaviour", 
-                                                      "Other_life_history", "Colour"),])
-
-intro.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), 
-                       family = binomial, 
-                       data =data.for.models.intro[data.for.models.intro$Kingsolver_traits %in% 
-                                                     c("Other_morphology", "Size", 
-                                                       "Physiology", "Behaviour", 
-                                                       "Other_life_history", "Colour"),])
-
-intro.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, 
-                       data = data.for.models.intro)
-
-intro.model.4 <- glmer(R.2 ~ Sex*Kingsolver_traits + (1|StudyID), family = binomial, 
-                       data = data.for.models.intro[data.for.models.intro$Kingsolver_traits %in%
-                                                      c("Other_morphology", "Size", 
-                                                        "Physiology", "Behaviour", 
-                                                        "Other_life_history", "Colour"),])
-
-summary(intro.model.2)
-summary(intro.model.3)
-
-ggplot(data = data.for.models.across, aes(y = R.2, color = "Both")) +
-  geom_boxplot() + 
-  geom_boxplot(data = data.for.models.intro, aes(x = 1, y = R.2, color = "Intro")) +
-  facet_wrap(~Kingsolver_traits) + theme_classic()
-
-ggplot(data = data.for.models.across, aes(x = 0, y = R.2, color = "Both")) +
-  geom_boxplot() + 
-  geom_boxplot(data = data.for.models.intro, aes(x = 1, y = R.2, color = "Intro")) +
-  theme_classic() +
-  facet_wrap(~Sex)
-
-## evolutionary history question
-
-## there are some issues w convergence in caroni.model.2 but these go away if we exclude colour
-
-among.drainage.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
-                              data = data.for.models.among.drainage[data.for.models.among.drainage$Kingsolver_traits %in% 
-                                                                      c( "Other_morphology", "Size", 
-                                                                         "Physiology", "Behaviour", 
-                                                                         "Other_life_history", "Colour"),])
-
-among.drainage.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), 
-                                family = binomial, 
-                                data =data.for.models.among.drainage[data.for.models.among.drainage$Kingsolver_traits %in% 
-                                                                       c( "Other_morphology", "Size", 
-                                                                          "Physiology", "Behaviour", 
-                                                                          "Other_life_history", "Colour"),])
-
-among.drainage.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.among.drainage)
-
-among.drainage.model.4 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, 
-                              data = data.for.models.among.drainage[data.for.models.among.drainage$Kingsolver_traits %in% 
-                                                                      c("Other_morphology", "Size", 
-                                                                         "Physiology", "Behaviour", 
-                                                                         "Other_life_history", "Colour"),])
-
-summary(among.drainage.model.2)
-summary(among.drainage.model.3)
-
-caroni.model <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), family = binomial, 
-                      data = data.for.models.caroni[data.for.models.caroni$Kingsolver_traits %in% 
-                                                      c("Other_morphology", "Size",
-                                                        "Physiology",  "Behaviour", 
-                                                        "Other_life_history",  "Colour"),])
-
-caroni.model.2 <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID) + (1|Sex), 
-                        family = binomial, 
-                        data =data.for.models.caroni[data.for.models.caroni$Kingsolver_traits %in% 
-                                                       c("Other_morphology", "Size",
-                                                         "Physiology",  "Behaviour", 
-                                                         "Other_life_history",  "Colour"),])
-
-caroni.model.3 <- glmer(R.2 ~ Sex + (1|StudyID) + (1|Kingsolver_traits), family = binomial, data = data.for.models.caroni)
-
-caroni.model.4 <- glmer(R.2 ~ Kingsolver_traits*Sex + (1|StudyID), family = binomial, 
-                      data = data.for.models.caroni[data.for.models.caroni$Kingsolver_traits %in% 
-                                                      c("Other_morphology", "Size",
-                                                        "Physiology",  "Behaviour", 
-                                                        "Other_life_history",  "Colour"),])
-
-summary(caroni.model.2)
-summary(caroni.model.3)
-
-data.for.models.among.drainage %>% 
-  filter(Kingsolver_traits != "Other") %>% 
-  ggplot(aes(x = Kingsolver_traits, y = R.2)) +
-  geom_boxplot(aes(color = Kingsolver_traits)) +
-  geom_jitter(size = 4, alpha = 0.1, aes(color = Kingsolver_traits)) +
-  theme(legend.position = "none") +
-  theme_classic()
-
-data.for.models.caroni %>% 
-  filter(Kingsolver_traits != "Other") %>% 
-  ggplot(aes(x = Kingsolver_traits, y = R.2, color = Kingsolver_traits)) +
-  geom_boxplot() +
-  geom_jitter(size = 4, alpha = 0.1) +
-  theme(legend.position = "none") +
-  theme_classic()
-
-ggplot(data = data.for.models.among.drainage, aes(y = R.2, color = "Both drainages")) +
-  geom_boxplot() + 
-  geom_boxplot(data = data.for.models.caroni, aes(x = 1, y = R.2, color = "Caroni only")) +
-  theme_classic() +
-  facet_wrap(~Sex)
-
-ggplot(data = data.for.models.among.drainage, aes(y = R.2, color = "Both drainages")) +
-  geom_boxplot() + 
-  geom_boxplot(data = data.for.models.caroni, aes(x = 1, y = R.2, color = "Caroni only")) +
-  facet_grid(ncol = vars(Kingsolver_traits), nrow = vars(Sex)) +
-  theme_classic()
-
+(evolhist.females.glm <- glm(R2 ~ R2source, family = binomial,
+                             data = evolhist.data.females)) %>% summary()
 
 #### here down is the old stuff ####
 
