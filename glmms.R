@@ -69,120 +69,124 @@ spreadsheet.data$TraitID <- as.factor(spreadsheet.data$TraitID)
 spreadsheet.data$Slope <- as.factor(spreadsheet.data$Slope)
 spreadsheet.data$Drainage <- as.factor(spreadsheet.data$Drainage)
 spreadsheet.data$Kingsolver_traits <- as.factor(spreadsheet.data$Kingsolver_traits)
-
-## QUESTION 1 ECOLOGY
-
-## combine R2 and spreadsheet data
 R2.data.among$TraitID <- as.factor(R2.data.among$TraitID)
 R2.data.south$TraitID <- as.factor(R2.data.south$TraitID)
+R2.data.intro$TraitID <- as.factor(R2.data.intro$TraitID)
+R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
+R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
+
+## QUESTION ECOLOGY (NORTH VS SOUTH)
+
+## combine R2 and spreadsheet data
+#prep for when we bind them together, this variable will go in the model to indicate the type of R2
 R2.data.among$method <- "all"
 R2.data.south$method <- "south"
+R2.data.intro$method <- "intro"
+R2.data.caroni$method <- "caroni"
+R2.data.among.drainage$method <- "both.drainages"
 
-data.for.models <- left_join(spreadsheet.data, R2.data.among, by = "TraitID")
-data.for.ecology.models <- merge(data.for.models, R2.data.south[, c("TraitID", "R.2", "method")], by = "TraitID")
+#get relevant data with one entry for each Trait
+##I was inclusive with columns, many probably aren't needed so you can cut them out
+data.all <- inner_join(spreadsheet.data, R2.data.among, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:50)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) #removes replicated TraitIDs and retains the columns
 
-## remove duplicates so one traitID (yes - I know I need to fix this!)
-data.for.ecology.models <- data.for.ecology.models[!duplicated(data.for.ecology.models$TraitID),]
+#repeat for south only R2 and others...
+data.south <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:50)%>% 
+  distinct(TraitID, .keep_all = TRUE) 
 
-## rename so that we can identify which R2 is from across and which from south
-data.for.ecology.models <- rename(data.for.ecology.models, R2south = R.2.y)
-data.for.ecology.models <- rename(data.for.ecology.models, R2across = R.2.x)
+data.intro<- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:50)%>% 
+  distinct(TraitID, .keep_all = TRUE) 
 
-## convert to long so that there are two R2 values per traitID
-data.for.ecology.models <- data.for.ecology.models %>% 
-  pivot_longer(c("R2south", "R2across"), names_to = "R2source", values_to = "R2")
+data.caroni<- inner_join(spreadsheet.data, R2.data.caroni, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:50)%>% 
+  distinct(TraitID, .keep_all = TRUE) 
 
-## create separate dataframes for M/F
-ecology.data.males <- data.for.ecology.models %>% filter(Sex == "M" & Kingsolver_traits !="Other")
-ecology.data.females <- data.for.ecology.models %>% filter(Sex == "F" & Kingsolver_traits !="Other")
+data.among.drainage<- inner_join(spreadsheet.data, R2.data.among.drainage, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:50)%>% 
+  distinct(TraitID, .keep_all = TRUE)
+
+#then we can bind them together as we wish! First ecology...
+data.for.ecology.models<-rbind(data.all,data.south) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+
+ecology.data.males <- data.for.ecology.models %>% 
+  filter(Sex == "M" & Kingsolver_traits !="Other")
+ecology.data.females <- data.for.ecology.models %>% 
+  filter(Sex == "F" & Kingsolver_traits !="Other")
+
+#evolutionary history question
+data.for.evolhist.models<-rbind(data.caroni,data.among.drainage) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+
+evolhist.data.males <- data.for.evolhist.models %>% 
+  filter(Sex == "M" & Kingsolver_traits !="Other")
+evolhist.data.females <- data.for.evolhist.models %>% 
+  filter(Sex == "F" & Kingsolver_traits !="Other")
+
+# Intro, I'm pretty sure these are the right csvs for this question
+data.for.intro.models<-rbind(data.all,data.intro) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+
+time.data.males <- data.for.intro.models %>% 
+  filter(Sex == "M" & Kingsolver_traits !="Other")
+time.data.females <- data.for.intro.models %>% 
+  filter(Sex == "F" & Kingsolver_traits !="Other")
+
+# as a note and fail safe I would run the grouping with TraitID on the sex specific dfs to make sure theres two traitID entries for each
 
 ## models
-## remember that R2 source tells us if R2 was calculated across or within (here: across/south)
 
-(ecology.model.males <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+## ECOLOGY QUESTION (ACROSS SLOPES VS WITHIN SOUTH SLOPE)
+
+(ecology.model.males <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
                               data = ecology.data.males)) %>% summary()
 
-(ecology.model.females <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+(ecology.model.females <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
                                 data = ecology.data.females)) %>% summary()
 
-(ecology.males.glm <- glm(R2 ~ R2source, family = binomial,
+(ecology.males.glm <- glm(R.2 ~ method, family = binomial,
                           data = ecology.data.males)) %>% summary()
 
-(ecology.females.glm <- glm(R2 ~ R2source, family = binomial,
+(ecology.females.glm <- glm(R.2 ~ method, family = binomial,
                             data = ecology.data.females)) %>% summary()
 
-## QUESTION TIME FRAMES (INTROS VS NATURAL)
-R2.data.intro$TraitID <- as.factor(R2.data.intro$TraitID)
-R2.data.intro$method <- "intro"
+## TIME FRAME QUESTION (WITH INTORS VS ONLY NATURAL)
 
-data.for.time.models <- merge(data.for.models, R2.data.intro[, c("TraitID", "R.2", "method")], by = "TraitID")
-
-## remove duplicates so one traitID (yes - I know I need to fix this!)
-data.for.time.models <- data.for.time.models[!duplicated(data.for.time.models$TraitID),]
-
-## rename so that we can identify which R2 is from across and which from intro
-data.for.time.models <- rename(data.for.time.models, R2intro = R.2.y)
-data.for.time.models <- rename(data.for.time.models, R2across = R.2.x)
-
-## convert to long so that there are two R2 values per traitID
-data.for.time.models <- data.for.time.models %>% 
-  pivot_longer(c("R2intro", "R2across"), names_to = "R2source", values_to = "R2")
-
-## create separate dataframes for M/F
-time.data.males <- data.for.time.models %>% filter(Sex == "M" & Kingsolver_traits !="Other")
-time.data.females <- data.for.time.models %>% filter(Sex == "F" & Kingsolver_traits !="Other")
-
-## models
-## remember that R2 source tells us if R2 was calculated across or within (across/intro)
-(time.model.males <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+(time.model.males <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
                            data = time.data.males)) %>% summary()
 
-(time.model.females <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+(time.model.females <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
                              data = time.data.females)) %>% summary()
 
-(time.males.glm <- glm(R2 ~ R2source, family = binomial,
+(time.males.glm <- glm(R.2 ~ method, family = binomial,
                        data = time.data.males)) %>% summary()
 
-(time.females.glm <- glm(R2 ~ R2source, family = binomial,
+(time.females.glm <- glm(R.2 ~ method, family = binomial,
                          data = time.data.females)) %>% summary()
 
 ## QUESTION EVOLUTIONARY HISTORY (CARONI VS OROPUCHE)
-R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
-R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
-R2.data.among.drainage$method <- "both.drainages"
-R2.data.caroni$method <- "caroni"
 
-R2.data.among.drainage <- left_join(spreadsheet.data, R2.data.among.drainage, by = "TraitID")
-data.for.evolhist.models <- merge(data.for.models, R2.data.caroni[, c("TraitID", "R.2", "method")], by = "TraitID")
-
-## remove duplicates so one traitID (yes - I know I need to fix this!)
-data.for.evolhist.models <- data.for.evolhist.models[!duplicated(data.for.evolhist.models$TraitID),]
-
-## rename so that we can identify which R2 is from across and which from south
-data.for.evolhist.models <- rename(data.for.evolhist.models, R2caroni = R.2.y)
-data.for.evolhist.models <- rename(data.for.evolhist.models, R2bothdrainages = R.2.x)
-
-## convert to long so that there are two R2 values per traitID
-data.for.evolhist.models <- data.for.evolhist.models %>% 
-  pivot_longer(c("R2caroni", "R2bothdrainages"), names_to = "R2source", values_to = "R2")
-
-## create separate dataframes for M/F
-evolhist.data.males <- data.for.evolhist.models %>% filter(Sex == "M" & Kingsolver_traits !="Other")
-evolhist.data.females <- data.for.evolhist.models %>% filter(Sex == "F" & Kingsolver_traits !="Other")
-
-##models
-## remember that R2 source tells us if R2 was calculated across or within (caroni+oropuche/caroni)
-(evolhist.model.males <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+(evolhist.model.males <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
                                data = evolhist.data.males)) %>% summary()
 
-(evolhist.model.females <- glmer(R2 ~ R2source + (1|StudyID/TraitID), family = binomial,
+(evolhist.model.females <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
                                  data = evolhist.data.females)) %>% summary()
 
-(evolhist.males.glm <- glm(R2 ~ R2source, family = binomial,
+(evolhist.males.glm <- glm(R.2 ~ method, family = binomial,
                            data = evolhist.data.males)) %>% summary()
 
-(evolhist.females.glm <- glm(R2 ~ R2source, family = binomial,
+(evolhist.females.glm <- glm(R.2 ~ method, family = binomial,
                              data = evolhist.data.females)) %>% summary()
+
 
 #### here down is the old stuff ####
 
