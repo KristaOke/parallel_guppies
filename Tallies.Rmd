@@ -11,7 +11,7 @@ wd <- getwd()
 new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved feb 11th
 data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",")%>% #Data.csv is saved .xlsx feb 10th
   select(StudyID:Comments) 
-r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated feb 11th 
+r.squared<- read.csv(paste(wd,'/Data/TraitR2_among.csv',sep=""), header=TRUE, sep=",") #R2 generated feb 11th 
 ```
 
 Tallies and Counts
@@ -24,6 +24,7 @@ test<-new.data %>%
   filter(!is.na(Number)) %>% 
   filter(!is.na(SD) | !is.na(SE))
 
+# drainage level summary information, idk why this is here
 new.data[!duplicated(new.data$TraitID),] %>% 
   group_by(Slope.type) %>%
   summarize(count = n())
@@ -40,6 +41,68 @@ test[!duplicated(test$TraitID),] %>%
   summarize(count = n())
   
 ```
+
+
+```{r calculate the d}
+library(effsize)
+
+test<-new.data %>%
+  filter(!is.na(MeanValue)) %>% 
+  filter(!is.na(Number)) %>% 
+  filter(!is.na(SD) | !is.na(SE)) %>%  
+  group_by(TraitID) %>% 
+  filter(n_distinct(Poptype)>1) %>% 
+  select(1:3,20,14,19,21:23,38,4:5,10,25:31,37,40,41)
+
+good_trait<-test %>% 
+  filter(Poptype=="Introduction" & !is.na(Source_pop) & !Source_pop =="Unknown") %>% 
+  distinct(TraitID) %>% 
+  pull(TraitID) #turns to vector, 114 traits with explicit source pops listed
+
+test<-test %>% 
+  filter(TraitID %in% good_trait)
+
+source_pops<-pull(test, Source_pop)
+
+test<-test %>% 
+  filter(PopulationRaw %in% source_pops | !is.na(Source_pop)) %>% 
+  mutate(type = ifelse(is.na(Source_pop), "Source", "Intro")) %>% 
+  mutate(pop.temp = ifelse(!is.na(Source_pop), Source_pop, PopulationRaw)) %>% 
+  group_by(TraitID, pop.temp) %>% 
+  mutate(introID = cur_group_id()) %>% 
+  arrange(introID) %>% 
+  filter(n_distinct(type)>1)
+
+test$MeanValue<-as.numeric(test$MeanValue)
+test$pop.temp<-as.factor(test$pop.temp)
+test$type<-as.factor(test$type)
+test$introID<-as.factor(test$introID)
+test2<-test %>% 
+  ungroup() %>% 
+  slice_tail(n = 20) %>% 
+  filter(!introID %in% c(97,82))
+
+test2$introID<-as.factor(test2$introID) %>% 
+  droplevels()
+
+mean<-pull(test2, MeanValue)
+type<-pull(test2, type)
+id<-pull(test2, introID)
+cohen.d(d = mean, f = type, subject = id, paired = TRUE, data = test2) #this isn't really working and also needs real data not meta data
+
+library(esc) # this uses metaData but unfortunately we don't have a large enough metadata sample to do the pop vs intro questions this way (n= 3)
+
+test3<-test %>% 
+  select(4,18:21,24:26) %>% 
+  ungroup() %>% 
+  slice_tail(n = 20) %>% 
+  filter(!introID == 97)
+
+test3<-pivot_wider(test3, names_from = type, values_from = c(MeanValue, SD, SE, Number))
+
+esc_mean
+```
+
 
 ## North vs South Slope
 Looked at the ratio of north to south in traits with both populations (histogram)
@@ -212,23 +275,4 @@ ggplot( aes(x = TraitType1, y = R.2, fill = Sex)) + geom_violin()
 ```
 ##
 
-
-```{r temp}
-library(tidyverse)
-dat <- read_excel("~/Downloads/metaanalysis_finaltraits.xlsx")
-dat<-dat %>% 
-  arrange(StudyID, StudyType, Trait, Sex, Predation)
-sex.length<-rle(as.character(paste(dat$Trait,dat$Sex,dat$StudyType)))  
-dat$TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
-
-test<-dat %>% 
-  group_by(Kingsolver_traits) %>% 
-  subset(!duplicated(TraitID))
-
-summary(as.factor(test$Kingsolver_traits))
-
-x<-subset(test, test$Kingsolver_traits=="Behaviour")
-
-
-```
 
