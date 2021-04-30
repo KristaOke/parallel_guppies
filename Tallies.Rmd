@@ -39,7 +39,16 @@ test$Drainage.type<-ifelse(test$unique_drainages==1, test$Drainage, "Mixed")
 test[!duplicated(test$TraitID),] %>% 
   group_by(Drainage.type) %>%
   summarize(count = n())
-  
+ 
+#what studies should we contact for cohen's d 
+good_IDs<-test %>% 
+  filter(Poptype=="Introduction" & !is.na(Source_pop) & !Source_pop =="Unknown") %>% 
+  distinct(StudyID) %>% 
+  pull(StudyID)
+
+test<-new.data %>% 
+  filter(StudyID %in% good_IDs) %>% 
+  select(1,4,25:27,29:31,37,20:22,40:41,2,6,28)
 ```
 
 
