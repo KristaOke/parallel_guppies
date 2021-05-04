@@ -22,6 +22,8 @@
 
 ## 2021-04-03 AH - I've added a bunch and shoved the old stuff the the bottom
 
+## Note: 2021-05-04: Study 41: Female response to male from ancestral population is duplicated. Delete these four rows.
+
 # LIBRARIES ---- 
 library(plyr)
 library(dplyr)
