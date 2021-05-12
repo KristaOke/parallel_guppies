@@ -77,6 +77,222 @@ R2.data.intro$TraitID <- as.factor(R2.data.intro$TraitID)
 R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
 R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
 
+# adding extra columns (broader random effects)
+
+## these are all of the authors
+spreadsheet.data <- 
+  spreadsheet.data %>% 
+  mutate(first_author = case_when(
+    Study == "O'Steen et al. 2002" ~ "O'Steen",  
+    Study == "Weese et al. 2010" ~ "Weese",  
+    Study == "Burns et al. 2009" ~ "Rodd",  ## this one breask the rules because Burns appears twice
+    Study == "Reznick et al. 2005" ~ "Reznick",
+    Study == "Evans et al. 2011" ~ "Evans",
+    Study == "Kam et al. 2014" ~ "Kam",  # This is a typo in spreadsheet, actually Sandkam
+    Study == "Burns and Rodd 2008" ~ "Rodd",  ## burns appears twice
+    Study == "Harris et al. 2010" ~ "Harris",
+    Study == "Neff et al. 2008" ~ "Neff", 
+    Study == "Herbert-Read et al. 2019" ~ "Herbert-Read",
+    Study == "Stephenson et al. 2015" ~ "Stephenson",
+    Study == "Edenbrow et al. 2017" ~ "Croft",
+    Study == "Evans et al. 2003" ~ "Evans",
+    Study == "Piyapong et al. 2011" ~ "Piyapong",
+    Study == "Magurran and Seghers 1994" ~ "Magurran",
+    Study == "Martin and Johnsen 2017" ~ "Martin",
+    Study == "Gotanda et al. 2013" ~ "Gotanda",  ## 
+    Study == "Hain et al. 2016" ~ "Neff",
+    Study == "de Lira et al. inprep" ~ "Hendry",
+    Study == "Eastya et al. 2011" ~ "Hendry",
+    Study == "Gordon et al. 2017b" ~ "Gordon",
+    Study == "Fraser et al. 2015" ~ "Fraser",
+    Study == "Devigili et al. 2019" ~ "Devigili",
+    Study == "Perez-Jvostov et al. 2012" ~ "Perez-Jvostov",
+    Study == "Dial et al. 2016" ~ "Dial",
+    Study == "Egset et al. 2011" ~ "Egset",
+    Study == "El-Sabaawi et al. 2012" ~ "El-Sabaawi",
+    Study == "Huizinga et al. 2009" ~ "Reznick",
+    Study == "Reznick et al. 2004" ~ "Reznick",
+    Study == "Herbert-Read et al. 2017" ~ "Herbert-Read",
+    Study == "Schwartz and Hendry 2007" ~ "Hendry",
+    Study == "Zandona et al. 2017" ~ "Zandona",
+    Study == "Millar and Hendry 2011" ~ "Hendry",
+    Study == "Ioannou et al. 2017" ~ "Ioannou",
+    Study == "Reznick and Endler 1982" ~ "Reznick",
+    Study == "Reddon et al. 2018" ~ "Reddon",
+    Study == "Fischer et al. 2013" ~ "Fischer",
+    Study == "Elgee et al. 2010" ~ "Elgee",
+    Study == "Gordon et al. 2012" ~ "Gordon",
+    Study == "Evans and Magurran 1999" ~ "Evans",
+    Study == "Dial et al. 2017" ~ "Dial",
+    Study == "Bohr Brask et al. 2019" ~ "Brask",
+    Study == "Fischer et al. 2016" ~ "Fischer",
+    Study == "Valvo et al. 2019" ~ "Rodd",
+    Study == "Reznick and Bryant 2007" ~ "Reznick",
+    Study == "Magurran and Seghers" ~ "Magurran",
+    Study == "Auer et al. 2018" ~ "Reznick",
+    Study == "Croft et al. 2009" ~ "Croft",
+    Study == "Zandona et al. 2015" ~ "Zandona"))
+
+## Each of these authors appears more than once (the ones that are # are only represented once)
+spreadsheet.data <- 
+  spreadsheet.data %>% 
+  mutate(first_author_NS = case_when(
+    #Study == "O'Steen et al. 2002" ~ "Other",  
+    #Study == "Weese et al. 2010" ~ "Other",  
+    Study == "Burns et al. 2009" ~ "Rodd",  ## this one breask the rules because Burns appears twice
+    Study == "Reznick et al. 2005" ~ "Reznick",
+    Study == "Evans et al. 2011" ~ "Evans",
+    #Study == "Kam et al. 2014" ~ "Other",  # This is a typo in spreadsheet, actually Sandkam
+    Study == "Burns and Rodd 2008" ~ "Rodd",  ## burns appears twice
+    #Study == "Harris et al. 2010" ~ "Other",
+    Study == "Neff et al. 2008" ~ "Neff", 
+    Study == "Herbert-Read et al. 2019" ~ "Herbert-Read",
+    #Study == "Stephenson et al. 2015" ~ "Other",
+    Study == "Edenbrow et al. 2017" ~ "Croft",
+    Study == "Evans et al. 2003" ~ "Evans",
+    #Study == "Piyapong et al. 2011" ~ "Other",
+    Study == "Magurran and Seghers 1994" ~ "Magurran",
+    #Study == "Martin and Johnsen 2017" ~ "Other",
+    Study == "Gotanda et al. 2013" ~ "Gotanda",  ## 
+    Study == "Hain et al. 2016" ~ "Neff",
+    Study == "de Lira et al. inprep" ~ "Hendry",
+    Study == "Eastya et al. 2011" ~ "Hendry",
+    Study == "Gordon et al. 2017b" ~ "Gordon",
+    #Study == "Fraser et al. 2015" ~ "Other",
+    #Study == "Devigili et al. 2019" ~ "Other",
+    #Study == "Perez-Jvostov et al. 2012" ~ "Other",
+    Study == "Dial et al. 2016" ~ "Dial",
+    #Study == "Egset et al. 2011" ~ "Other",
+    #Study == "El-Sabaawi et al. 2012" ~ "Other",
+    Study == "Huizinga et al. 2009" ~ "Reznick",
+    Study == "Reznick et al. 2004" ~ "Reznick",
+    Study == "Herbert-Read et al. 2017" ~ "Herbert-Read",
+    Study == "Schwartz and Hendry 2007" ~ "Hendry",
+    Study == "Zandona et al. 2017" ~ "Zandona",
+    Study == "Millar and Hendry 2011" ~ "Hendry",
+    #Study == "Ioannou et al. 2017" ~ "Other",
+    Study == "Reznick and Endler 1982" ~ "Reznick",
+    #Study == "Reddon et al. 2018" ~ "Other",
+    Study == "Fischer et al. 2013" ~ "Fischer",
+    #Study == "Elgee et al. 2010" ~ "Other",
+    Study == "Gordon et al. 2012" ~ "Gordon",
+    Study == "Evans and Magurran 1999" ~ "Evans",
+    Study == "Dial et al. 2017" ~ "Dial",
+    #Study == "Bohr Brask et al. 2019" ~ "Other",
+    Study == "Fischer et al. 2016" ~ "Fischer",
+    Study == "Valvo et al. 2019" ~ "Rodd",
+    Study == "Reznick and Bryant 2007" ~ "Reznick",
+    Study == "Magurran and Seghers" ~ "Magurran",
+    Study == "Auer et al. 2018" ~ "Reznick",
+    Study == "Croft et al. 2009" ~ "Croft",
+    Study == "Zandona et al. 2015" ~ "Zandona"))
+
+spreadsheet.data <- 
+  spreadsheet.data %>% 
+  mutate(institution = case_when(
+    Study == "O'Steen et al. 2002" ~ "UC Irvine",  
+    Study == "Weese et al. 2010" ~ "Maine",  
+    Study == "Burns et al. 2009" ~ "Toronto",  
+    Study == "Reznick et al. 2005" ~ "UC Riverside",
+    Study == "Evans et al. 2011" ~ "Western Australia",
+    Study == "Kam et al. 2014" ~ "Simon Fraser",  # This is a typo in spreadsheet, actually Sandkam
+    Study == "Burns and Rodd 2008" ~ "Toronto",  
+    Study == "Harris et al. 2010" ~ "Lund",
+    Study == "Neff et al. 2008" ~ "Western Ontario", 
+    Study == "Herbert-Read et al. 2019" ~ "Cambridge",  # Lund too
+    Study == "Stephenson et al. 2015" ~ "Cardiff",
+    Study == "Edenbrow et al. 2017" ~ "Exeter",
+    Study == "Evans et al. 2003" ~ "Padova",
+    Study == "Piyapong et al. 2011" ~ "Mahasarakham",
+    Study == "Magurran and Seghers 1994" ~ "Oxford",
+    Study == "Martin and Johnsen 2017" ~ "Duke",
+    Study == "Gotanda et al. 2013" ~ "McGill",  ## 
+    Study == "Hain et al. 2016" ~ "Western Ontario",
+    Study == "de Lira et al. inprep" ~ "McGill",
+    Study == "Eastya et al. 2011" ~ "McGill",
+    Study == "Gordon et al. 2017b" ~ "Jyvaskyla",
+    Study == "Fraser et al. 2015" ~ "Max Plank",
+    Study == "Devigili et al. 2019" ~ "Stockholm",
+    Study == "Perez-Jvostov et al. 2012" ~ "McGill",
+    Study == "Dial et al. 2016" ~ "Brown",
+    Study == "Egset et al. 2011" ~ "NTNU",
+    Study == "El-Sabaawi et al. 2012" ~ "Cornell",
+    Study == "Huizinga et al. 2009" ~ "Colorado State",
+    Study == "Reznick et al. 2004" ~ "UC Riverside",
+    Study == "Herbert-Read et al. 2017" ~ "Stockholm",
+    Study == "Schwartz and Hendry 2007" ~ "McGill",
+    Study == "Zandona et al. 2017" ~ "Drexel",
+    Study == "Millar and Hendry 2011" ~ "McGill",
+    Study == "Ioannou et al. 2017" ~ "Bristol",
+    Study == "Reznick and Endler 1982" ~ "Pennsylvania",
+    Study == "Reddon et al. 2018" ~ "McGill",
+    Study == "Fischer et al. 2013" ~ "Colorado State",
+    Study == "Elgee et al. 2010" ~ "Windsor",
+    Study == "Gordon et al. 2012" ~ "UC Riverside",
+    Study == "Evans and Magurran 1999" ~ "St Andrews",
+    Study == "Dial et al. 2017" ~ "Brown",
+    Study == "Bohr Brask et al. 2019" ~ "Exeter",
+    Study == "Fischer et al. 2016" ~ "Colorado State",
+    Study == "Valvo et al. 2019" ~ "Florida State",
+    Study == "Reznick and Bryant 2007" ~ "UC Riverside",
+    Study == "Magurran and Seghers" ~ "Oxford",
+    Study == "Auer et al. 2018" ~ "Glasgow",
+    Study == "Croft et al. 2009" ~ "Exeter",  ## also Bangor
+    Study == "Zandona et al. 2015" ~ "Drexel"))  ## diff from current
+
+spreadsheet.data <- 
+  spreadsheet.data %>% 
+  mutate(institution_NS = case_when(
+    #Study == "O'Steen et al. 2002" ~ "UC Irvine",  
+    #Study == "Weese et al. 2010" ~ "Maine",  
+    Study == "Burns et al. 2009" ~ "Toronto",  
+    Study == "Reznick et al. 2005" ~ "UC Riverside",
+    #Study == "Evans et al. 2011" ~ "Western Australia",
+    #Study == "Kam et al. 2014" ~ "Simon Fraser",  # This is a typo in spreadsheet, actually Sandkam
+    Study == "Burns and Rodd 2008" ~ "Toronto",  
+    #Study == "Harris et al. 2010" ~ "Lund",
+    Study == "Neff et al. 2008" ~ "Western Ontario", 
+    #Study == "Herbert-Read et al. 2019" ~ "Cambridge",  # Lund too
+    #Study == "Stephenson et al. 2015" ~ "Cardiff",
+    Study == "Edenbrow et al. 2017" ~ "Exeter",
+    #Study == "Evans et al. 2003" ~ "Padova",
+    #Study == "Piyapong et al. 2011" ~ "Mahasarakham",
+    Study == "Magurran and Seghers 1994" ~ "Oxford",
+    #Study == "Martin and Johnsen 2017" ~ "Duke",
+    Study == "Gotanda et al. 2013" ~ "McGill",  ## 
+    Study == "Hain et al. 2016" ~ "Western Ontario",
+    Study == "de Lira et al. inprep" ~ "McGill",
+    Study == "Eastya et al. 2011" ~ "McGill",
+    #Study == "Gordon et al. 2017b" ~ "Jyvaskyla",
+    #Study == "Fraser et al. 2015" ~ "Max Plank",
+    Study == "Devigili et al. 2019" ~ "Stockholm",
+    Study == "Perez-Jvostov et al. 2012" ~ "McGill",
+    Study == "Dial et al. 2016" ~ "Brown",
+    #Study == "Egset et al. 2011" ~ "NTNU",
+    #Study == "El-Sabaawi et al. 2012" ~ "Cornell",
+    Study == "Huizinga et al. 2009" ~ "Colorado State",
+    Study == "Reznick et al. 2004" ~ "UC Riverside",
+    Study == "Herbert-Read et al. 2017" ~ "Stockholm",
+    Study == "Schwartz and Hendry 2007" ~ "McGill",
+    Study == "Zandona et al. 2017" ~ "Drexel",
+    Study == "Millar and Hendry 2011" ~ "McGill",
+    #Study == "Ioannou et al. 2017" ~ "Bristol",
+    #Study == "Reznick and Endler 1982" ~ "Pennsylvania",
+    Study == "Reddon et al. 2018" ~ "McGill",
+    Study == "Fischer et al. 2013" ~ "Colorado State",
+    #Study == "Elgee et al. 2010" ~ "Windsor",
+    Study == "Gordon et al. 2012" ~ "UC Riverside",
+    #Study == "Evans and Magurran 1999" ~ "St Andrews",
+    Study == "Dial et al. 2017" ~ "Brown",
+    Study == "Bohr Brask et al. 2019" ~ "Exeter",
+    Study == "Fischer et al. 2016" ~ "Colorado State",
+    #Study == "Valvo et al. 2019" ~ "Florida State",
+    Study == "Reznick and Bryant 2007" ~ "UC Riverside",
+    Study == "Magurran and Seghers" ~ "Oxford",
+    #Study == "Auer et al. 2018" ~ "Glasgow",
+    Study == "Croft et al. 2009" ~ "Exeter",  ## also Bangor
+    Study == "Zandona et al. 2015" ~ "Drexel"))  ## diff from current
+
 ## QUESTION ECOLOGY (NORTH VS SOUTH)
 
 ## combine R2 and spreadsheet data
