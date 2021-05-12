@@ -413,20 +413,53 @@ time.data.females <- data.for.intro.models %>%
 
 
 ## TIME FRAME QUESTION (WITH INTORS VS ONLY NATURAL)
+## glmer first
+(time.model.males.glmer <- glmer(R.2 ~ method + (1|institution), family = binomial,
+                                 data = time.data.males)) %>% summary()
 
-(time.model.males <- glmer(R.2 ~ method + (1|institution), family = binomial,
-                           data = time.data.males)) %>% summary()
+### no warning
+(time.model.females.glmer <- glmer(R.2 ~ method + (1|institution), family = binomial,
+                                   data = time.data.females)) %>% summary()
 
-(time.model.females <- glmer(R.2 ~ method + (1|institution), family = binomial,
-                             data = time.data.females)) %>% summary()
+### no warning
+(time.model.males.glmer <- glmer(R.2 ~ method + (1|institution_NS), family = binomial,
+                                 data = time.data.males)) %>% summary()
 
-(time.males.glm <- glm(R.2 ~ method, family = binomial,
-                       data = time.data.males)) %>% summary()
+### no warning
+(time.model.females.glmer <- glmer(R.2 ~ method + (1|institution_NS), family = binomial,
+                                   data = time.data.females)) %>% summary()
 
-(time.females.glm <- glm(R.2 ~ method, family = binomial,
-                         data = time.data.females)) %>% summary()
+(time.model.males.glmer <- glmer(R.2 ~ method + (1|first_author), family = binomial,
+                                 data = time.data.males)) %>% summary()
 
-## QUESTION EVOLUTIONARY HISTORY (CARONI VS OROPUCHE)
+### no warning
+(time.model.females.glmer <- glmer(R.2 ~ method + (1|first_author), family = binomial,
+                                   data = time.data.females)) %>% summary()
+
+### no warning
+(time.model.males.glmer <- glmer(R.2 ~ method + (1|first_author_NS), family = binomial,
+                                 data = time.data.males)) %>% summary()
+
+### no warning
+(time.model.females.glmer <- glmer(R.2 ~ method + (1|first_author_NS), family = binomial,
+                                   data = time.data.females)) %>% summary()
+
+## glm second
+
+
+(time.model.males.glm <- glm(R.2 ~ method + institution, family = binomial,
+                             data = time.data.males)) %>% summary()
+
+(time.model.females.glm <- glm(R.2 ~ method + institution, family = binomial,
+                               data = time.data.females)) %>% summary()
+
+(time.model.males.glm <- glm(R.2 ~ method + first_author, family = binomial,
+                             data = time.data.males)) %>% summary()
+
+(time.model.females.glm <- glm(R.2 ~ method + first_author, family = binomial,
+                               data = time.data.females)) %>% summary()
+
+# QUESTION EVOLUTIONARY HISTORY (CARONI VS OROPUCHE)
 
 (evolhist.model.males <- glmer(R.2 ~ method + (1|institution), family = binomial,
                                data = evolhist.data.males)) %>% summary()
