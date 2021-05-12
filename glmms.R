@@ -365,17 +365,52 @@ time.data.females <- data.for.intro.models %>%
 
 ## ECOLOGY QUESTION (ACROSS SLOPES VS WITHIN SOUTH SLOPE)
 
-(ecology.model.males <- glmer(R.2 ~ method + (1|institution), family = binomial,
-                              data = ecology.data.males)) %>% summary()
+## glmer first
+(ecology.model.males.glmer <- glmer(R.2 ~ method + (1|institution), family = binomial,
+                                    data = ecology.data.males)) %>% summary()
 
-(ecology.model.females <- glmer(R.2 ~ method + (1|institution), family = binomial,
-                                data = ecology.data.females)) %>% summary()
+(ecology.model.females.glmer <- glmer(R.2 ~ method + (1|institution), family = binomial,
+                                      data = ecology.data.females)) %>% summary()
 
-(ecology.males.glm <- glm(R.2 ~ method, family = binomial,
-                          data = ecology.data.males)) %>% summary()
+(ecology.model.males.glmer <- glmer(R.2 ~ method + (1|institution_NS), family = binomial,
+                                    data = ecology.data.males)) %>% summary()
 
-(ecology.females.glm <- glm(R.2 ~ method, family = binomial,
-                            data = ecology.data.females)) %>% summary()
+### this is the only one without the warning
+(ecology.model.females.glmer <- glmer(R.2 ~ method + (1|institution_NS), family = binomial,
+                                      data = ecology.data.females)) %>% summary()
+
+(ecology.model.males.glmer <- glmer(R.2 ~ method + (1|first_author), family = binomial,
+                                    data = ecology.data.males)) %>% summary()
+
+(ecology.model.females.glmer <- glmer(R.2 ~ method + (1|first_author), family = binomial,
+                                      data = ecology.data.females)) %>% summary()
+
+(ecology.model.males.glmer <- glmer(R.2 ~ method + (1|first_author_NS), family = binomial,
+                                    data = ecology.data.males)) %>% summary()
+
+(ecology.model.females.glmer <- glmer(R.2 ~ method + (1|first_author_NS), family = binomial,
+                                      data = ecology.data.females)) %>% summary()
+
+## glm second
+
+(ecology.model.males.glm <- glm(R.2 ~ method + institution, family = binomial,
+                                data = ecology.data.males)) %>% summary()
+
+(ecology.model.females.glm <- glm(R.2 ~ method + institution, family = binomial,
+                                  data = ecology.data.females)) %>% summary()
+
+(ecology.model.males.glm <- glm(R.2 ~ method + first_author, family = binomial,
+                                data = ecology.data.males)) %>% summary()
+
+(ecology.model.females.glm <- glm(R.2 ~ method + first_author, family = binomial,
+                                  data = ecology.data.females)) %>% summary()
+
+(ecology.model.males.glm <- glm(R.2 ~ method + StudyID, family = binomial,
+                                data = ecology.data.males)) %>% summary()
+
+(ecology.model.females.glm <- glm(R.2 ~ method + StudyID, family = binomial,
+                                  data = ecology.data.females)) %>% summary()
+
 
 ## TIME FRAME QUESTION (WITH INTORS VS ONLY NATURAL)
 
