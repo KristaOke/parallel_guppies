@@ -77,7 +77,7 @@ R2.data.intro$TraitID <- as.factor(R2.data.intro$TraitID)
 R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
 R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
 
-# adding extra columns (broader random effects)
+# adding extra columns (broader random)
 
 ## these are all of the authors
 spreadsheet.data <- 
@@ -365,10 +365,10 @@ time.data.females <- data.for.intro.models %>%
 
 ## ECOLOGY QUESTION (ACROSS SLOPES VS WITHIN SOUTH SLOPE)
 
-(ecology.model.males <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
+(ecology.model.males <- glmer(R.2 ~ method + (1|institution), family = binomial,
                               data = ecology.data.males)) %>% summary()
 
-(ecology.model.females <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
+(ecology.model.females <- glmer(R.2 ~ method + (1|institution), family = binomial,
                                 data = ecology.data.females)) %>% summary()
 
 (ecology.males.glm <- glm(R.2 ~ method, family = binomial,
@@ -379,10 +379,10 @@ time.data.females <- data.for.intro.models %>%
 
 ## TIME FRAME QUESTION (WITH INTORS VS ONLY NATURAL)
 
-(time.model.males <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
+(time.model.males <- glmer(R.2 ~ method + (1|institution), family = binomial,
                            data = time.data.males)) %>% summary()
 
-(time.model.females <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
+(time.model.females <- glmer(R.2 ~ method + (1|institution), family = binomial,
                              data = time.data.females)) %>% summary()
 
 (time.males.glm <- glm(R.2 ~ method, family = binomial,
@@ -393,10 +393,10 @@ time.data.females <- data.for.intro.models %>%
 
 ## QUESTION EVOLUTIONARY HISTORY (CARONI VS OROPUCHE)
 
-(evolhist.model.males <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
+(evolhist.model.males <- glmer(R.2 ~ method + (1|institution), family = binomial,
                                data = evolhist.data.males)) %>% summary()
 
-(evolhist.model.females <- glmer(R.2 ~ method + (1|StudyID/TraitID), family = binomial,
+(evolhist.model.females <- glmer(R.2 ~ method + (1|institution), family = binomial,
                                  data = evolhist.data.females)) %>% summary()
 
 (evolhist.males.glm <- glm(R.2 ~ method, family = binomial,
