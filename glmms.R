@@ -461,17 +461,45 @@ time.data.females <- data.for.intro.models %>%
 
 # QUESTION EVOLUTIONARY HISTORY (CARONI VS OROPUCHE)
 
-(evolhist.model.males <- glmer(R.2 ~ method + (1|institution), family = binomial,
-                               data = evolhist.data.males)) %>% summary()
+## glmer first
+(evolhist.model.males.glmer <- glmer(R.2 ~ method + (1|institution), family = binomial,
+                                     data = evolhist.data.males)) %>% summary()
 
-(evolhist.model.females <- glmer(R.2 ~ method + (1|institution), family = binomial,
-                                 data = evolhist.data.females)) %>% summary()
+(ecology.model.females.glmer <- glmer(R.2 ~ method + (1|institution), family = binomial,
+                                      data = evolhist.data.females)) %>% summary()
 
-(evolhist.males.glm <- glm(R.2 ~ method, family = binomial,
-                           data = evolhist.data.males)) %>% summary()
+(evolhist.model.males.glmer <- glmer(R.2 ~ method + (1|institution_NS), family = binomial,
+                                     data = evolhist.data.males)) %>% summary()
 
-(evolhist.females.glm <- glm(R.2 ~ method, family = binomial,
-                             data = evolhist.data.females)) %>% summary()
+(ecology.model.females.glmer <- glmer(R.2 ~ method + (1|institution_NS), family = binomial,
+                                      data = evolhist.data.females)) %>% summary()
+
+(evolhist.model.males.glmer <- glmer(R.2 ~ method + (1|first_author), family = binomial,
+                                     data = evolhist.data.males)) %>% summary()
+
+(ecology.model.females.glmer <- glmer(R.2 ~ method + (1|first_author), family = binomial,
+                                      data = evolhist.data.females)) %>% summary()
+
+(evolhist.model.males.glmer <- glmer(R.2 ~ method + (1|first_author_NS), family = binomial,
+                                     data = evolhist.data.males)) %>% summary()
+
+(ecology.model.females.glmer <- glmer(R.2 ~ method + (1|first_author_NS), family = binomial,
+                                      data = evolhist.data.females)) %>% summary()
+
+## glm second
+
+
+(evolhist.model.males.glm <- glm(R.2 ~ method + institution, family = binomial,
+                                 data = evolhist.data.males)) %>% summary()
+
+(evolhist.model.females.glm <- glm(R.2 ~ method + institution, family = binomial,
+                                   data = evolhist.data.females)) %>% summary()
+
+(evolhist.model.males.glm <- glm(R.2 ~ method + first_author, family = binomial,
+                                 data = evolhist.data.males)) %>% summary()
+
+(evolhist.model.females.glm <- glm(R.2 ~ method + first_author, family = binomial,
+                                   data = evolhist.data.females)) %>% summary()
 
 
 #### here down is the old stuff ####
