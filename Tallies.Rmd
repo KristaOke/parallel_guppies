@@ -67,7 +67,7 @@ cohen.data<-cohen.data %>%
 
  n_distinct(cohen.data$TraitID) #n = 29
 
-source_pops<-pull(cohen.data, Source_pop)
+source_pops<-pull(cohen.data, Source_pop) 
 
 cohen.data<-cohen.data %>% 
   filter(PopulationRaw %in% source_pops | !is.na(Source_pop)) %>% 
