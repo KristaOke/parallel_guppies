@@ -76,7 +76,7 @@ cohen.data<-cohen.data %>%
   group_by(TraitID, pop.temp) %>% 
   mutate(introID = cur_group_id()) %>% 
   arrange(introID) %>% 
-  filter(n_distinct(type)>1) #this last line takes us from 125 to 22 rows.
+  filter(n_distinct(type)>1) #this last line takes us from 125 to 22 rows
 
 cohen.data$MeanValue<-as.numeric(cohen.data$MeanValue)
 cohen.data$pop.temp<-as.factor(cohen.data$pop.temp)
