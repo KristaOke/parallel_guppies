@@ -9,9 +9,12 @@ library(ggplot2)
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
 new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved feb 11th
-data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",")%>% #Data.csv is saved .xlsx feb 10th
+data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",") %>% #Data.csv is saved .xlsx feb 10th
   select(StudyID:Comments) 
 r.squared<- read.csv(paste(wd,'/Data/TraitR2_among.csv',sep=""), header=TRUE, sep=",") #R2 generated feb 11th 
+
+cohen.data<- read.csv(paste(wd,'/Data/cohen.d.data.csv',sep=""), header=TRUE, sep=",") %>% 
+  select(1:18)
 ```
 
 Tallies and Counts
@@ -53,27 +56,18 @@ test<-new.data %>%
 
 
 ```{r calculate the d}
-library(effsize)
 
-test<-new.data %>%
+cohen.data<-cohen.data %>%
   filter(!is.na(MeanValue)) %>% 
   filter(!is.na(Number)) %>% 
-  filter(!is.na(SD) | !is.na(SE)) %>%  
+  filter(!is.na(SD)) %>%  
+  filter(!StudyID == 3) %>% 
   group_by(TraitID) %>% 
-  filter(n_distinct(Poptype)>1) %>% 
-  select(1:3,20,14,19,21:23,38,4:5,10,25:31,37,40,41)
+  filter(n_distinct(Poptype)>1)
 
-good_trait<-test %>% 
-  filter(Poptype=="Introduction" & !is.na(Source_pop) & !Source_pop =="Unknown") %>% 
-  distinct(TraitID) %>% 
-  pull(TraitID) #turns to vector, 114 traits with explicit source pops listed
+source_pops<-pull(cohen.data, Source_pop)
 
-test<-test %>% 
-  filter(TraitID %in% good_trait)
-
-source_pops<-pull(test, Source_pop)
-
-test<-test %>% 
+cohen.data<-cohen.data %>% 
   filter(PopulationRaw %in% source_pops | !is.na(Source_pop)) %>% 
   mutate(type = ifelse(is.na(Source_pop), "Source", "Intro")) %>% 
   mutate(pop.temp = ifelse(!is.na(Source_pop), Source_pop, PopulationRaw)) %>% 
@@ -82,34 +76,30 @@ test<-test %>%
   arrange(introID) %>% 
   filter(n_distinct(type)>1)
 
-test$MeanValue<-as.numeric(test$MeanValue)
-test$pop.temp<-as.factor(test$pop.temp)
-test$type<-as.factor(test$type)
-test$introID<-as.factor(test$introID)
-test2<-test %>% 
-  ungroup() %>% 
-  slice_tail(n = 20) %>% 
-  filter(!introID %in% c(97,82))
+cohen.data$MeanValue<-as.numeric(cohen.data$MeanValue)
+cohen.data$pop.temp<-as.factor(cohen.data$pop.temp)
+cohen.data$type<-as.factor(cohen.data$type)
+cohen.data$introID<-as.factor(cohen.data$introID)
 
-test2$introID<-as.factor(test2$introID) %>% 
-  droplevels()
-
-mean<-pull(test2, MeanValue)
-type<-pull(test2, type)
-id<-pull(test2, introID)
-cohen.d(d = mean, f = type, subject = id, paired = TRUE, data = test2) #this isn't really working and also needs real data not meta data
+test<-cohen.data %>% 
+  filter(introID %in% c(3, 56, 58, 60)) #these are the traits with just one intro and one source
 
 library(esc) # this uses metaData but unfortunately we don't have a large enough metadata sample to do the pop vs intro questions this way (n= 3)
 
-test3<-test %>% 
-  select(4,18:21,24:26) %>% 
-  ungroup() %>% 
-  slice_tail(n = 20) %>% 
-  filter(!introID == 97)
+cohen.data2<-test %>% 
+  select(type, MeanValue, SD, SE, Number, introID) %>% 
+  pivot_wider(names_from = type, values_from = c(MeanValue, SD, SE, Number))
 
-test3<-pivot_wider(test3, names_from = type, values_from = c(MeanValue, SD, SE, Number))
+grp1m<- pull(cohen.data2,MeanValue_Source)
+grp2m<- pull(cohen.data2,MeanValue_Intro)
+grp1se<- pull(cohen.data2,SE_Source)
+grp2se<- pull(cohen.data2,SE_Intro)
+grp1n <- pull(cohen.data2,Number_Source)
+grp2n <- pull(cohen.data2,Number_Intro)
 
-esc_mean
+esc_list<-list(grp1m, grp2m, grp1se, grp2se, grp1n, grp2n)
+
+cohensd<-mapply(FUN = esc_mean_se, grp1m = grp1m, grp2m = grp2m, grp1se = grp1se, grp2se = grp2se, grp1n = grp1n, grp2n = grp2n)
 ```
 
 
