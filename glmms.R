@@ -38,6 +38,10 @@ library(tidyverse)
 library(fitdistrplus)
 library(tidyverse)
 library(sjPlot)
+library(ggpubr)
+library(PupillometryR)
+
+# 2021-06-10 - I have updated this to be consistent with everything on the doc!!
 
 # set working directory
 # setwd("")
@@ -306,24 +310,24 @@ R2.data.among.drainage$method <- "both.drainages"
 #get relevant data with one entry for each Trait
 ##I was inclusive with columns, many probably aren't needed so you can cut them out
 data.all <- inner_join(spreadsheet.data, R2.data.among, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 43:50)%>% #I selected only the columns that have information that applies at the trait level
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:54)%>% #I selected only the columns that have information that applies at the trait level
   distinct(TraitID, .keep_all = TRUE) #removes replicated TraitIDs and retains the columns
 
 #repeat for south only R2 and others...
 data.south <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 43:50)%>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:54)%>% 
   distinct(TraitID, .keep_all = TRUE) 
 
 data.intro<- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 43:50)%>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:54)%>% 
   distinct(TraitID, .keep_all = TRUE) 
 
 data.caroni<- inner_join(spreadsheet.data, R2.data.caroni, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 43:50)%>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:54)%>% 
   distinct(TraitID, .keep_all = TRUE) 
 
 data.among.drainage<- inner_join(spreadsheet.data, R2.data.among.drainage, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 43:50)%>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:54)%>% 
   distinct(TraitID, .keep_all = TRUE)
 
 #then we can bind them together as we wish! First ecology...
@@ -361,6 +365,319 @@ time.data.females <- data.for.intro.models %>%
 
 # as a note and fail safe I would run the grouping with TraitID on the sex specific dfs to make sure theres two traitID entries for each
 
+## Overall models
+
+## remove 'both'
+### (Because when calculated by hand, I would do M/F/Both with same data)
+data.all <- data.all %>% filter(Sex %in% c("M", "F"))  
+
+## remove other (because overall trait type model will not converge with other)
+data.all <- data.all %>% filter(!Kingsolver_traits == "Other")
+
+## creating a dataset w no colour (to compare w those w colour)
+data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == "Colour")
+
+## basic histograms
+data.all %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1.5) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  theme_bw()
+
+## basic histograms - no colour
+data.all.no.colour %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1.5) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  theme_bw()
+
+## overall traits model
+
+## this WILL NOT RUN with other included
+(all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), data = data.all, family = binomial)) %>% summary()
+
+## overall sex model
+(all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
+
+### Removed colour 
+(all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
+
+## trait type plots
+## here is a general plot with colour
+data.all %>% 
+  ggplot(aes(x = Kingsolver_traits, y = R.2, fill = Kingsolver_traits)) + 
+  geom_jitter(aes(color = Kingsolver_traits), width = .1) +
+  geom_boxplot(size = 1, aes(x = Kingsolver_traits, y = R.2) ,
+               alpha = 0.3, width = 0.3) +
+  scale_colour_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray")) +
+  scale_fill_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray")) +
+  theme_classic() 
+
+data.all.no.colour %>% 
+  ggplot(aes(x = Kingsolver_traits, y = R.2, fill = Kingsolver_traits)) + 
+  geom_jitter(aes(color = Kingsolver_traits), width = .1) +
+  geom_boxplot(size = 1, aes(x = Kingsolver_traits, y = R.2) ,
+               alpha = 0.3, width = 0.3) +
+  scale_colour_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray")) +
+  scale_fill_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray")) +
+  theme_classic() 
+
+## sex plots
+data.all %>% 
+  ggplot(aes(x = Sex, y = R.2, fill = Sex)) + 
+  geom_jitter(aes(color = Sex), width = 0.1, size = 2) +
+  geom_boxplot(size = 1, aes(x = Sex, y = R.2), alpha = 0.3) +
+  scale_colour_manual(values =  c("#FFB93C", "#457111")) +
+  scale_fill_manual(values =  c("#FFB93C", "#457111")) +
+  theme_classic()  
+
+data.all.no.colour %>% 
+  ggplot(aes(x = Sex, y = R.2, fill = Sex)) + 
+  geom_jitter(aes(color = Sex), width = 0.1, size = 2) +
+  geom_boxplot(size = 1, aes(x = Sex, y = R.2), alpha = 0.3) +
+  scale_colour_manual(values =  c("#FFB93C", "#457111")) +
+  scale_fill_manual(values =  c("#FFB93C", "#457111")) +
+  theme_classic()  
+
+
+## Determinants
+
+### Sample size tables
+
+### I don't think that you can just tally by method
+
+## Ecology
+with(data.for.ecology.models, table(Kingsolver_traits, Sex))
+with(data.for.ecology.models, table(Kingsolver_traits))
+with(data.for.ecology.models, table(Sex))
+data.for.ecology.models %>% group_by(StudyID) %>% tally()
+
+## Intro
+with(data.for.intro.models, table(Kingsolver_traits, Sex))
+with(data.for.intro.models, table(Kingsolver_traits))
+with(data.for.intro.models, table(Sex))
+data.for.intro.models %>% group_by(StudyID) %>% tally()
+
+## Evolhist
+with(data.for.evolhist.models, table(Kingsolver_traits, Sex))
+with(data.for.evolhist.models, table(Kingsolver_traits))
+with(data.for.evolhist.models, table(Sex))
+data.for.evolhist.models %>% group_by(StudyID) %>% tally()
+
+# Models ----
+
+## 1. Ecology models ----
+#### Is there a difference between the slopes? 
+
+### Remove 'Both' sex category because duplicates
+data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
+
+### Remove other (to be consistent with above, but idk)
+data.for.ecology.models %>% filter(!Kingsolver_traits == "Other")
+
+### Make dataframes to remove colour
+ecology.data.no.colour <- data.for.ecology.models %>% filter(!Kingsolver_traits == "Colour")
+
+### Model with everything
+(ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
+
+### Model without colour
+(ecology.no.colour <- glmer(R.2 ~ method*Sex + (1|StudyID), data = ecology.data.no.colour, family = binomial)) %>% summary()
+
+### effect size plot with all models
+plot_models(ecology.full, ecology.no.colour, vline.color = "grey")
+
+### this is for the means that I report in the text
+ecology.data.no.colour %>% filter(method == "all") %>% summary()
+ecology.data.no.colour %>% filter(method == "south") %>% summary()
+
+### Plots
+
+(ecology.full.plot <-
+    ecology.data.no.colour %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    theme_bw()+
+    theme(legend.position = "none"))
+
+
+(ecology.sex.plot <-  
+    ecology.data.no.colour %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    facet_wrap(~Sex) +
+    theme_bw() )
+
+ggarrange(ecology.full.plot, ecology.sex.plot, ncol = 1, common.legend= TRUE)
+
+
+## 2. Intro models ----
+#### Is there a difference between studies with only natural vs w intro
+
+### Remove 'Both' sex category because duplicates
+data.for.intro.models <- data.for.intro.models %>% filter(Sex %in% c("M", "F"))  
+
+### Remove 'other' to be consistent
+data.for.intro.models <- data.for.intro.models %>% filter(!Kingsolver_traits == "Other")
+
+### Make dataframes to remove colour
+intro.data.no.colour <- data.for.intro.models %>% filter(!Kingsolver_traits == "Colour")
+
+### Model with everything 
+(intro.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.intro.models, family = binomial)) %>% summary()
+
+### Model without colour
+(intro.no.colour <- glmer(R.2 ~ method*Sex + (1|StudyID), data = intro.data.no.colour, family = binomial)) %>% summary()
+
+### effect size plot with all models
+plot_models(intro.full, intro.no.colour, vline.color = "grey")
+
+intro.data.no.colour %>% 
+  ggplot(aes(x = method, y = R.2, fill = Sex)) +
+  geom_boxplot(size = 1.5) +
+  geom_jitter(size = 3, alpha = 0.1, width = 0.2) +
+  scale_fill_manual(values = c("gray48", "gray90")) +
+  facet_wrap(~Sex) +
+  theme_bw()
+
+### this is for the means that I report in the text
+intro.data.no.colour %>% filter(method == "all") %>% summary()
+intro.data.no.colour %>% filter(method == "intro") %>% summary()
+
+(intro.full.plot <-
+    intro.data.no.colour %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    theme_bw()+
+    theme(legend.position = "none"))
+
+
+(intro.sex.plot <-  
+    intro.data.no.colour %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    facet_wrap(~Sex) +
+    theme_bw())
+
+ggarrange(intro.full.plot, intro.sex.plot, ncol = 1, common.legend= TRUE)
+
+## 3. Evolutionary history models ----
+#### Is there a difference when only w pops in the caroni vs also in the Oropuche? 
+
+### These are all singular fits
+
+### Remove 'Both' sex category because duplicates
+data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
+
+### Remove other, being consistent
+data.for.evolhist.models <- data.for.evolhist.models %>% filter(!Kingsolver_traits == "Other")
+
+### Make dataframes to remove colour
+evolhist.data.no.colour <- data.for.evolhist.models %>% filter(!Kingsolver_traits == "Colour")
+
+### Model with everything 
+(evolhist.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
+
+### Model without colour
+(evolhist.no.colour <- glmer(R.2 ~ method*Sex + (1|StudyID), data = evolhist.data.no.colour, family = binomial)) %>% summary()
+
+### effect size plot with all models
+plot_models(evolhist.full, evolhist.no.colour, vline.color = "grey")
+
+### These are means I report in text
+evolhist.data.no.colour %>% filter(method == "both.drainages") %>% summary()
+evolhist.data.no.colour %>% filter(method == "caroni") %>% summary()
+
+(evolhist.full.plot <-
+    evolhist.data.no.colour %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    theme_bw()+
+    theme(legend.position = "none"))
+
+(evolhist.sex.plot <-  
+    evolhist.data.no.colour %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    facet_wrap(~Sex) +
+    theme_bw() )
+
+ggarrange(evolhist.full.plot, evolhist.sex.plot, ncol = 1, common.legend= TRUE)
+
+
+# Troubleshooting ----
+#### Evolhist are singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
+#### Note that I can't plot lmer w an sjplot (cause lmer is plotted as an Estimate, whereas the glm/glmer are odds ratios). I think that the glm/glmer are more consistent anyway (?) but I am only basing this on agreement re significance.
+
+## Compare intro
+### This one is not singular (so is an example)
+summary(intro.no.colour)
+(intro.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = intro.data.no.colour)) %>% summary()
+Anova(intro.full.lmer, type = 2)
+(intro.full.glm <- glm(R.2 ~ method*Sex, data = intro.data.no.colour, family = binomial)) %>% summary()
+
+### Plot models
+plot_models(intro.no.colour, intro.full.glm)  # I can't tell
+
+## Compare ecology
+summary(ecology.no.colour)
+(ecology.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = ecology.data.no.colour)) %>% summary()
+Anova(ecology.full.lmer, type = 3)
+(ecology.full.glm <- glm(R.2 ~ method*Sex, data = ecology.data.no.colour, family = binomial)) %>% summary()
+
+### Plot model to compare effect sizes
+plot_models(ecology.no.colour, ecology.full.glm)
+
+### This is singular (need to decide with this one)
+summary(evolhist.no.colour)
+(evolhist.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = evolhist.data.no.colour)) %>% summary()
+Anova(evolhist.full.lmer, type = 3)
+(evolhist.full.glm <- glm(R.2 ~ method*Sex, data = evolhist.data.no.colour, family = binomial)) %>% summary()
+
+plot_models(evolhist.no.colour, evolhist.full.glm)
+
+### Plot models (is there a better way to compare effect sizes?)
+
+
+
+
+# !!!
+# !!!
+# Everything below here is old!!!!
 ## models
 
 ## ECOLOGY QUESTION (ACROSS SLOPES VS WITHIN SOUTH SLOPE)
