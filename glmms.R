@@ -1,22 +1,15 @@
 # GLMMs for parallel_guppies! 
 # 2020-08-31 AH
 
-# 2020-09-08 ah
-# We need to collapse categories - TraitType1/TraitType2
-# Probably should exclude common garden (check cgtally)
-# Maybe include morphometric for CG?
+
+### 2021-06-11 ah 
+### Fixed a typo - other can't be removed from the question-specific models 
+### but NEEDS to be removed for the overall models?? 
 
 # For collapsing traits... 
 # Diet + Other + Physiology + Life History
 # But for "both" physiology makes up a bigger proportion in the North
 # For "both" maybe we can only look at South
-
-# 2020-09-09 ah
-# Collapsed the traits and re-ran the models... 
-
-# 2020-09-14 ah
-# Is sex.mod6 the best model? 
-# Deleted all models with 'Paired' as an effect
 
 # changed file names -- NEW FILES ON DRIVE
 
@@ -477,7 +470,7 @@ data.for.evolhist.models %>% group_by(StudyID) %>% tally()
 data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
 
 ### Remove other (to be consistent with above, but idk)
-data.for.ecology.models %>% filter(!Kingsolver_traits == "Other")
+#data.for.ecology.models %>% filter(!Kingsolver_traits == "Other") # TYPO (but fixing it makes it singular....)
 
 ### Make dataframes to remove colour
 ecology.data.no.colour <- data.for.ecology.models %>% filter(!Kingsolver_traits == "Colour")
@@ -532,7 +525,7 @@ ggarrange(ecology.full.plot, ecology.sex.plot, ncol = 1, common.legend= TRUE)
 data.for.intro.models <- data.for.intro.models %>% filter(Sex %in% c("M", "F"))  
 
 ### Remove 'other' to be consistent
-data.for.intro.models <- data.for.intro.models %>% filter(!Kingsolver_traits == "Other")
+#data.for.intro.models <- data.for.intro.models %>% filter(!Kingsolver_traits == "Other")
 
 ### Make dataframes to remove colour
 intro.data.no.colour <- data.for.intro.models %>% filter(!Kingsolver_traits == "Colour")
@@ -594,7 +587,7 @@ ggarrange(intro.full.plot, intro.sex.plot, ncol = 1, common.legend= TRUE)
 data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
 
 ### Remove other, being consistent
-data.for.evolhist.models <- data.for.evolhist.models %>% filter(!Kingsolver_traits == "Other")
+#data.for.evolhist.models <- data.for.evolhist.models %>% filter(!Kingsolver_traits == "Other")
 
 ### Make dataframes to remove colour
 evolhist.data.no.colour <- data.for.evolhist.models %>% filter(!Kingsolver_traits == "Colour")
