@@ -365,7 +365,8 @@ time.data.females <- data.for.intro.models %>%
 data.all <- data.all %>% filter(Sex %in% c("M", "F"))  
 
 ## remove other (because overall trait type model will not converge with other)
-data.all <- data.all %>% filter(!Kingsolver_traits == "Other")
+### but only from the trait model
+data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
 
 ## creating a dataset w no colour (to compare w those w colour)
 data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == "Colour")
@@ -391,7 +392,7 @@ data.all.no.colour %>%
 ## overall traits model
 
 ## this WILL NOT RUN with other included
-(all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), data = data.all, family = binomial)) %>% summary()
+(all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), data = data.all.traits, family = binomial)) %>% summary()
 
 ## overall sex model
 (all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
