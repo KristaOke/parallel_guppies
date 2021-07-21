@@ -171,12 +171,12 @@ new.data$Drainage<- case_when(
 )  #Labels all single populations as a specific drainage
 
 
-#coding the trait column, one ID for each trait measured in each sex group in each study, THIS WAY IS BETTER
+#coding the trait column, one ID for each trait measured in each sex group in each study
 new.data<-new.data %>% 
   arrange(StudyID, StudyType, Trait, Sex, Predation)
 sex.length<-rle(as.character(paste(new.data$Trait,new.data$Sex,new.data$StudyType)))  
 new.data$TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
-
+#also recoding studyID because of excluded studies making the numbers janky
 study.length<-rle(as.character(paste(new.data$Study)))
 new.data$StudyID<-rep(seq_along(study.length$lengths), study.length$lengths)
 
