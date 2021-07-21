@@ -241,7 +241,7 @@ ids_i_broad<-new.data %>%
   filter(!duplicated(TraitID)) %>% 
   select(TraitID)
 
-traits_ibroad<-new.data %>% 
+traits_i_broad<-new.data %>% 
   filter(TraitID %in% ids_i_broad$TraitID) %>% 
   filter(Poptype_broad == "Natural") #219 traits, done and on drive
 ```
