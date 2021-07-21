@@ -102,17 +102,51 @@ North<-c("Yarra", "Marianne", "Paria", "Madamas", "Damier", "Brasso Seco", "Bala
 
 Northeastern<- c("Tompire", "Ricon", "Mission", "Toco")
 
-Other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Manzanilla", "Oropuna", "Hollis", "Visigney") #mostly southern range, jessica stephenson paper, but some others
+Other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Manzanilla", "Visigney") #mostly southern range, jessica stephenson paper, but some others
 
-South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Caura", "Manacal", "Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Valencia", "Matura", "Hollis", "Saint Joseph", "Caura")  
+South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Caura", "Manacal", "Quare","Hollis", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Valencia", "Matura", "Hollis", "Saint Joseph", "Caura", "Oropuna")  
 
 #Drainage level
-Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Caura", "Manacal", "Saint Joseph")
+Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Caura", "Manacal", "Saint Joseph", "Oropuna")
 
-Oropuche<-c("Quare", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Valencia", "Matura", "Hollis")
+Oropuche<-c("Quare", "Hollis", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Valencia", "Matura", "Hollis")
 
 #rivers not already sorted into north or south slope
 #unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South| river.list$Population %in% Northeastern| river.list$Population %in% Other))) 
+
+#For mapping watershed sorting STILL NEED(Maracas, Saint Joseph, Manacal, Tranquille, Mausica, Blanadra)
+map_other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Manzanilla", "Visigney", "Tompire", "Ricon", "Mission", "Toco")
+map_aripo<-c("Aripo", "Ceniza", "Naranjo", "Valencia")
+map_quare<-c("Quare","Hollis")
+map_tunapuna<-c("Tunapuna", "Caroni Lower Dyke")
+map_tacarigua<-c("Tacarigua", "Cuara")
+map_arouca<-c("Arouca", "Lopinot", "Oropuna")
+map_guanapo<-c("Guanapo")
+map_arima<-c("Arima")
+map_elcedro<-c("El Cedro")
+map_turure<-c("Turure")
+map_oropuche<-c("Oropuche", "Matura", "La Seiva", "Rio Barre", "Rio Grande", "La Selva")
+map_yarra<-c("Yarra")
+map_marianne<-c("Marianne", "Brasso Seco")
+map_paria<-c("Paria", "Madamas")
+map_damier<-c("Damier")
+data$pop_map<-case_when(
+  data$Population %in% map_aripo ~ "Aripo",
+  data$Population %in% map_quare ~ "Quare",
+  data$Population %in% map_tacarigua ~ "Tacarigua",
+  data$Population %in% map_tunapuna ~ "Tunapuna",
+  data$Population %in% map_arouca ~ "Arouca",
+  data$Population %in% map_guanapo ~ "Guanapo",
+  data$Population %in% map_arima ~ "Arima",
+  data$Population %in% map_elcedro ~ "El Cedro",
+  data$Population %in% map_turure ~ "Turure",
+  data$Population %in% map_oropuche ~ "Oropuche",
+  data$Population %in% map_yarra ~ "Yarra",
+  data$Population %in% map_marianne ~ "Marianne",
+  data$Population %in% map_paria ~ "Paria",
+  data$Population %in% map_damier ~ "Damier",
+  data$Population %in% map_other ~ "Other"
+)
 ```
 
 
@@ -136,36 +170,23 @@ new.data$Drainage<- case_when(
   new.data$Population %in% Northeastern ~ "Other",
 )  #Labels all single populations as a specific drainage
 
-#coding the trait column, one ID for each trait measured in each study (regardless of sex)
-#new.data<-new.data %>% 
-  #arrange(StudyID, Trait)
-#lengths<-rle(as.character(new.data$Trait))
-#new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
-new.data<-new.data %>% 
-  arrange(StudyID, StudyType, Trait, Sex, Predation)
 
 #coding the trait column, one ID for each trait measured in each sex group in each study, THIS WAY IS BETTER
+new.data<-new.data %>% 
+  arrange(StudyID, StudyType, Trait, Sex, Predation)
 sex.length<-rle(as.character(paste(new.data$Trait,new.data$Sex,new.data$StudyType)))  
 new.data$TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
 
-#fixes some kingsolver trait mis-sorting (March 10th meeting)
-new.data$Kingsolver_traits<-ifelse(new.data$TraitID %in% c(41:42,62:79,81:82,89:91,119:121,295:297,301:303,554), "Physiology", 
-                               ifelse(new.data$TraitID %in% c(27:28,33:34,377,472), "Other_life_history",
-                               ifelse(new.data$TraitID %in% c(471,473), "Other_morphology", new.data$Kingsolver_traits)))
+study.length<-rle(as.character(paste(new.data$Study)))
+new.data$StudyID<-rep(seq_along(study.length$lengths), study.length$lengths)
 
-#changing intro sites
-new.data$Poptype<-ifelse(new.data$Population %in% c("Damier", "Turure", "El Cedro"), "Introduction", new.data$Poptype)
+#fixes some kingsolver trait mis-sorting (March 10th meeting), final spreadsheet done manually (july 21)
+#new.data$Kingsolver_traits<-ifelse(new.data$TraitID %in% c(41:42,62:79,81:82,89:91,119:121,295:297,301:303,554), "Physiology",ifelse(new.data$TraitID %in% c(27:28,33:34,377,472), "Other_life_history",ifelse(new.data$TraitID %in% c(471,473), "Other_morphology", new.data$Kingsolver_traits)))
 
-#tests
-x<-as.data.frame(sex.length[["lengths"]])
-x<-x %>% 
-  subset(`sex.length[["lengths"]]`<3) # check for traits with less than the min 4 pops
+#changing intro sites, El cedro LP is intro, El Cedro HP is natural
+new.data$Poptype_broad<-ifelse(new.data$Population %in% c("Damier", "Turure"), "Introduction", new.data$Poptype)
+new.data$Poptype_broad<-ifelse((new.data$Population %in% c("El Cedro") & new.data$Predation=="Low"), "Introduction", new.data$Poptype)
 
-new.data %>% 
-  group_by(TraitID) %>% 
-  filter(all(c("Common Garden (F1)", "Wildcaught") %in% StudyType )) #I think this checks out!!
-
-new.data[is.na(new.data$Slope),]
 ```
 
 
@@ -183,7 +204,7 @@ x<-slope.data[!duplicated(slope.data$TraitID),]
 summary(as.factor(x$unique_slopes))
 summary(as.factor(x$Slope.type))
 
-#write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written Mar 10th
+#write_csv(slope.data, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/MetaData.csv") #written July 21st
 ```
 
 
@@ -203,16 +224,8 @@ traitData<-traitData[!duplicated(traitData$TraitID),]
 
 ### Mapping miscellaneous ###
 
+
 ```{r mapping prep}
-location.data<-new.data[!is.na(new.data$Location),]
-coordinates<-location.data[!duplicated(location.data$Location),] %>% 
-  select(1:22,24:27,37:42) #one entry per location for map input, BUT no information on how many traits per location as of now
-
-#write_csv(coordinates, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.csv")
-```
-
-
-```{r mapping prep2}
 Coordinates <- read_csv("~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.csv")
 Coordinates<-Coordinates %>% 
   select(1:4,19,21:26)
