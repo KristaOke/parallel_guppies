@@ -228,7 +228,22 @@ ids_i<-new.data %>%
 
 traits_i<-new.data %>% 
   filter(TraitID %in% ids_i$TraitID) %>% 
-  filter(Poptype == "Natural") #232 traits, done and on drive
+  filter(Poptype == "Natural") #209 traits, done and on drive
+
+ids_i_broad<-new.data %>% 
+  group_by(TraitID, Poptype_broad, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Poptype_broad))>1) %>% #selects traits with both natural and introduction populations
+  filter(Poptype_broad == "Natural") %>% #select only natural pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  select(TraitID)
+
+traits_ibroad<-new.data %>% 
+  filter(TraitID %in% ids_i_broad$TraitID) %>% 
+  filter(Poptype_broad == "Natural") #219 traits, done and on drive
 ```
 
 
