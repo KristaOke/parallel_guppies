@@ -136,24 +136,17 @@ new.data$Drainage<- case_when(
   new.data$Population %in% Northeastern ~ "Other",
 )  #Labels all single populations as a specific drainage
 
-#coding the trait column, one ID for each trait measured in each study (regardless of sex)
-#new.data<-new.data %>% 
-  #arrange(StudyID, Trait)
-#lengths<-rle(as.character(new.data$Trait))
-#new.data$TraitID<-rep(seq_along(lengths$lengths), lengths$lengths)
-new.data<-new.data %>% 
-  arrange(StudyID, StudyType, Trait, Sex, Predation)
 
 #coding the trait column, one ID for each trait measured in each sex group in each study, THIS WAY IS BETTER
+new.data<-new.data %>% 
+  arrange(StudyID, StudyType, Trait, Sex, Predation)
 sex.length<-rle(as.character(paste(new.data$Trait,new.data$Sex,new.data$StudyType)))  
 new.data$TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
 
-#fixes some kingsolver trait mis-sorting (March 10th meeting)
-new.data$Kingsolver_traits<-ifelse(new.data$TraitID %in% c(41:42,62:79,81:82,89:91,119:121,295:297,301:303,554), "Physiology", 
-                               ifelse(new.data$TraitID %in% c(27:28,33:34,377,472), "Other_life_history",
-                               ifelse(new.data$TraitID %in% c(471,473), "Other_morphology", new.data$Kingsolver_traits)))
+#fixes some kingsolver trait mis-sorting (March 10th meeting), final spreadsheet done manually (july 21)
+#new.data$Kingsolver_traits<-ifelse(new.data$TraitID %in% c(41:42,62:79,81:82,89:91,119:121,295:297,301:303,554), "Physiology",ifelse(new.data$TraitID %in% c(27:28,33:34,377,472), "Other_life_history",ifelse(new.data$TraitID %in% c(471,473), "Other_morphology", new.data$Kingsolver_traits)))
 
-#changing intro sites
+#changing intro sites, El cedro LP is intro, El Cedro HP is natural
 new.data$Poptype<-ifelse(new.data$Population %in% c("Damier", "Turure", "El Cedro"), "Introduction", new.data$Poptype)
 
 #tests
