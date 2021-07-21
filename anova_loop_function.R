@@ -96,8 +96,22 @@ hist(as.numeric(as.character(output.all$justr)))
 
 
 #write results to a csv file for further analyses DONT FORGET TO MOVE AND OVERWRITE saves inside repo not data folder
-#write.table(output.all, file = "TraitR2.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
+#this is the overall R2, all studies and traits included
+#write.table(output.all, file = "TraitR2_among.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
+# anova for the south only (Slope Q)
+output.all<-anova_loop(dat=traits_s)
+#write.table(output.all, file = "TraitR2_South.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
+# anova for the caroni only (drainage Q)
+output.all<-anova_loop(dat=traits_d)
+#write.table(output.all, file = "TraitR2_Caroni.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
+# anova for the south only (drainage Q, northern pops excluded because they arent in caroni or oropuche drainages)
+output.all<-anova_loop(dat=traits_d_all)
+#write.table(output.all, file = "TraitR2_Among_Drainage.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+
+# anova for the natural pops only (drainage Q)
+output.all<-anova_loop(dat=traits_i)
+#write.table(output.all, file = "TraitR2_intro.csv",row.names=FALSE,col.names=TRUE, sep=",") 
