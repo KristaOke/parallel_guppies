@@ -102,16 +102,16 @@ hist(as.numeric(as.character(output.all$justr)))
 
 # anova for the south only (Slope Q)
 output.south<-anova_loop(dat=traits_s)
-#write.table(output.all, file = "TraitR2_South.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+#write.table(output.south, file = "TraitR2_South.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
 # anova for the caroni only (drainage Q)
 output.caroni<-anova_loop(dat=traits_d)
-#write.table(output.all, file = "TraitR2_Caroni.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+#write.table(output.caroni, file = "TraitR2_Caroni.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
 # anova for the south only (drainage Q, northern pops excluded because they arent in caroni or oropuche drainages)
 output.south.drainages<-anova_loop(dat=traits_d_all)
-#write.table(output.all, file = "TraitR2_Among_Drainage.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+#write.table(output.south.drainages, file = "TraitR2_Among_Drainage.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
 # anova for the natural pops only (drainage Q)
 output.intros<-anova_loop(dat=traits_i)
-#write.table(output.all, file = "TraitR2_intro.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+#write.table(output.intros, file = "TraitR2_intro.csv",row.names=FALSE,col.names=TRUE, sep=",") 
