@@ -183,9 +183,11 @@ new.data$StudyID<-rep(seq_along(study.length$lengths), study.length$lengths)
 #fixes some kingsolver trait mis-sorting (March 10th meeting), final spreadsheet done manually (july 21)
 #new.data$Kingsolver_traits<-ifelse(new.data$TraitID %in% c(41:42,62:79,81:82,89:91,119:121,295:297,301:303,554), "Physiology",ifelse(new.data$TraitID %in% c(27:28,33:34,377,472), "Other_life_history",ifelse(new.data$TraitID %in% c(471,473), "Other_morphology", new.data$Kingsolver_traits)))
 
-#changing intro sites, El cedro LP is intro, El Cedro HP is natural
-new.data$Poptype_broad<-ifelse(new.data$Population %in% c("Damier", "Turure"), "Introduction", new.data$Poptype)
-new.data$Poptype_broad<-ifelse((new.data$Population %in% c("El Cedro") & new.data$Predation=="Low"), "Introduction", new.data$Poptype)
+#changing intro sites, all turure and damier, El cedro LP is intro, El Cedro HP is natural, Arima after 2001 HP is intro
+new.data$Poptype_broad<-ifelse(new.data$Population %in% c("Damier", "Turure"), "Introduction",
+                               ifelse((new.data$Population %in% c("El Cedro") & new.data$Predation=="Low"), "Introduction", 
+                                      ifelse((new.data$Population %in% c("El Cedro") & new.data$Predation=="Low"), "Introduction", 
+                                             ifelse((new.data$Population %in% c("Arima") & new.data$Predation=="High" & new.data$Collection_start>2001), "Introduction", new.data$Poptype))))
 
 ```
 
