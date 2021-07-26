@@ -28,11 +28,11 @@ library(MuMIn)
 # wd<- getwd()
 
 
-## import and tidy 
+# import and tidy 
 
-# These are all the updated sheets on the Drive
-# spreadsheet.data is the data extracted for the meta-analysis
-# R2.data.among are the output of the ANOVA loops
+## These are all the updated sheets on the Drive
+## spreadsheet.data is the data extracted for the meta-analysis
+## R2.data.among are the output of the ANOVA loops
 
 spreadsheet.data <- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")
 R2.data.among <- read.csv(paste(wd,'/Data/TraitR2_among.csv',sep=""), header=TRUE, sep=",")
@@ -42,7 +42,7 @@ R2.data.caroni <- read.csv(paste(wd,'/Data/TraitR2_Caroni.csv',sep=""), header=T
 R2.data.among.drainage <- read.csv(paste(wd,'/Data/TraitR2_Among_Drainage.csv',sep=""), header=TRUE, sep=",")
 R2.data.intro.broad <- read.csv(paste(wd, '/Data/TraitR2_intro_broad.csv', sep = ""), header = TRUE, sep = "")
 
-
+## fix structure
 str(spreadsheet.data)
 str(R2.data.among)
 
@@ -65,8 +65,8 @@ R2.data.intro.broad$TraitID <- as.factor(R2.data.intro.broad$TraitID)
 R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
 R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
 
-## combine R2 and spreadsheet data
-#prep for when we bind them together, this variable will go in the model to indicate the type of R2
+# combine R2 and spreadsheet data
+## prep for when we bind them together, this variable will go in the model to indicate the type of R2
 R2.data.among$method <- "all"
 R2.data.south$method <- "south"
 R2.data.intro$method <- "only_natural"
@@ -74,13 +74,13 @@ R2.data.intro.broad$method <- "only_natural_broad"
 R2.data.caroni$method <- "caroni"
 R2.data.among.drainage$method <- "both.drainages"
 
-#get relevant data with one entry for each Trait
-##I was inclusive with columns, many probably aren't needed so you can cut them out
+## get relevant data with one entry for each Trait
+### I was inclusive with columns, many probably aren't needed so you can cut them out
 data.all <- inner_join(spreadsheet.data, R2.data.among, by = "TraitID") %>% 
   dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% #I selected only the columns that have information that applies at the trait level
   distinct(TraitID, .keep_all = TRUE) #removes replicated TraitIDs and retains the columns
 
-#repeat for south only R2 and others...
+## repeat for south only R2 and others...
 data.south <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>% 
   dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
   distinct(TraitID, .keep_all = TRUE) 
@@ -101,7 +101,7 @@ data.among.drainage<- inner_join(spreadsheet.data, R2.data.among.drainage, by = 
   dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
   distinct(TraitID, .keep_all = TRUE)
 
-#then we can bind them together as we wish! First ecology...
+## then we can bind them together as we wish! First ecology...
 data.for.ecology.models<-rbind(data.all,data.south) %>% 
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
@@ -115,7 +115,7 @@ ecology.data.females <- data.for.ecology.models %>%
   filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
   ungroup(TraitID)
 
-#evolutionary history question
+## evolutionary history question
 data.for.evolhist.models<-rbind(data.caroni,data.among.drainage) %>% 
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
@@ -128,7 +128,7 @@ evolhist.data.females <- data.for.evolhist.models %>%
   filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
   ungroup(TraitID)
 
-# Intro, I'm pretty sure these are the right csvs for this question
+## Intro "strict", I'm pretty sure these are the right csvs for this question
 data.for.intro.models<-rbind(data.all,data.intro) %>% 
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
@@ -142,15 +142,15 @@ time.data.females <- data.for.intro.models %>%
   ungroup(TraitID)
 
 
-# Intro, I'm pretty sure these are the right csvs for this question
+## Intro "broad", 
 data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>% 
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
   filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
 
-# as a note and fail safe I would run the grouping with TraitID on the sex specific dfs to make sure theres two traitID entries for each
+### as a note and fail safe I would run the grouping with TraitID on the sex specific dfs to make sure theres two traitID entries for each
 
-## Overall models
+# Overall models ----
 
 ## remove 'both'
 ### (Because when calculated by hand, I would do M/F/Both with same data)
@@ -183,7 +183,8 @@ data.all.no.colour %>%
   ylab("Frequency") +
   theme_bw()
 
-# colour traits included
+# mean R2/sd for in-text descriptions
+## colour traits included
 w.colour.M <- data.all %>% filter(Sex == "M")
 mean(w.colour.M$R.2)
 sd(w.colour.M$R.2)
@@ -192,7 +193,7 @@ w.colour.F <- data.all %>% filter(Sex == "F")
 mean(w.colour.F$R.2)
 sd(w.colour.F$R.2)
 
-# colour traits excluded
+## colour traits excluded
 no.colour.M <- data.all.no.colour %>% filter(Sex == "M")
 mean(no.colour.M$R.2)
 sd(no.colour.M$R.2)
@@ -201,31 +202,32 @@ no.colour.F <- data.all.no.colour %>% filter(Sex == "F")
 mean(no.colour.F$R.2)
 sd(no.colour.F$R.2)
 
-## overall traits model
+## overall traits model ----
 
-## this WILL NOT RUN with other included
+## All traits - this WILL NOT RUN with other included
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), data = data.all.traits, family = binomial)) %>% summary()
 
-data.all.traits.rear <- data.all.traits %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))
-(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.traits.rear, family = binomial)) %>% summary()
-
+## get marginal R2
 r.squaredGLMM(all.model.traits)
 
-## overall sex model
+## Rearing enviro model ----
+data.all.traits.rear <- data.all.traits %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.traits.rear, family = binomial)) %>% summary()
+
+##  overall sex model ----
 (all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
 
+## get marginal R2
 r.squaredGLMM(all.model.sex)
 
-confint(all.model.sex)
-
-### Removed colour 
+## Removed colour 
 (all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
 
 r.squaredGLMM(all.model.sex.no.colour)
 
 confint(all.model.sex.no.colour)
 
-## trait type plots
+## trait type plots ----
 ## here is a general plot with colour
 data.all.traits %>% 
   ggplot(aes(x = Kingsolver_traits, y = R.2, fill = Kingsolver_traits)) + 
@@ -250,7 +252,7 @@ data.all.no.colour %>%
   scale_fill_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray")) +
   theme_classic() 
 
-## sex plots
+## sex plots ----
 data.all.traits %>% 
   ggplot(aes(x = Sex, y = R.2, fill = Sex)) + 
   geom_jitter(aes(color = Sex), width = 0.1, size = 2) +
@@ -275,7 +277,7 @@ data.all %>% filter(Kingsolver_traits %in% c("Behaviour", "Colour", "Other_life_
   facet_wrap(~Kingsolver_traits) +
   theme_bw()
 
-# Traits
+# Traits descriptive stuff for in text
 
 Colourtrait <- data.all %>% filter(Kingsolver_traits == "Colour")
 mean(Colourtrait$R.2)
@@ -297,7 +299,8 @@ Othertrait <- data.all %>% filter(Kingsolver_traits == "Other")
 mean(Othertrait$R.2)
 sd(Othertrait$R.2)
 
-# Rearing enviro
+# Rearing enviro for in-text
+## with colour 
 w.colour.cg <- data.all %>% filter(StudyType == "Common Garden (F2)")
 mean(w.colour.cg$R.2)
 sd(w.colour.cg$R.2)
@@ -306,6 +309,7 @@ w.colour.wc <- data.all %>% filter(StudyType == "Wildcaught")
 mean(w.colour.wc$R.2)
 sd(w.colour.wc$R.2)
 
+## without colour
 no.colour.cg <- data.all.no.colour %>% filter(StudyType == "Common Garden (F2)")
 mean(no.colour.cg$R.2)
 sd(no.colour.cg$R.2)
@@ -315,9 +319,9 @@ mean(no.colour.wc$R.2)
 sd(no.colour.wc$R.2)
 
 
-## Determinants
+# Determinants (ecological complex, evol hist, contemp evol) ----
 
-### Sample size tables
+## Sample size tables ----
 
 ### I don't think that you can just tally by method
 
@@ -339,9 +343,9 @@ with(data.for.evolhist.models, table(Kingsolver_traits))
 with(data.for.evolhist.models, table(Sex))
 data.for.evolhist.models %>% group_by(StudyID) %>% tally()
 
-### Models
+## Determinant Models ----
 
-### 1. Ecology models 
+### 1. Ecology models ----
 # Ecology model
 ## Is there a difference between the slopes? 
 
@@ -386,7 +390,7 @@ mean(no.colour.all$R.2)
 sd(no.colour.all$R.2)
 
 
-## Plots
+#### Plots ----
 
 (ecology.full.plot <-
   ecology.data.no.colour %>% 
@@ -417,8 +421,7 @@ ggarrange(ecology.full.plot, ecology.sex.plot, ncol = 1, common.legend= TRUE)
 
 
 
-### 2. Intro models
-# intro model
+### 2. Intro models ----
 ## Is there a difference between studies with only natural vs w intro
 
 ### Remove 'Both' sex category because duplicates
@@ -457,6 +460,7 @@ intro.data.no.colour %>%
 intro.data.no.colour %>% filter(method == "all") %>% summary()
 intro.data.no.colour %>% filter(method == "intro") %>% summary()
 
+#### Intro plots ----
 (intro.full.plot <-
   intro.data.no.colour %>% 
   ggplot(aes(x = method, y = R.2, fill = method)) + 
@@ -502,7 +506,7 @@ mean(no.colour.all$R.2)
 sd(no.colour.all$R.2)
 
 
-# intro %>% model
+### intro BROAD model ----
 ## Is there a difference between studies with only natural vs w intro
 
 ### Remove 'Both' sex category because duplicates
@@ -525,7 +529,7 @@ r.squaredGLMM(intro.full.broad)
 r.squaredGLMM(intro.no.colour)
 
 
-## effect size plot with all models
+#### intro BROAD plots ----
 plot_models(intro.full, intro.no.colour, vline.color = "grey")
 
 intro.data.no.colour.broad %>% 
@@ -580,8 +584,7 @@ mean(no.colour.all.broad$R.2)
 sd(no.colour.all.broad$R.2)
 
 
-# 3. Evolutionary history models
-# evolhist model
+### 3. Evolutionary history models ----
 ## Is there a difference when only w pops in the caroni vs also in the Oropuche? 
 
 ## These are all singular fits
@@ -607,7 +610,7 @@ r.squaredGLMM(evolhist.full)
 r.squaredGLMM(evolhist.no.colour)
 
 
-## effect size plot with all models
+#### evolhist plots ----
 plot_models(evolhist.full, evolhist.no.colour, vline.color = "grey")
 
 evolhist.data.no.colour %>% filter(method == "both.drainages") %>% summary()
@@ -659,7 +662,7 @@ sd(ok2$R.2)
   
 
 
-## Troubleshooting 
+## Troubleshooting ----
 ### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
 
 #### (It seems to me like glm/glmer are consistent, so we should be able to use the evolutionary history model and say that we checked (?))
