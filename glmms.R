@@ -36,6 +36,11 @@ library(tidyverse)
 library(fitdistrplus)
 library(tidyverse)
 library(sjPlot)
+library(olsrr)
+library(ggpubr)
+library(PupillometryR)
+library(MuMIn)
+
 
 # set working directory
 # setwd("")
@@ -54,6 +59,8 @@ R2.data.south <- read.csv(paste(wd,'/Data/TraitR2_south.csv',sep=""), header=TRU
 R2.data.intro <- read.csv(paste(wd,'/Data/TraitR2_intro.csv',sep=""), header=TRUE, sep=",")
 R2.data.caroni <- read.csv(paste(wd,'/Data/TraitR2_Caroni.csv',sep=""), header=TRUE, sep=",")
 R2.data.among.drainage <- read.csv(paste(wd,'/Data/TraitR2_Among_Drainage.csv',sep=""), header=TRUE, sep=",")
+R2.data.intro.broad <- read.csv(paste(wd, '/Data/TraitR2_intro_broad.csv', sep = ""), header = TRUE, sep = "")
+
 
 str(spreadsheet.data)
 str(R2.data.among)
@@ -70,12 +77,13 @@ spreadsheet.data$Slope <- as.factor(spreadsheet.data$Slope)
 spreadsheet.data$Drainage <- as.factor(spreadsheet.data$Drainage)
 spreadsheet.data$Kingsolver_traits <- as.factor(spreadsheet.data$Kingsolver_traits)
 
-## QUESTION 1 ECOLOGY
-
-# First we make an "across" data frame for both slopes
-## combine R2 and spreadsheet data
 R2.data.among$TraitID <- as.factor(R2.data.among$TraitID)
 R2.data.south$TraitID <- as.factor(R2.data.south$TraitID)
+R2.data.intro$TraitID <- as.factor(R2.data.intro$TraitID)
+R2.data.intro.broad$TraitID <- as.factor(R2.data.intro.broad$TraitID)
+R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
+R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
+
 R2.data.among$method <- "all"
 R2.data.south$method <- "south"
 
