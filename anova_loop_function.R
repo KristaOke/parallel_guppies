@@ -36,8 +36,8 @@ new.data$Predation<-as.factor(new.data$Predation)
 new.data$MeanValue<-as.numeric(new.data$MeanValue)
 
 #how many traits/studies?
-length(unique(new.data$TraitID))#556 for TraitID (without typos traits) mar 10th
-length(unique(new.data$StudyID)) #49
+length(unique(new.data$TraitID))#555 for TraitID (without typos traits) jul 21
+length(unique(new.data$StudyID)) #48
 
 #set up a new function to loop through all data and run anova on Mean trait values for each trait
 #note this assumes we have just one covariate of interest: predation(treatment) (basically habitat, e.g. high/low predation)
@@ -96,8 +96,26 @@ hist(as.numeric(as.character(output.all$justr)))
 
 
 #write results to a csv file for further analyses DONT FORGET TO MOVE AND OVERWRITE saves inside repo not data folder
-#write.table(output.all, file = "TraitR2.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
+#this is the overall R2, all studies and traits included
+#write.table(output.all, file = "TraitR2_among.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
+# anova for the south only (Slope Q)
+output.south<-anova_loop(dat=traits_s)
+#write.table(output.south, file = "TraitR2_South.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
+# anova for the caroni only (drainage Q)
+output.caroni<-anova_loop(dat=traits_d)
+#write.table(output.caroni, file = "TraitR2_Caroni.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
+# anova for the south only (drainage Q, northern pops excluded because they arent in caroni or oropuche drainages)
+output.south.drainages<-anova_loop(dat=traits_d_all)
+#write.table(output.south.drainages, file = "TraitR2_Among_Drainage.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+
+# anova for the natural pops only (drainage Q)
+output.intros<-anova_loop(dat=traits_i)
+#write.table(output.intros, file = "TraitR2_intro.csv",row.names=FALSE,col.names=TRUE, sep=",")
+
+# anova for the natural pops only (drainage Q, broad specification)
+output.intros<-anova_loop(dat=traits_i_broad)
+#write.table(output.intros, file = "TraitR2_intro_broad.csv",row.names=FALSE,col.names=TRUE, sep=",") 

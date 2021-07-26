@@ -164,52 +164,26 @@ ids_i<-new.data %>%
 
 traits_i<-new.data %>% 
   filter(TraitID %in% ids_i$TraitID) %>% 
-  filter(Poptype == "Natural") #232 traits, done and on drive
+  filter(Poptype == "Natural") #209 traits, done and on drive
+
+ids_i_broad<-new.data %>% 
+  group_by(TraitID, Poptype_broad, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Poptype_broad))>1) %>% #selects traits with both natural and introduction populations
+  filter(Poptype_broad == "Natural") %>% #select only natural pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  select(TraitID)
+
+traits_i_broad<-new.data %>% 
+  filter(TraitID %in% ids_i_broad$TraitID) %>% 
+  filter(Poptype_broad == "Natural") #219 traits, done and on drive
 ```
-##
-
-Visualization and Plots
-
-## R2 plots (old school visualization)
-```{r R2 prep}
-new.data<-left_join(new.data,r.squared, by = "TraitID")
-new.data$R.2<-as.numeric(new.data$R.2)
-```
 
 
 
-```{r plots violin}
-ggplot(data = new.data, aes(x=TraitType2, y = R.2, fill = TraitType2)) + geom_violin() 
-ggplot(data = new.data, aes(x=TraitType1, y = R.2, fill = TraitType1)) + geom_violin() 
-
-new.data %>% 
-  filter(unique_slopes==1) %>% 
-ggplot(aes(x=Slope, y = R.2, fill = Slope)) + geom_violin() 
-
-new.data %>% 
-  filter(unique_slopes==1) %>% 
-ggplot(aes(x=TraitType2, y = R.2, fill = Slope)) + geom_violin()
-
-new.data %>% 
-  filter(unique_slopes==1) %>% 
-ggplot(aes(x=TraitType1, y = R.2, fill = Slope)) + geom_violin()
-
-#ggplot(data = new.data, aes(x=StudyType, y = R.2, fill = StudyType)) + geom_violin() 
-
-#sex specific plots
-new.data %>% 
-  filter(Sex == "M" | Sex == "F") %>% 
-ggplot( aes(x = Sex, y = R.2, fill = Sex)) + geom_violin()
-
-new.data %>% 
-  filter(Sex == "M" | Sex == "F") %>% 
-ggplot( aes(x = TraitType2, y = R.2, fill = Sex)) + geom_violin()
-
-new.data %>% 
-  filter(Sex == "M" | Sex == "F") %>% 
-ggplot( aes(x = TraitType1, y = R.2, fill = Sex)) + geom_violin()
-
-```
 ##
 
 
