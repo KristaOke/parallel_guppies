@@ -9,12 +9,9 @@ library(ggplot2)
 #setwd("<YOURPATHWAY>")
 wd <- getwd()
 new.data<- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",") #MetaData saved feb 11th
-data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",") %>% #Data.csv is saved .xlsx feb 10th
+data<- read.csv(paste(wd,'/Data/Data.csv',sep=""), header=TRUE, sep=",")%>% #Data.csv is saved .xlsx feb 10th
   select(StudyID:Comments) 
-r.squared<- read.csv(paste(wd,'/Data/TraitR2_among.csv',sep=""), header=TRUE, sep=",") #R2 generated feb 11th 
-
-cohen.data<- read.csv(paste(wd,'/Data/cohen.d.data.csv',sep=""), header=TRUE, sep=",") %>% 
-  select(1:18)
+r.squared<- read.csv(paste(wd,'/Data/TraitR2.csv',sep=""), header=TRUE, sep=",") #R2 generated feb 11th 
 ```
 
 Tallies and Counts
@@ -27,7 +24,6 @@ test<-new.data %>%
   filter(!is.na(Number)) %>% 
   filter(!is.na(SD) | !is.na(SE))
 
-# drainage level summary information, idk why this is here
 new.data[!duplicated(new.data$TraitID),] %>% 
   group_by(Slope.type) %>%
   summarize(count = n())
@@ -42,68 +38,8 @@ test$Drainage.type<-ifelse(test$unique_drainages==1, test$Drainage, "Mixed")
 test[!duplicated(test$TraitID),] %>% 
   group_by(Drainage.type) %>%
   summarize(count = n())
- 
-#what studies should we contact for cohen's d 
-good_IDs<-test %>% 
-  filter(Poptype=="Introduction" & !is.na(Source_pop) & !Source_pop =="Unknown") %>% 
-  distinct(StudyID) %>% 
-  pull(StudyID)
-
-test<-new.data %>% 
-  filter(StudyID %in% good_IDs) %>% 
-  select(1,4,25:27,29:31,37,20:22,40:41,2,6,28)
+  
 ```
-
-
-```{r calculate the d}
-
-cohen.data<-cohen.data %>%
-  filter(!is.na(MeanValue)) %>% 
-  filter(!is.na(Number)) %>% 
-  filter(!is.na(SD)) %>%  
-  filter(!StudyID == 3) %>% 
-  group_by(TraitID) %>% 
-  filter(n_distinct(Poptype)>1)
-
- n_distinct(cohen.data$TraitID) #n = 29
-
-source_pops<-pull(cohen.data, Source_pop) 
-
-cohen.data<-cohen.data %>% 
-  filter(PopulationRaw %in% source_pops | !is.na(Source_pop)) %>% 
-  mutate(type = ifelse(is.na(Source_pop), "Source", "Intro")) %>% 
-  mutate(pop.temp = ifelse(!is.na(Source_pop), Source_pop, PopulationRaw)) %>% 
-  group_by(TraitID, pop.temp) %>% 
-  mutate(introID = cur_group_id()) %>% 
-  arrange(introID) %>% 
-  filter(n_distinct(type)>1) #this last line takes us from 125 to 22 rows
-
-cohen.data$MeanValue<-as.numeric(cohen.data$MeanValue)
-cohen.data$pop.temp<-as.factor(cohen.data$pop.temp)
-cohen.data$type<-as.factor(cohen.data$type)
-cohen.data$introID<-as.factor(cohen.data$introID)
-
-test<-cohen.data %>% 
-  filter(introID %in% c(3, 56, 58, 60)) #these are the traits with just one intro and one source
-
-library(esc) # this uses metaData but unfortunately we don't have a large enough metadata sample to do the pop vs intro questions this way (n= 3)
-
-cohen.data2<-test %>% 
-  select(type, MeanValue, SD, SE, Number, introID) %>% 
-  pivot_wider(names_from = type, values_from = c(MeanValue, SD, SE, Number))
-
-grp1m<- pull(cohen.data2,MeanValue_Source)
-grp2m<- pull(cohen.data2,MeanValue_Intro)
-grp1se<- pull(cohen.data2,SE_Source)
-grp2se<- pull(cohen.data2,SE_Intro)
-grp1n <- pull(cohen.data2,Number_Source)
-grp2n <- pull(cohen.data2,Number_Intro)
-
-esc_list<-list(grp1m, grp2m, grp1se, grp2se, grp1n, grp2n)
-
-cohensd<-mapply(FUN = esc_mean_se, grp1m = grp1m, grp2m = grp2m, grp1se = grp1se, grp2se = grp2se, grp1n = grp1n, grp2n = grp2n)
-```
-
 
 ## North vs South Slope
 Looked at the ratio of north to south in traits with both populations (histogram)
@@ -276,4 +212,23 @@ ggplot( aes(x = TraitType1, y = R.2, fill = Sex)) + geom_violin()
 ```
 ##
 
+
+```{r temp}
+library(tidyverse)
+dat <- read_excel("~/Downloads/metaanalysis_finaltraits.xlsx")
+dat<-dat %>% 
+  arrange(StudyID, StudyType, Trait, Sex, Predation)
+sex.length<-rle(as.character(paste(dat$Trait,dat$Sex,dat$StudyType)))  
+dat$TraitID<-rep(seq_along(sex.length$lengths), sex.length$lengths)
+
+test<-dat %>% 
+  group_by(Kingsolver_traits) %>% 
+  subset(!duplicated(TraitID))
+
+summary(as.factor(test$Kingsolver_traits))
+
+x<-subset(test, test$Kingsolver_traits=="Behaviour")
+
+
+```
 
