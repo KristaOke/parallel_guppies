@@ -228,14 +228,49 @@ traitData<-traitData[!duplicated(traitData$TraitID),]
 
 
 ```{r mapping prep}
-Coordinates <- read_csv("~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.csv")
+Coordinates <- read_csv("~/Documents/Projects/R scripts/Meta Analysis/Data/Map/most_coordinates.csv")
 Coordinates<-Coordinates %>% 
-  select(1:4,19,21:26)
-Coordinates<-separate(Coordinates, Location, into = c("Easting", "Northing"), sep = 6, remove = FALSE)
-Coordinates$ID<-2:194
-#write_csv(Coordinates, path = "~/Documents/Masters/R scripts/Meta Analysis/Data/Coordinates.csv")
-```
+  select(1,2,4,7,17:19,21:23,25,29:30,33:35) %>% 
+  arrange(TraitID)
+map_other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Manzanilla", "Visigney", "Tompire", "Ricon", "Mission", "Toco")
+map_aripo<-c("Aripo", "Ceniza", "Naranjo", "Valencia")
+map_quare<-c("Quare","Hollis")
+map_tunapuna<-c("Tunapuna", "Caroni Lower Dyke")
+map_tacarigua<-c("Tacarigua", "Cuara")
+map_arouca<-c("Arouca", "Lopinot", "Oropuna")
+map_guanapo<-c("Guanapo")
+map_arima<-c("Arima")
+map_elcedro<-c("El Cedro")
+map_turure<-c("Turure")
+map_oropuche<-c("Oropuche", "Matura", "La Seiva", "Rio Barre", "Rio Grande", "La Selva")
+map_yarra<-c("Yarra")
+map_marianne<-c("Marianne", "Brasso Seco")
+map_paria<-c("Paria", "Madamas")
+map_damier<-c("Damier")
+Coordinates$pop_map<-case_when(
+  Coordinates$Population %in% map_aripo ~ "Aripo",
+  Coordinates$Population %in% map_quare ~ "Quare",
+  Coordinates$Population %in% map_tacarigua ~ "Tacarigua",
+  Coordinates$Population %in% map_tunapuna ~ "Tunapuna",
+  Coordinates$Population %in% map_arouca ~ "Arouca",
+  Coordinates$Population %in% map_guanapo ~ "Guanapo",
+  Coordinates$Population %in% map_arima ~ "Arima",
+  Coordinates$Population %in% map_elcedro ~ "El Cedro",
+  Coordinates$Population %in% map_turure ~ "Turure",
+  Coordinates$Population %in% map_oropuche ~ "Oropuche",
+  Coordinates$Population %in% map_yarra ~ "Yarra",
+  Coordinates$Population %in% map_marianne ~ "Marianne",
+  Coordinates$Population %in% map_paria ~ "Paria",
+  Coordinates$Population %in% map_damier ~ "Damier",
+  Coordinates$Population %in% map_other ~ "Other"
+)
 
+Coordinates$Poptype_broad<-ifelse(Coordinates$Population %in% c("Damier", "Turure"), "Introduction",
+                               ifelse((Coordinates$Population %in% c("El Cedro") & Coordinates$Predation=="Low"), "Introduction", 
+                                      ifelse((Coordinates$Population %in% c("El Cedro") & Coordinates$Predation=="Low"), "Introduction", 
+                                             ifelse((Coordinates$Population %in% c("Arima") & Coordinates$Predation=="High" & Coordinates$Collection_start>2001), "Introduction", Coordinates$Poptype))))
+#write_csv(Coordinates, path = "~/Documents/Projects/R scripts/Meta Analysis/Data/Map/site_type.csv")
+```
 
 
 
