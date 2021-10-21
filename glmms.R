@@ -351,8 +351,8 @@ Anova(evolhist.full.lmer, type = 3)
 
 plot_models(evolhist.no.colour, evolhist.full.glm)
 
-
-## first figure ----
+## figure 1 is map 
+## figure2
 
 fig2data <- read.csv("testPG_figure.csv", fileEncoding="UTF-8-BOM")
 fig2data$population <- as.factor(fig2data$population)
@@ -403,37 +403,7 @@ figure2 <- ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom
 
 
 
-sup3 <-
-  data.all %>% 
-  filter(StudyType %in% c("Common Garden (F2)", "Wildcaught")) %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1) +
-  xlab(expression(paste(R^2))) +
-  ylab("Frequency") +
-  theme_bw() +
-  theme(
-    axis.title.x = element_text(size = 15),
-    axis.title.y = element_text(size = 15),
-    plot.title = element_text(size = 20),
-    axis.text.x = element_text(angle = 45, vjust= 1, hjust = 1)) +
-  facet_grid(Sex ~ StudyType, scales = "free")
 
-
-sup2 <-
-  data.all %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1) +
-  xlab(expression(paste(R^2))) +
-  ylab("Frequency") +
-  theme_bw() +
-  theme(
-    axis.title.x = element_text(size = 15),
-    axis.title.y = element_text(size = 15),
-    plot.title = element_text(size = 20),
-    axis.text.x = element_text(angle = 45, vjust= 1, hjust = 1)) +
-  facet_grid(Sex ~ Kingsolver_traits, scales = "free")
 
 
 
@@ -756,7 +726,7 @@ data.eco <- data.for.ecology.models
 levels(data.eco$method) <- c("Between both slopes",
                              "Only the southern slope")
 
-(ecology_hist_a <-
+(ecology_hist_a <- 
     data.eco %>% 
     filter(method == "Between both slopes") %>% 
     ggplot(aes(x = R.2)) +
@@ -1049,7 +1019,6 @@ levels(data.renamed$Kingsolver_traits) <- c("Life history",
       axis.title.y = element_text(size = 24),
       strip.text = element_text(size = 13),
       plot.title = element_text(size = 24)))
-
 
 # traits plot ----
 
