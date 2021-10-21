@@ -556,19 +556,121 @@ figure3 <- cowplot::plot_grid(top.fig.3, bottom.fig.3, nrow = 2, rel_heights = c
 figure3 <- figure3 + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
 figure3
 
+# figure 4
+behav_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Behaviour") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
 
-(figure4<-
-    data.all %>% 
-    ggplot(aes(x = R.2)) +
-    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                   fill="#E6E6E6", colour = "black", size = 1) +
-    xlab(expression(paste(R^2))) +
-    ylab("Frequency") +
-    theme_bw() +
-    facet_wrap(. ~ Kingsolver_traits, nrow = 2, scales = "free") +
-    theme(
-      strip.text = element_text(size = 13),
-      axis.title = element_text(size = 24)))
+colour_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Colour") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+other_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Other") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+data.olh <- data.all
+levels(data.olh$Kingsolver_traits) <- c("Life history",
+                                        "Behaviour",
+                                        "Colour",
+                                        "Other",
+                                        "Morphology",
+                                        "Physiology",
+                                        "Size")
+
+levels(data.olh$Kingsolver_traits)
+
+olh_hist <-
+  data.olh %>% 
+  filter(Kingsolver_traits == "Life history") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+morpho_hist <-
+  data.olh %>% 
+  filter(Kingsolver_traits == "Morphology") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+phys_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Physiology") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  xlab(expression(paste(R^2))) +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title.y = element_blank(),
+    axis.title.x = element_text(size = 24))
+
+size_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Size") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+
+toptraits <- cowplot::plot_grid("", behav_hist, colour_hist, other_hist, olh_hist, nrow = 1, 
+                                rel_widths = c(0.15, 1, 1, 1, 1))
+bottomtraits <- cowplot::plot_grid("", "", morpho_hist, phys_hist, size_hist, "", nrow = 1,
+                                   rel_widths = c(0.15, 0.4, 0.8, 0.8, 0.8, 0.4), 
+                                   align = "h", axis = "bt")
+figure4 <- cowplot::plot_grid(toptraits,bottomtraits, nrow = 2, align = "bt", rel_heights = c(0.9, 1))
+figure4 <- traitsplot + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
+figure4
+
 
 ## figure 5
 
@@ -900,22 +1002,7 @@ final.sup.table <- left_join(traits.slopes.drinages.pops, Populations.names)
 
 View(final.sup.table)
 
-
-data.all %>% 
-  ggplot(aes(x = Sex, y = R.2)) + 
-  geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
-  geom_jitter(position = position_nudge(x = - .1, y = 0)) +
-  geom_boxplot(size = 1, aes(x = Sex, y = R.2) ,
-               alpha = 0.3, width = 0.1) +
-  theme_bw() +
-  facet_wrap(~Kingsolver_traits) +
-  labs(y = expression(paste(R^2)),
-       x = "\nMethod") +
-  theme(axis.title = element_text(size = 16),
-        axis.text = element_text(size = 13)) +
-  theme(legend.position = "none")
-
-
+# other figs in the supplement 
 
 data.renamed <- data.all
 levels(data.renamed$Kingsolver_traits) <- c("Life history",
@@ -925,8 +1012,6 @@ levels(data.renamed$Kingsolver_traits) <- c("Life history",
                                             "Morphology",
                                             "Physiology",
                                             "Size")
-
-
 (figa3 <- 
     data.renamed %>% 
     filter(StudyType %in% c("Wildcaught", "Common Garden (F2)")) %>% 
@@ -945,12 +1030,6 @@ levels(data.renamed$Kingsolver_traits) <- c("Life history",
       axis.title.y = element_text(size = 24),
       strip.text = element_text(size = 13),
       plot.title = element_text(size = 24)))
-
-tiff("figa3.pg.tiff", res = 600, units = "in", height = 6, width = 8)
-figa3
-dev.off()
-
-# figure in supplement ----
 
 (figa2 <- 
     data.renamed %>% 
@@ -971,128 +1050,10 @@ dev.off()
       strip.text = element_text(size = 13),
       plot.title = element_text(size = 24)))
 
-tiff("figa2.pg.tiff", res = 600, units = "in", height = 6, width = 8)
-figa2
-dev.off()
 
 # traits plot ----
 
-behav_hist <-
-  data.all %>% 
-  filter(Kingsolver_traits == "Behaviour") %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1) +
-  #ggtitle("Overall (n = 446)") +
-  theme_bw() +
-  facet_wrap(.~ Kingsolver_traits) +
-  theme(
-    strip.text = element_text(size = 13),
-    axis.title = element_blank())
 
-colour_hist <-
-  data.all %>% 
-  filter(Kingsolver_traits == "Colour") %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1) +
-  #ggtitle("Overall (n = 446)") +
-  theme_bw() +
-  facet_wrap(.~ Kingsolver_traits) +
-  theme(
-    strip.text = element_text(size = 13),
-    axis.title = element_blank())
-
-other_hist <-
-  data.all %>% 
-  filter(Kingsolver_traits == "Other") %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1) +
-  
-  theme_bw() +
-  facet_wrap(.~ Kingsolver_traits) +
-  theme(
-    strip.text = element_text(size = 13),
-    axis.title = element_blank())
-
-data.olh <- data.all
-levels(data.olh$Kingsolver_traits) <- c("Life history",
-                                        "Behaviour",
-                                        "Colour",
-                                        "Other",
-                                        "Morphology",
-                                        "Physiology",
-                                        "Size")
-
-levels(data.olh$Kingsolver_traits)
-
-olh_hist <-
-  data.olh %>% 
-  filter(Kingsolver_traits == "Life history") %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1) +
-  #ggtitle("Overall (n = 446)") +
-  theme_bw() +
-  facet_wrap(.~ Kingsolver_traits) +
-  theme(
-    strip.text = element_text(size = 13),
-    axis.title = element_blank())
-
-morpho_hist <-
-  data.olh %>% 
-  filter(Kingsolver_traits == "Morphology") %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1) +
-  #ggtitle("Overall (n = 446)") +
-  theme_bw() +
-  facet_wrap(.~ Kingsolver_traits) +
-  theme(
-    strip.text = element_text(size = 13),
-    axis.title = element_blank())
-
-phys_hist <-
-  data.all %>% 
-  filter(Kingsolver_traits == "Physiology") %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1) +
-  #ggtitle("Overall (n = 446)") +
-  theme_bw() +
-  xlab(expression(paste(R^2))) +
-  facet_wrap(.~ Kingsolver_traits) +
-  theme(
-    strip.text = element_text(size = 13),
-    axis.title.y = element_blank(),
-    axis.title.x = element_text(size = 24))
-
-size_hist <-
-  data.all %>% 
-  filter(Kingsolver_traits == "Size") %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1) +
-  #ggtitle("Overall (n = 446)") +
-  theme_bw() +
-  facet_wrap(.~ Kingsolver_traits) +
-  theme(
-    strip.text = element_text(size = 13),
-    axis.title = element_blank())
-
-
-toptraits <- cowplot::plot_grid("", behav_hist, colour_hist, other_hist, olh_hist, nrow = 1, 
-                                rel_widths = c(0.15, 1, 1, 1, 1))
-bottomtraits <- cowplot::plot_grid("", "", morpho_hist, phys_hist, size_hist, "", nrow = 1,
-                                   rel_widths = c(0.15, 0.4, 0.8, 0.8, 0.8, 0.4), 
-                                   align = "h", axis = "bt")
-traitsplot <- cowplot::plot_grid(toptraits,bottomtraits, nrow = 2, align = "bt", rel_heights = c(0.9, 1))
-traitsplot <- traitsplot + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
-
-tiff("fig4.pg.tiff", res= 600, height = 6, width = 8, units = "in")
-traitsplot
-dev.off()
 
 ##
 
