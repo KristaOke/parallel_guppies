@@ -264,7 +264,17 @@ data.all %>% filter(Kingsolver_traits %in% c("Behaviour", "Colour", "Other_life_
   facet_wrap(~Kingsolver_traits) +
   theme_bw()
 
-# Traits descriptive stuff for in text
+# multivariate models ----
+
+
+(sex.and.triats <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
+Anova(sex.and.triats, type = "II")
+
+(sex.and.rear <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
+
+Anova(sex.and.rear, type = 2)
+
+# Traits descriptive stuff for in text ----
 
 Colourtrait <- data.all %>% filter(Kingsolver_traits == "Colour")
 mean(Colourtrait$R.2)
@@ -473,22 +483,11 @@ data.for.intro.models.broad$method <- as.factor(data.for.intro.models.broad$meth
 ### Remove 'Both' sex category because duplicates
 data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c("M", "F"))  
 
-### Remove 'other' to be consistent
-#data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(!Kingsolver_traits == "Other")
-
 ## Make dataframes to remove colour
 intro.data.no.colour.broad <- data.for.intro.models.broad %>% filter(!Kingsolver_traits == "Colour")
 
 ## Model with everything 
-(intro.full.broad <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
-
-r.squaredGLMM(intro.full.broad)
-
-### Model without colour
-(intro.no.colour <- glmer(R.2 ~ method*Sex + (1|StudyID), data = intro.data.no.colour.broad, family = binomial)) %>% summary()
-
-r.squaredGLMM(intro.no.colour)
-
+(intro.full.broad <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
 
 #### intro BROAD plots ----
 plot_models(intro.full, intro.no.colour, vline.color = "grey")
@@ -529,33 +528,23 @@ intro.data.no.colour.broad %>%
 ggarrange(intro.full.plot, intro.sex.plot, ncol = 1, common.legend= TRUE)
 
 
-w.colour.nat.broad <- data.for.intro.models.broad %>% filter(method == "only_natural_broad") 
-mean(w.colour.nat.broad$R.2)
-sd(w.colour.nat.broad$R.2)
-w.colour.all.broad <- data.for.intro.models.broad %>% filter(method == "all") 
-mean(w.colour.all.broad$R.2)
-sd(w.colour.all.broad$R.2)
-
-# colour traits excluded
-no.colour.nat.broad <- intro.data.no.colour.broad %>% filter(method == "only_natural_broad")
-mean(no.colour.nat.broad$R.2, na.rm = TRUE)
-sd(no.colour.nat.broad$R.2, na.rm = TRUE)
-no.colour.all.broad <- intro.data.no.colour.broad %>% filter(method == "all") 
-mean(no.colour.all.broad$R.2)
-sd(no.colour.all.broad$R.2)
-
+only_natural_broad <- data.for.intro.models.broad %>% filter(method == "only_natural_broad") 
+mean(only_natural_broad$R.2)
+sd(only_natural_broad$R.2)
+natural_and_intro_broad <- data.for.intro.models.broad %>% filter(method == "all") 
+mean(natural_and_intro_broad$R.2)
+sd(natural_and_intro_broad$R.2)
 
 ### 3. Evolutionary history models ----
 ## Is there a difference when only w pops in the caroni vs also in the Oropuche? 
 
 ## These are all singular fits
 
+### fix structure
+data.for.evolhist.models$method <- as.factor(data.for.evolhist.models$method)
+
 ### Remove 'Both' sex category because duplicates
 data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
-
-### Being consistent
-
-#data.for.evolhist.models <- data.for.evolhist.models %>% filter(!Kingsolver_traits == "Other")
 
 ## Make dataframes to remove colour
 evolhist.data.no.colour <- data.for.evolhist.models %>% filter(!Kingsolver_traits == "Colour")
@@ -563,19 +552,8 @@ evolhist.data.no.colour <- data.for.evolhist.models %>% filter(!Kingsolver_trait
 ## Model with everything 
 (evolhist.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
 
-r.squaredGLMM(evolhist.full)
-
-### Model without colour
-(evolhist.no.colour <- glmer(R.2 ~ method*Sex + (1|StudyID), data = evolhist.data.no.colour, family = binomial)) %>% summary()
-
-r.squaredGLMM(evolhist.no.colour)
-
-
 #### evolhist plots ----
 plot_models(evolhist.full, evolhist.no.colour, vline.color = "grey")
-
-evolhist.data.no.colour %>% filter(method == "both.drainages") %>% summary()
-evolhist.data.no.colour %>% filter(method == "caroni") %>% summary()
 
 
 (evolhist.full.plot <-
@@ -606,22 +584,15 @@ evolhist.data.no.colour %>%
 ggarrange(evolhist.full.plot, evolhist.sex.plot, ncol = 1, common.legend= TRUE)
 
 
-ok <- evolhist.data.no.colour %>% filter(method == "caroni") 
-mean(ok$R.2)
-sd(ok$R.2)
-ok2 <- evolhist.data.no.colour %>% filter(method == "both.drainages")
-mean(ok2$R.2)
-sd(ok2$R.2)
+one_drainage <- data.for.evolhist.models %>% filter(method == "caroni") 
+mean(one_drainage$R.2)
+sd(one_drainage$R.2)
 
-ok <- data.for.evolhist.models %>% filter(method == "caroni") 
-mean(ok$R.2)
-sd(ok$R.2)
-ok2 <- data.for.evolhist.models %>% filter(method == "both.drainages")
-mean(ok2$R.2)
-sd(ok2$R.2)
+both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")
+mean(both_drainages$R.2)
+sd(both_drainages$R.2)
 
   
-
 
 ## Troubleshooting ----
 ### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
@@ -636,9 +607,6 @@ summary(intro.no.colour)
 (intro.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = intro.data.no.colour)) %>% summary()
 Anova(intro.full.lmer, type = 2)
 (intro.full.glm <- glm(R.2 ~ method*Sex, data = intro.data.no.colour, family = binomial)) %>% summary()
-
-## Plot models
-plot_models(intro.no.colour, intro.full.glm)
 
 ## Compare ecology
 summary(ecology.no.colour)
@@ -658,6 +626,9 @@ summary(evolhist.full)
 Anova(evolhist.full.lmer, type = 3)
 (evolhist.full.glm <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
 
+car::Anova(evolhist.full.lmer, type = "II")
+car::Anova(evolhist.full.glm, type = "II")
+
 plot_models(evolhist.no.colour, evolhist.full.glm)
 
 summary(evolhist.no.colour)
@@ -668,33 +639,786 @@ Anova(evolhist.full.lmer, type = 3)
 plot_models(evolhist.no.colour, evolhist.full.glm)
 
 
-## Plot models (is there a better way to compare effect sizes?)
-### (Note that I'm not sure if lmer looks like this because it's bad, or because it would typically be plotted as an estimate, not an odds ratio)
-plot_models(ecology.full, ecology.full.glm)
+## first figure ----
 
 test <- read.csv("testPG_figure.csv", fileEncoding="UTF-8-BOM")
 test$population <- as.factor(test$population)
 
-highparal <- test %>% filter(facet == 'a') %>% 
-  ggplot(aes(x = population, y = mean, color = predation)) +
-  geom_point(size = 4) +
-  labs(title = "Example of high R2 (0.984)",
-       subtitle = "Study = Reddon et al. 2018, \nTrait = Standard length (mm) (males only)") +
-  scale_colour_manual(values =  c("#9F0620", "#69A9C7")) +
-  theme_classic()
+(highparal <- test %>% filter(facet == 'a') %>% 
+    ggplot(aes(x = population, y = mean, color = predation)) +
+    geom_point(size = 4) +
+    labs(title = "Example of high R2 (0.984)",
+         subtitle = #"Study = Reddon et al. 2018, \n
+           # "Trait = Male standard length (mm)"
+    ) +
+    scale_colour_manual(values =  c("black", "grey")) +
+    theme_classic() +
+    theme_bw() +
+    labs(y = "Male standard length (mm)",
+         x = "\nPopulation") +
+    theme(axis.title = element_text(size = 14),
+          axis.text = element_text(size = 12),
+          plot.title = element_text(size = 16)))
 
-lowparal <- test %>% filter(facet == 'b') %>% 
-  ggplot(aes(x = population, y = mean, color = predation)) +
-  geom_point(size = 4) +
-  labs(title = "Example of low R2 (0.000)",
-       subtitle = "Study = Eastya et al. 2011, \nTrait = Mean relative area of black") +
-  scale_colour_manual(values =  c("#9F0620", "#69A9C7")) +
-  theme_classic()
+
+(lowparal <- test %>% filter(facet == 'b') %>% 
+    ggplot(aes(x = population, y = mean, color = predation)) +
+    geom_point(size = 4) +
+    labs(title = "Example of low R2 (0.000)",
+         subtitle = #"Study = Easty et al. 2011, \n
+           # "Trait = Mean relative area of black (%)"
+    ) +
+    scale_colour_manual(values =  c("black", "grey")) +
+    theme_classic() +
+    theme_bw() +
+    labs(y = "Mean relative area of black (%)",
+         x = "\nPopulation") +
+    theme(axis.title = element_text(size = 14),
+          axis.text = element_text(size = 12),
+          plot.title = element_text(size = 16)))
+
+ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
+
+sup3 <-
+  data.all %>% 
+  filter(StudyType %in% c("Common Garden (F2)", "Wildcaught")) %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 15),
+    axis.title.y = element_text(size = 15),
+    plot.title = element_text(size = 20),
+    axis.text.x = element_text(angle = 45, vjust= 1, hjust = 1)) +
+  facet_grid(Sex ~ StudyType, scales = "free")
+
+
+sup2 <-
+  data.all %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 15),
+    axis.title.y = element_text(size = 15),
+    plot.title = element_text(size = 20),
+    axis.text.x = element_text(angle = 45, vjust= 1, hjust = 1)) +
+  facet_grid(Sex ~ Kingsolver_traits, scales = "free")
+
+
+
+ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
+
+highparal <- highparal + annotate("segment", x = 1, xend = 3, y = 12.01, yend = 13.5)
+highparal <- highparal + annotate("segment", x = 2, xend = 4, y = 12.11, yend = 13.76)
+highparal
+
+lowparal <- lowparal + annotate("segment", x = 1, xend = 3, y = 8.74, yend = 9.86)
+lowparal <- lowparal + annotate("segment", x = 2, xend = 4, y = 8.20, yend = 7.0)
+
+lowparal
 
 ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
 
 
-##
+# histograms in manuscript ---- 
+
+data.all$overall <- "Overall"
+overall_hist <- 
+  data.all %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(. ~ overall) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+wildcaught_hist <-
+  data.all %>% 
+  filter(StudyType == "Wildcaught") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  #ggtitle("Wildcaught (n = 373)") +
+  facet_wrap(. ~ StudyType) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+cg_hist <- 
+  data.all %>% 
+  filter(StudyType == "Common Garden (F2)") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  #ggtitle("Common Garden F1/F2 (n = 73)") +
+  facet_wrap(. ~ StudyType) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+m_hist <- 
+  data.all %>% 
+  filter(Sex == "M") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 #fill="#E6E6E6", 
+                 colour = "black", fill = "#E6E6E6", size = 1) +
+  labs(#x = expression(paste(R^2)),
+    y = "Frequency", 
+    # title = "Males (n = 274)",
+    #subtitle = "colour traits included"
+  ) +
+  theme_bw() +
+  facet_wrap(. ~ Sex) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+m_hist_no_colour <- 
+  data.all.no.colour %>% 
+  filter(Sex == "M") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 #fill="#E6E6E6", 
+                 colour = "black", fill = "#E6E6E6", size = 1) +
+  labs(x = expression(paste(R^2)),
+       y = "Frequency",
+       #title = "Males (n = 165)",
+       #subtitle = "colour traits excluded"
+  ) +
+  facet_wrap(. ~ Sex) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+f_hist_w_other <-
+  data.all %>% 
+  filter(Sex == "F") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 #fill="#E6E6E6", 
+                 colour = "black", fill = "#E6E6E6", size = 1) +
+  #xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  # ggtitle("Females (n = 172)") +
+  facet_wrap(. ~ Sex) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+#f_hist_no_other <-
+#data.all %>% 
+#  filter(Sex == "F" &
+#           !Kingsolver_traits == "Other") %>% 
+#  ggplot(aes(x = R.2)) +
+#  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+#                 #fill="#E6E6E6", 
+#                 colour = "black", fill = "#E6E6E6", size = 1) +
+#  #xlab(expression(paste(R^2))) +
+#  ylab("Frequency") +
+#  # ggtitle("Females (n = 172)") +
+#  facet_wrap(. ~ Sex) +
+#  theme_bw() +
+#  theme(
+#    strip.text = element_text(size = 13),
+#    axis.title = element_text(size = 24))
+
+
+top.fig.2 <- cowplot::plot_grid("", overall_hist + theme(axis.title = element_blank()),
+                                wildcaught_hist + theme(axis.title = element_blank()),
+                                cg_hist + theme(axis.title = element_blank()), 
+                                nrow = 1, labels = c("", "A", "B", "C"), 
+                                rel_widths = c(0.15, 1, 1, 1))
+
+bottom.fig.2 <- cowplot::plot_grid("", m_hist + theme(axis.title = element_blank()),
+                                   m_hist_no_colour + theme(axis.title.y = element_blank()),
+                                   f_hist_w_other + theme(axis.title = element_blank()),
+                                   
+                                   #f_hist_no_other + theme(axis.title.y = element_blank()), 
+                                   nrow = 1,
+                                   labels = c("", "D", "E", "F", "G"),
+                                   align = "h", axis = "bt",
+                                   rel_widths = c(0.15, 1, 1,1))
+
+bottom.fig.2
+
+
+fig2 <- cowplot::plot_grid(top.fig.2, bottom.fig.2, nrow = 2, rel_heights = c(1,1))
+
+fig2
+
+fig2 <- fig2 + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
+
+fig2
+
+(fig3<-
+    data.all %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    theme_bw() +
+    facet_wrap(. ~ Kingsolver_traits, nrow = 2, scales = "free") +
+    theme(
+      strip.text = element_text(size = 13),
+      axis.title = element_text(size = 24)))
+
+# table for supplement ----
+
+ok <- data.all %>% group_by(Study)
+ok.test <- mutate(ok, min(R.2))
+ok.test <- mutate(ok.test, max(R.2))
+
+ok2 <- data.frame(data.all %>% group_by(Study, Poptype_broad) %>% tally())
+
+check <- rbind(ok.test, ok2)
+
+No.traits <- data.all %>% group_by(Study, Trait) %>% tally() %>% 
+  transmute(No.traits = sum(n)) %>% 
+  distinct(No.traits, .keep_all = FALSE) 
+View(No.traits)
+
+Slope.names <- spreadsheet.data %>% group_by(Study, Slope) %>% count()
+Slope.names <- data.frame(aggregate(Slope ~ Study, data = Slope.names, paste, collapse = ","))
+
+wat <- left_join(No.traits, Slope.names)
+
+Drainage.names <- spreadsheet.data %>% group_by(Study, Drainage) %>% count()
+Drainage.names <- data.frame(aggregate(Drainage ~ Study, data = Drainage.names, paste, collapse = ","))
+
+wat <- left_join(wat, Drainage.names)
+
+Pop.names <- spreadsheet.data %>% group_by(Study, Poptype_broad) %>% count()
+Pop.names <- data.frame(aggregate(Poptype_broad ~ Study, data = Pop.names, paste, collapse = ","))
+
+wat <- left_join(wat, Pop.names)
+
+
+Populations.names <- spreadsheet.data %>% group_by(Study, Poptype_broad, Population) %>% 
+  filter(Poptype_broad == "Introduction") %>% count()
+Populations.names <- data.frame(aggregate(Population ~ Study, data = Populations.names, paste, collapse = ","))
+
+wat <- left_join(wat, Populations.names)
+
+View(wat)
+
+write.csv(wat, "Supplement_table.csv")
+
+# last fig ----
+
+
+
+kk <- list("Male with colour (274)" = Malewithcolour$R.2, "Male without colour (165)" = Malenocolour$R.2, 
+           "Female (172)" = Femalesex$R.2, 
+           "Colour (109)" = Colourtrait$R.2, "Life history (48)" = LHtrait$R.2, "Size (47)" = Sizetrait$R.2, 
+           "Morphology (42)" = Morphtrait$R.2, "Other (3)" = Othertrait$R.2, "Physiology (64)" = Phystrait$R.2,
+           "Common Garden (F2) (70)" = cg$R.2, "Wild caught (373)" = wc$R.2, "Within one slope (176)" = one.slope$R.2, "Between both slopes (176)" = both.slopes$R.2, 
+           "Only natural (183)" = only_natural$R.2, "Natural and introduced (183)" = natural_and_intro$R.2, 
+           "Within one drainage (258)" = one_drainage$R.2, "Between both drainages (258)" = both_drainages$R.2)
+
+mean <- (as.data.frame(sapply(kk, mean)))
+mean <- cbind(Factor = rownames(mean), mean)
+rownames(mean) <- NULL
+colnames(mean)[2] <- "mean"
+
+standev <- (as.data.frame(sapply(kk, sd)))
+standev <- cbind(Factor = rownames(standev), standev)
+rownames(standev) <- NULL
+colnames(standev)[2] <- "sd"
+
+larger_table <- inner_join(mean, standev, by = "Factor")
+
+larger_table$minsd <- larger_table$mean - larger_table$sd
+larger_table$maxsd <- larger_table$mean + larger_table$sd
+
+larger_table$order <- c(1,2,3,4,5,6,7,8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
+larger_table$Question <- c("Sex", "Sex", "Sex", 
+                           "Trait type", "Trait type", "Trait type", "Trait type",
+                           "Trait type", "Trait type",
+                           "Rearing environment", "Rearing environment",
+                           "Ecological complexity", "Ecological complexity",
+                           "Time since colonization", "Time since colonization",
+                           "Evolutionary history", "Evolutionary history")
+
+larger_table$Question  <- with(larger_table, reorder(Question, rev(order)))
+
+vertical_lines <- c(3.5, 9.5, 11.5, 13.5, 15.5)
+
+(lastfig2b<-
+    larger_table %>% ggplot(x = Factor, aes(reorder(Factor, order), y = mean)) +
+    geom_point(size = 2) +
+    geom_linerange(aes(x = Factor, ymin = minsd, ymax = maxsd), size = 0.5) +
+    
+    annotate("rect", xmin = 0.5, xmax = 3.5, ymin = -Inf, ymax = Inf, fill = "yellow", alpha = 0.2) +
+    annotate("rect", xmin = 3.5, xmax = 9.5, ymin = -Inf, ymax = Inf, fill = "orange", alpha = .4) +
+    annotate("rect", xmin = 9.5, xmax = 11.5, ymin = -Inf, ymax = Inf, fill = "palegreen", alpha = .4) +
+    annotate("rect", xmin = 11.5, xmax = 13.5, ymin = -Inf, ymax = Inf, fill = "#0404B7", alpha = .3) +
+    annotate("rect", xmin = 13.5, xmax = 15.5, ymin = -Inf, ymax = Inf, fill = "purple", alpha = .4) +
+    annotate("rect", xmin = 15.5, xmax = 17.5, ymin = -Inf, ymax = Inf, fill = "hot pink", alpha = .3) +
+    
+    
+    labs(x = "Factor", 
+         y = expression(paste(R^2))) +
+    coord_flip() +
+    theme_bw() +
+    theme(axis.text = element_text(size = 14),
+          axis.title = element_text(size = 24)))
+
+# hist and boxplot figure ----
+
+levels(data.for.intro.models.broad$method)
+
+data.intro.broad <- data.for.intro.models.broad
+levels(data.intro.broad$method) <- c("Natural and introduced",
+                                     "Only natural")
+
+(intro_hist_broad_a <-
+    data.intro.broad %>% 
+    filter(method == "Natural and introduced") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    facet_wrap(.~method) +
+    labs(x = expression(paste(R^2))) +
+    theme_bw() +
+    theme(
+      axis.ticks.x = element_blank(),
+    ) +
+    xlim(-0.1,1) +
+    theme(axis.title = element_blank(),
+          strip.text = element_text(size = 13),
+          axis.text = element_text(size = 10)))
+
+intro_hist_broad_a
+
+(intro_hist_broad_b <-
+    data.intro.broad %>% 
+    filter(method == "Only natural") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    facet_wrap(.~method) +
+    labs(x = expression(paste(R^2))) +
+    theme_bw() +
+    theme(
+      axis.ticks.x = element_blank(),
+    ) +
+    xlim(-0.1,1) +
+    #theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm")) +
+    theme(axis.title = element_blank(),
+          strip.text = element_text(size = 13),
+          axis.text = element_text(size = 10)))
+
+
+
+intro_box <-
+  data.for.intro.models.broad %>% 
+  ggplot(aes(x = R.2)) +
+  geom_boxplot(size = 1) +
+  #geom_point(aes(x = method, y = R.2), size = 3, alpha = 0.3) +
+  facet_wrap(~method, ncol =1) +
+  theme_minimal() +
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank()) +
+  theme(axis.ticks.y = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank()) +
+  xlim(-0.1,1) +
+  theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))+
+  theme(axis.title = element_blank())
+intro_box
+
+intro_box_cow <- cowplot::plot_grid(intro_hist_broad_a, intro_box,
+                                    intro_hist_broad_b, nrow = 3, ncol = 1,
+                                    rel_heights = c(4,1, 4),
+                                    align = "v", axis = "lr", 
+                                    labels = c("C", "", "F"))
+intro_box_cow
+
+## ecology
+
+levels(data.for.ecology.models$method)
+
+data.eco <- data.for.ecology.models
+levels(data.eco$method) <- c("Between both slopes",
+                             "Only the southern slope")
+
+(ecology_hist_a <-
+    data.eco %>% 
+    filter(method == "Between both slopes") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    facet_wrap(~method) +
+    labs(x = "") +
+    theme_bw() +
+    theme(
+      axis.ticks.x = element_blank(),
+    ) +
+    xlim(-0.1,1) +
+    # theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm")) +
+    theme(axis.title = element_blank(),
+          strip.text = element_text(size = 13),
+          axis.text = element_text(size = 10)))
+
+(ecology_hist_b <-
+    data.eco %>% 
+    filter(method == "Only the southern slope") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    facet_wrap(~method) +
+    labs(x = "") +
+    theme_bw() +
+    theme(
+      axis.ticks.x = element_blank(),
+    ) +
+    xlim(-0.1,1) +
+    # theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm")) +
+    theme(axis.title = element_blank(),
+          strip.text = element_text(size = 13),
+          axis.text = element_text(size = 10)))
+
+ecology_box <-
+  data.for.ecology.models %>% 
+  ggplot(aes(x = R.2)) +
+  geom_boxplot(size = 1) +
+  #geom_point(aes(x = method, y = R.2), size = 3, alpha = 0.3) +
+  facet_wrap(~method, ncol =1) +
+  theme_minimal() +
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank()) +
+  theme(axis.ticks.y = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank()) +
+  xlim(-0.1,1) +
+  theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))+
+  theme(axis.title = element_blank())
+
+ecology_box_cow <- cowplot::plot_grid(ecology_hist_a, ecology_box,
+                                      ecology_hist_b, nrow = 3, ncol = 1,
+                                      rel_heights = c(4,1, 4),
+                                      align = "v", axis = "lr", 
+                                      labels = c("A", "", "D"))
+
+ecology_box_cow
+
+## evolutionary history
+
+data.evo <- data.for.evolhist.models
+levels(data.evo$method) <- c("Between both drainages",
+                             "Only the Caroni drainage")
+(evolhist_hist_a <-
+    data.evo %>% 
+    filter(method == "Between both drainages") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    
+    facet_wrap(.~method) +
+    labs(x = "") +
+    theme_bw() +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    theme(
+      axis.title = element_blank(),
+      strip.text = element_text(size = 13),
+      axis.text = element_text(size = 10)
+    ) +
+    xlim(-0.1,1) 
+  #+  theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))
+)
+
+(evolhist_hist_b <-
+    data.evo %>% 
+    filter(method == "Only the Caroni drainage") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    
+    facet_wrap(.~method) +
+    labs(x = "") +
+    theme_bw() +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    theme(
+      axis.title = element_blank(),
+      strip.text = element_text(size = 13),
+      axis.text = element_text(size = 10)
+    ) +
+    xlim(-0.1,1) 
+  #+  theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))
+)
+
+evolhist_box <-
+  data.for.evolhist.models %>% 
+  ggplot(aes(x = R.2)) +
+  geom_boxplot(size = 1) +
+  #geom_point(aes(x = method, y = R.2), size = 3, alpha = 0.3) +
+  facet_wrap(~method, ncol =1) +
+  theme_minimal() +
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank()) +
+  theme(axis.ticks.y = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank()) +
+  xlim(-0.1,1) +
+  theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))+
+  theme(axis.title = element_blank())
+
+
+evolhist_box_cow <- cowplot::plot_grid(evolhist_hist_a, evolhist_box, 
+                                       evolhist_hist_b, nrow = 3, ncol = 1,
+                                       rel_heights = c(4,1, 4),
+                                       align = "v", axis = "lr", 
+                                       labels = c("B", "", "E"))
+
+evolhist_box_cow
+
+fig5 <- cowplot::plot_grid(ecology_box_cow, evolhist_box_cow, intro_box_cow, nrow = 1,
+                           align = "hv", axis = "tblr",
+                           rel_widths = c(1,1,1))
+tiff("fig5.pg.tiff", width = 8, height = 4, units = "in", res = 600)
+fig5
+dev.off()
+
+
+
+
+""
+
+
+
+
+
+
+
+data.all %>% 
+  ggplot(aes(x = Sex, y = R.2)) + 
+  geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+  geom_jitter(position = position_nudge(x = - .1, y = 0)) +
+  geom_boxplot(size = 1, aes(x = Sex, y = R.2) ,
+               alpha = 0.3, width = 0.1) +
+  theme_bw() +
+  facet_wrap(~Kingsolver_traits) +
+  labs(y = expression(paste(R^2)),
+       x = "\nMethod") +
+  theme(axis.title = element_text(size = 16),
+        axis.text = element_text(size = 13)) +
+  theme(legend.position = "none")
+
+
+
+data.renamed <- data.all
+levels(data.renamed$Kingsolver_traits) <- c("Life history",
+                                            "Behaviour",
+                                            "Colour",
+                                            "Other",
+                                            "Morphology",
+                                            "Physiology",
+                                            "Size")
+
+
+(figa3 <- 
+    data.renamed %>% 
+    filter(StudyType %in% c("Wildcaught", "Common Garden (F2)")) %>% 
+    filter(Sex %in% c("M", "F")) %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    theme_bw() +
+    facet_grid(Sex~StudyType, scales = "free") +
+    theme(
+      axis.text = element_text(size = 14),
+      axis.text.x = element_text(angle = 45, vjust = 0.5),
+      axis.title.x = element_text(size = 24),
+      axis.title.y = element_text(size = 24),
+      strip.text = element_text(size = 13),
+      plot.title = element_text(size = 24)))
+
+tiff("figa3.pg.tiff", res = 600, units = "in", height = 6, width = 8)
+figa3
+dev.off()
+
+# figure in supplement ----
+
+(figa2 <- 
+    data.renamed %>% 
+    filter(Sex %in% c("M", "F")) %>% 
+    filter(!Kingsolver_traits %in% c("Colour", "Other")) %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 0.75) +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    theme_bw() +
+    facet_grid(Sex~Kingsolver_traits, scales = "free") +
+    theme(
+      axis.text = element_text(size = 14),
+      axis.text.x = element_text(angle = 45, vjust = 0.5),
+      axis.title.x = element_text(size = 24),
+      axis.title.y = element_text(size = 24),
+      strip.text = element_text(size = 13),
+      plot.title = element_text(size = 24)))
+
+tiff("figa2.pg.tiff", res = 600, units = "in", height = 6, width = 8)
+figa2
+dev.off()
+
+# traits plot ----
+
+behav_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Behaviour") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+colour_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Colour") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+other_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Other") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+data.olh <- data.all
+levels(data.olh$Kingsolver_traits) <- c("Life history",
+                                        "Behaviour",
+                                        "Colour",
+                                        "Other",
+                                        "Morphology",
+                                        "Physiology",
+                                        "Size")
+
+levels(data.olh$Kingsolver_traits)
+
+olh_hist <-
+  data.olh %>% 
+  filter(Kingsolver_traits == "Life history") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+morpho_hist <-
+  data.olh %>% 
+  filter(Kingsolver_traits == "Morphology") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+phys_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Physiology") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  xlab(expression(paste(R^2))) +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title.y = element_blank(),
+    axis.title.x = element_text(size = 24))
+
+size_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Size") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+
+toptraits <- cowplot::plot_grid("", behav_hist, colour_hist, other_hist, olh_hist, nrow = 1, 
+                                rel_widths = c(0.15, 1, 1, 1, 1))
+bottomtraits <- cowplot::plot_grid("", "", morpho_hist, phys_hist, size_hist, "", nrow = 1,
+                                   rel_widths = c(0.15, 0.4, 0.8, 0.8, 0.8, 0.4), 
+                                   align = "h", axis = "bt")
+traitsplot <- cowplot::plot_grid(toptraits,bottomtraits, nrow = 2, align = "bt", rel_heights = c(0.9, 1))
+traitsplot <- traitsplot + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
+
+tiff("fig4.pg.tiff", res= 600, height = 6, width = 8, units = "in")
+traitsplot
+dev.off()
 
 ##
 
