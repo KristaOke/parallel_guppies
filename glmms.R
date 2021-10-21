@@ -171,7 +171,7 @@ data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == "Colour")
 car::Anova(all.model.traits, type = "II")
 
 ## Rearing enviro model ----
-data.all.rear <- data.all.traits %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+data.all.rear <- data.all %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
 (all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
 
 car::Anova(all.model.rearing, type = "II")
