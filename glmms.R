@@ -552,24 +552,6 @@ f_hist_w_other <-
     strip.text = element_text(size = 13),
     axis.title = element_text(size = 24))
 
-#f_hist_no_other <-
-#data.all %>% 
-#  filter(Sex == "F" &
-#           !Kingsolver_traits == "Other") %>% 
-#  ggplot(aes(x = R.2)) +
-#  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-#                 #fill="#E6E6E6", 
-#                 colour = "black", fill = "#E6E6E6", size = 1) +
-#  #xlab(expression(paste(R^2))) +
-#  ylab("Frequency") +
-#  # ggtitle("Females (n = 172)") +
-#  facet_wrap(. ~ Sex) +
-#  theme_bw() +
-#  theme(
-#    strip.text = element_text(size = 13),
-#    axis.title = element_text(size = 24))
-
-
 top.fig.2 <- cowplot::plot_grid("", overall_hist + theme(axis.title = element_blank()),
                                 wildcaught_hist + theme(axis.title = element_blank()),
                                 cg_hist + theme(axis.title = element_blank()), 
