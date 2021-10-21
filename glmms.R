@@ -184,7 +184,6 @@ data.all.rear <- data.all.traits %>% filter(StudyType %in% c("Common Garden (F2)
 
 # multivariate models ----
 
-
 (sex.and.triats <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
 Anova(sex.and.triats, type = "II")
 
@@ -279,47 +278,11 @@ ecology.data.no.colour <- data.for.ecology.models %>% filter(!Kingsolver_traits 
 ### Model without colour
 (ecology.no.colour <- glmer(R.2 ~ method*Sex + (1|StudyID), data = ecology.data.no.colour, family = binomial)) %>% summary()
 
-## effect size plot with all models
-plot_models(ecology.full, ecology.no.colour, vline.color = "grey")
-
 ## this is for the means that I report in the text
 # colour traits included
-one.slope <- data.for.ecology.models %>% filter(method == "south")
-mean(one.slope$R.2)
-sd(one.slope$R.2)
-both.slopes <- data.for.ecology.models %>% filter(method == "all") 
-mean(both.slopes$R.2)
-sd(both.slopes$R.2)
+(one.slope <- data.for.ecology.models %>% filter(method == "south")) %>% summary()
 
-#### Plots ----
-
-(ecology.full.plot <-
-  ecology.data.no.colour %>% 
-  ggplot(aes(x = method, y = R.2, fill = method)) + 
-  geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
-  geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
-  geom_boxplot(size = 1, aes(x = method, y = R.2) ,
-               alpha = 0.3, width = 0.1) +
-  scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  theme_bw()+
-  theme(legend.position = "none"))
-
-
-(ecology.sex.plot <-  
-  ecology.data.no.colour %>% 
-  ggplot(aes(x = method, y = R.2, fill = method)) + 
-  geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
-  geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
-  geom_boxplot(size = 1, aes(x = method, y = R.2) ,
-               alpha = 0.3, width = 0.1) +
-  scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  facet_wrap(~Sex) +
-  theme_bw() )
-
-ggarrange(ecology.full.plot, ecology.sex.plot, ncol = 1, common.legend= TRUE)
-
+(both.slopes <- data.for.ecology.models %>% filter(method == "all")) %>% summary()
 
 
 ### 2. Intro models ----
@@ -1398,6 +1361,40 @@ data.all %>% filter(Kingsolver_traits %in% c("Behaviour", "Colour", "Other_life_
   facet_wrap(~Kingsolver_traits) +
   theme_bw()
 
+
+## quesiton-specific plots
+#### Plots ----
+
+(ecology.full.plot <-
+   ecology.data.no.colour %>% 
+   ggplot(aes(x = method, y = R.2, fill = method)) + 
+   geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+   geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+   geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                alpha = 0.3, width = 0.1) +
+   scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+   scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+   theme_bw()+
+   theme(legend.position = "none"))
+
+
+(ecology.sex.plot <-  
+    ecology.data.no.colour %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    facet_wrap(~Sex) +
+    theme_bw() )
+
+ggarrange(ecology.full.plot, ecology.sex.plot, ncol = 1, common.legend= TRUE)
+
+
+
+#
 
 ## older than 2021-10-21
 #### merge spreadsheet data w BOTH of these R2 to get an ecology data spreadsheet
