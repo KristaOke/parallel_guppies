@@ -156,6 +156,7 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 ### (Because when calculated by hand, I would do M/F/Both with same data)
 data.all <- data.all %>% filter(Sex %in% c("M", "F"))  
 
+mean(data.all$R.2)
 sd(data.all$R.2)
 #sd(data.all.no.colour$R.2)
 
@@ -198,34 +199,20 @@ no.colour.M <- data.all.no.colour %>% filter(Sex == "M")
 mean(no.colour.M$R.2)
 sd(no.colour.M$R.2)
 
-no.colour.F <- data.all.no.colour %>% filter(Sex == "F")
-mean(no.colour.F$R.2)
-sd(no.colour.F$R.2)
-
 ## overall traits model ----
 
 ## All traits - this WILL NOT RUN with other included
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), data = data.all.traits, family = binomial)) %>% summary()
 
-## get marginal R2
-r.squaredGLMM(all.model.traits)
-
 ## Rearing enviro model ----
-data.all.traits.rear <- data.all.traits %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
-(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.traits.rear, family = binomial)) %>% summary()
+data.all.reat <- data.all.traits %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
 
 ##  overall sex model ----
 (all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
 
-## get marginal R2
-r.squaredGLMM(all.model.sex)
-
 ## Removed colour 
 (all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
-
-r.squaredGLMM(all.model.sex.no.colour)
-
-confint(all.model.sex.no.colour)
 
 ## trait type plots ----
 ## here is a general plot with colour
@@ -299,24 +286,24 @@ Othertrait <- data.all %>% filter(Kingsolver_traits == "Other")
 mean(Othertrait$R.2)
 sd(Othertrait$R.2)
 
+Phystrait <- data.all %>% filter(Kingsolver_traits == "Physiology")
+mean(Colourtrait$R.2)
+sd(Colourtrait$R.2)
+
 # Rearing enviro for in-text
 ## with colour 
-w.colour.cg <- data.all %>% filter(StudyType == "Common Garden (F2)")
-mean(w.colour.cg$R.2)
-sd(w.colour.cg$R.2)
+cg <- data.all %>% filter(StudyType == "Common Garden (F2)")
+mean(cg$R.2)
+sd(cg$R.2)
 
-w.colour.wc <- data.all %>% filter(StudyType == "Wildcaught")
-mean(w.colour.wc$R.2)
-sd(w.colour.wc$R.2)
+wc <- data.all %>% filter(StudyType == "Wildcaught")
+mean(wc$R.2)
+sd(wc$R.2)
 
-## without colour
-no.colour.cg <- data.all.no.colour %>% filter(StudyType == "Common Garden (F2)")
-mean(no.colour.cg$R.2)
-sd(no.colour.cg$R.2)
-
-no.colour.wc <- data.all.no.colour %>% filter(StudyType == "Wildcaught")
-mean(no.colour.wc$R.2)
-sd(no.colour.wc$R.2)
+# Sex
+Malewithcolour <- data.all %>% filter(Sex == "M")
+Malenocolour <- data.all.no.colour %>% filter(!Sex == M)
+Femalesex <- data.all %>% filter(Sex == "F")
 
 
 # Determinants (ecological complex, evol hist, contemp evol) ----
@@ -349,11 +336,11 @@ data.for.evolhist.models %>% group_by(StudyID) %>% tally()
 # Ecology model
 ## Is there a difference between the slopes? 
 
+### fix structure
+data.for.ecology.models$method <- as.factor(data.for.ecology.models$method)
+
 ### Remove 'Both' sex category because duplicates
 data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
-
-## Remove other (to be consistent with above, but idk)
-#data.for.ecology.models %>% filter(!Kingsolver_traits == "Other")
 
 ## Make dataframes to remove colour
 ecology.data.no.colour <- data.for.ecology.models %>% filter(!Kingsolver_traits == "Colour")
@@ -361,34 +348,20 @@ ecology.data.no.colour <- data.for.ecology.models %>% filter(!Kingsolver_traits 
 ## Model with everything
 (ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
 
-r.squaredGLMM(ecology.full)
-
 ### Model without colour
 (ecology.no.colour <- glmer(R.2 ~ method*Sex + (1|StudyID), data = ecology.data.no.colour, family = binomial)) %>% summary()
-
-r.squaredGLMM(ecology.no.colour)
-
 
 ## effect size plot with all models
 plot_models(ecology.full, ecology.no.colour, vline.color = "grey")
 
 ## this is for the means that I report in the text
 # colour traits included
-w.colour.south <- data.for.ecology.models %>% filter(method == "south")
-mean(w.colour.south$R.2)
-sd(w.colour.south$R.2)
-w.colour.all <- data.for.ecology.models %>% filter(method == "all") 
-mean(w.colour.all$R.2)
-sd(w.colour.all$R.2)
-
-# colour traits excluded
-no.colour.south <- ecology.data.no.colour %>% filter(method == "south")
-mean(no.colour.south$R.2)
-sd(no.colour.south$R.2)
-no.colour.all <- ecology.data.no.colour %>% filter(method == "all") 
-mean(no.colour.all$R.2)
-sd(no.colour.all$R.2)
-
+one.slope <- data.for.ecology.models %>% filter(method == "south")
+mean(one.slope$R.2)
+sd(one.slope$R.2)
+both.slopes <- data.for.ecology.models %>% filter(method == "all") 
+mean(both.slopes$R.2)
+sd(both.slopes$R.2)
 
 #### Plots ----
 
@@ -424,25 +397,19 @@ ggarrange(ecology.full.plot, ecology.sex.plot, ncol = 1, common.legend= TRUE)
 ### 2. Intro models ----
 ## Is there a difference between studies with only natural vs w intro
 
+### Fix strucutre
+data.for.intro.models$method <- as.factor(data.for.intro.models$method)
+
 ### Remove 'Both' sex category because duplicates
 data.for.intro.models <- data.for.intro.models %>% filter(Sex %in% c("M", "F"))  
-
-### Remove 'other' to be consistent
-#data.for.intro.models <- data.for.intro.models %>% filter(!Kingsolver_traits == "Other")
 
 ## Make dataframes to remove colour
 intro.data.no.colour <- data.for.intro.models %>% filter(!Kingsolver_traits == "Colour")
 
 ## Model with everything 
-(intro.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.intro.models, family = binomial)) %>% summary()
+(intro.full <- glmer(R.2 ~ method* + (1|StudyID), data = data.for.intro.models, family = binomial)) %>% summary()
 
 r.squaredGLMM(intro.full)
-
-### Model without colour
-(intro.no.colour <- glmer(R.2 ~ method*Sex + (1|StudyID), data = intro.data.no.colour, family = binomial)) %>% summary()
-
-r.squaredGLMM(intro.no.colour)
-
 
 ## effect size plot with all models
 plot_models(intro.full, intro.no.colour, vline.color = "grey")
@@ -490,24 +457,18 @@ ggarrange(intro.full.plot, intro.sex.plot, ncol = 1, common.legend= TRUE)
 
 ## this is for the means that I report in the text
 # colour traits included
-w.colour.nat <- data.for.intro.models %>% filter(method == "only_natural")
-mean(w.colour.nat$R.2)
-sd(w.colour.nat$R.2)
-w.colour.all <- data.for.intro.models %>% filter(method == "all") 
-mean(w.colour.all$R.2)
-sd(w.colour.all$R.2)
-
-# colour traits excluded
-no.colour.nat <- intro.data.no.colour %>% filter(method == "only_natural")
-mean(no.colour.nat$R.2)
-sd(no.colour.nat$R.2)
-no.colour.all <- intro.data.no.colour %>% filter(method == "all") 
-mean(no.colour.all$R.2)
-sd(no.colour.all$R.2)
-
+only_natural <- data.for.intro.models %>% filter(method == "only_natural")
+mean(only_natural$R.2)
+sd(only_natural$R.2)
+natural_and_intro <- data.for.intro.models %>% filter(method == "all") 
+mean(natural_and_intro$R.2)
+sd(natural_and_intro$R.2)
 
 ### intro BROAD model ----
 ## Is there a difference between studies with only natural vs w intro
+
+### Fix structure
+data.for.intro.models.broad$method <- as.factor(data.for.intro.models.broad$method)
 
 ### Remove 'Both' sex category because duplicates
 data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c("M", "F"))  
