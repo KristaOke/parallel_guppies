@@ -154,11 +154,7 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 
 ## remove 'both'
 ### (Because when calculated by hand, I would do M/F/Both with same data)
-data.all <- data.all %>% filter(Sex %in% c("M", "F"))  
-
-mean(data.all$R.2)
-sd(data.all$R.2)
-#sd(data.all.no.colour$R.2)
+(data.all <- data.all %>% filter(Sex %in% c("M", "F"))  ) %>% summary()
 
 ## remove other (because model below will not converge with other)
 data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
@@ -172,12 +168,18 @@ data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == "Colour")
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
                            data = data.all.traits, family = binomial)) %>% summary()
 
+car::Anova(all.model.traits, type = "II")
+
 ## Rearing enviro model ----
 data.all.rear <- data.all.traits %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
 (all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
 
+car::Anova(all.model.rearing, type = "II")
+
 ##  overall sex model ----
 (all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
+
+car::Anova(all.model.sex, type = "II")
 
 ## Removed colour 
 (all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
@@ -249,6 +251,8 @@ data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F
 ## Model with everything
 (ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
 
+car::Anova(ecology.full, type = "II")
+
 ## this is for the means that I report in the text
 (one.slope <- data.for.ecology.models %>% filter(method == "south")) %>% summary()
 (both.slopes <- data.for.ecology.models %>% filter(method == "all")) %>% summary()
@@ -266,17 +270,9 @@ data.for.intro.models <- data.for.intro.models %>% filter(Sex %in% c("M", "F"))
 ## Model with everything 
 (intro.full <- glmer(R.2 ~ method* + (1|StudyID), data = data.for.intro.models, family = binomial)) %>% summary()
 
-## this is for the means that I report in the text
-intro.data.no.colour %>% filter(method == "all") %>% summary()
-intro.data.no.colour %>% filter(method == "intro") %>% summary()
-
 ## this is for the means that I would report in text (but I don't - "Strict")
-only_natural <- data.for.intro.models %>% filter(method == "only_natural")
-mean(only_natural$R.2)
-sd(only_natural$R.2)
-natural_and_intro <- data.for.intro.models %>% filter(method == "all") 
-mean(natural_and_intro$R.2)
-sd(natural_and_intro$R.2)
+(only_natural_strict <- data.for.intro.models %>% filter(method == "only_natural")) %>% summary()
+(natural_and_intro_strict <- data.for.intro.models %>% filter(method == "all")) %>% summary()
 
 ### intro BROAD model ----
 ## Is there a difference between studies with only natural vs w intro
@@ -290,14 +286,11 @@ data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c
 ## Model with everything 
 (intro.full.broad <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
 
+car::Anova(intro.full.broad, type = "II")
 
 ## for means/sd reported in text
-only_natural_broad <- data.for.intro.models.broad %>% filter(method == "only_natural_broad") 
-mean(only_natural_broad$R.2)
-sd(only_natural_broad$R.2)
-natural_and_intro_broad <- data.for.intro.models.broad %>% filter(method == "all") 
-mean(natural_and_intro_broad$R.2)
-sd(natural_and_intro_broad$R.2)
+(only_natural_broad <- data.for.intro.models.broad %>% filter(method == "only_natural_broad")) %>% summary()
+(natural_and_intro_broad <- data.for.intro.models.broad %>% filter(method == "all")) %>% summary()
 
 ### 3. Evolutionary history models ----
 ## Is there a difference when only w pops in the caroni vs also in the Oropuche? 
@@ -310,21 +303,15 @@ data.for.evolhist.models$method <- as.factor(data.for.evolhist.models$method)
 ### Remove 'Both' sex category because duplicates
 data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
 
-## Make dataframes to remove colour
-evolhist.data.no.colour <- data.for.evolhist.models %>% filter(!Kingsolver_traits == "Colour")
-
 ## Model with everything 
 (evolhist.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
 
+car::Anova(evolhist.full, type = "II")
+
 ## means/sd reported in text:
-one_drainage <- data.for.evolhist.models %>% filter(method == "caroni") 
-mean(one_drainage$R.2)
-sd(one_drainage$R.2)
+(one_drainage <- data.for.evolhist.models %>% filter(method == "caroni")) %>% summary()
 
-both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")
-mean(both_drainages$R.2)
-sd(both_drainages$R.2)
-
+(both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")) %>% summary()
 
 ## Troubleshooting ----
 ### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
@@ -367,10 +354,10 @@ plot_models(evolhist.no.colour, evolhist.full.glm)
 
 ## first figure ----
 
-test <- read.csv("testPG_figure.csv", fileEncoding="UTF-8-BOM")
-test$population <- as.factor(test$population)
+fig2data <- read.csv("testPG_figure.csv", fileEncoding="UTF-8-BOM")
+fig2data$population <- as.factor(fig2data$population)
 
-(highparal <- test %>% filter(facet == 'a') %>% 
+(highparal <- fig2data %>% filter(facet == 'a') %>% 
     ggplot(aes(x = population, y = mean, color = predation)) +
     geom_point(size = 4) +
     labs(title = "Example of high R2 (0.984)",
@@ -387,7 +374,7 @@ test$population <- as.factor(test$population)
           plot.title = element_text(size = 16)))
 
 
-(lowparal <- test %>% filter(facet == 'b') %>% 
+(lowparal <- fig2data %>% filter(facet == 'b') %>% 
     ggplot(aes(x = population, y = mean, color = predation)) +
     geom_point(size = 4) +
     labs(title = "Example of low R2 (0.000)",
@@ -403,7 +390,18 @@ test$population <- as.factor(test$population)
           axis.text = element_text(size = 12),
           plot.title = element_text(size = 16)))
 
-ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
+highparal <- highparal + annotate("segment", x = 1, xend = 3, y = 12.01, yend = 13.5)
+highparal <- highparal + annotate("segment", x = 2, xend = 4, y = 12.11, yend = 13.76)
+highparal
+
+lowparal <- lowparal + annotate("segment", x = 1, xend = 3, y = 8.74, yend = 9.86)
+lowparal <- lowparal + annotate("segment", x = 2, xend = 4, y = 8.20, yend = 7.0)
+lowparal
+
+figure2 <- ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
+
+
+
 
 sup3 <-
   data.all %>% 
@@ -437,20 +435,6 @@ sup2 <-
     axis.text.x = element_text(angle = 45, vjust= 1, hjust = 1)) +
   facet_grid(Sex ~ Kingsolver_traits, scales = "free")
 
-
-
-ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
-
-highparal <- highparal + annotate("segment", x = 1, xend = 3, y = 12.01, yend = 13.5)
-highparal <- highparal + annotate("segment", x = 2, xend = 4, y = 12.11, yend = 13.76)
-highparal
-
-lowparal <- lowparal + annotate("segment", x = 1, xend = 3, y = 8.74, yend = 9.86)
-lowparal <- lowparal + annotate("segment", x = 2, xend = 4, y = 8.20, yend = 7.0)
-
-lowparal
-
-ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
 
 
 # histograms in manuscript ---- 
@@ -552,13 +536,13 @@ f_hist_w_other <-
     strip.text = element_text(size = 13),
     axis.title = element_text(size = 24))
 
-top.fig.2 <- cowplot::plot_grid("", overall_hist + theme(axis.title = element_blank()),
+top.fig.3 <- cowplot::plot_grid("", overall_hist + theme(axis.title = element_blank()),
                                 wildcaught_hist + theme(axis.title = element_blank()),
                                 cg_hist + theme(axis.title = element_blank()), 
                                 nrow = 1, labels = c("", "A", "B", "C"), 
                                 rel_widths = c(0.15, 1, 1, 1))
 
-bottom.fig.2 <- cowplot::plot_grid("", m_hist + theme(axis.title = element_blank()),
+bottom.fig.3 <- cowplot::plot_grid("", m_hist + theme(axis.title = element_blank()),
                                    m_hist_no_colour + theme(axis.title.y = element_blank()),
                                    f_hist_w_other + theme(axis.title = element_blank()),
                                    
@@ -568,18 +552,12 @@ bottom.fig.2 <- cowplot::plot_grid("", m_hist + theme(axis.title = element_blank
                                    align = "h", axis = "bt",
                                    rel_widths = c(0.15, 1, 1,1))
 
-bottom.fig.2
+figure3 <- cowplot::plot_grid(top.fig.3, bottom.fig.3, nrow = 2, rel_heights = c(1,1))
+figure3 <- figure3 + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
+figure3
 
 
-fig2 <- cowplot::plot_grid(top.fig.2, bottom.fig.2, nrow = 2, rel_heights = c(1,1))
-
-fig2
-
-fig2 <- fig2 + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
-
-fig2
-
-(fig3<-
+(figure4<-
     data.all %>% 
     ggplot(aes(x = R.2)) +
     geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
@@ -592,106 +570,7 @@ fig2
       strip.text = element_text(size = 13),
       axis.title = element_text(size = 24)))
 
-# table for supplement ----
-
-ok <- data.all %>% group_by(Study)
-ok.test <- mutate(ok, min(R.2))
-ok.test <- mutate(ok.test, max(R.2))
-
-ok2 <- data.frame(data.all %>% group_by(Study, Poptype_broad) %>% tally())
-
-check <- rbind(ok.test, ok2)
-
-No.traits <- data.all %>% group_by(Study, Trait) %>% tally() %>% 
-  transmute(No.traits = sum(n)) %>% 
-  distinct(No.traits, .keep_all = FALSE) 
-View(No.traits)
-
-Slope.names <- spreadsheet.data %>% group_by(Study, Slope) %>% count()
-Slope.names <- data.frame(aggregate(Slope ~ Study, data = Slope.names, paste, collapse = ","))
-
-wat <- left_join(No.traits, Slope.names)
-
-Drainage.names <- spreadsheet.data %>% group_by(Study, Drainage) %>% count()
-Drainage.names <- data.frame(aggregate(Drainage ~ Study, data = Drainage.names, paste, collapse = ","))
-
-wat <- left_join(wat, Drainage.names)
-
-Pop.names <- spreadsheet.data %>% group_by(Study, Poptype_broad) %>% count()
-Pop.names <- data.frame(aggregate(Poptype_broad ~ Study, data = Pop.names, paste, collapse = ","))
-
-wat <- left_join(wat, Pop.names)
-
-
-Populations.names <- spreadsheet.data %>% group_by(Study, Poptype_broad, Population) %>% 
-  filter(Poptype_broad == "Introduction") %>% count()
-Populations.names <- data.frame(aggregate(Population ~ Study, data = Populations.names, paste, collapse = ","))
-
-wat <- left_join(wat, Populations.names)
-
-View(wat)
-
-write.csv(wat, "Supplement_table.csv")
-
-# last fig ----
-
-
-
-kk <- list("Male with colour (274)" = Malewithcolour$R.2, "Male without colour (165)" = Malenocolour$R.2, 
-           "Female (172)" = Femalesex$R.2, 
-           "Colour (109)" = Colourtrait$R.2, "Life history (48)" = LHtrait$R.2, "Size (47)" = Sizetrait$R.2, 
-           "Morphology (42)" = Morphtrait$R.2, "Other (3)" = Othertrait$R.2, "Physiology (64)" = Phystrait$R.2,
-           "Common Garden (F2) (70)" = cg$R.2, "Wild caught (373)" = wc$R.2, "Within one slope (176)" = one.slope$R.2, "Between both slopes (176)" = both.slopes$R.2, 
-           "Only natural (183)" = only_natural$R.2, "Natural and introduced (183)" = natural_and_intro$R.2, 
-           "Within one drainage (258)" = one_drainage$R.2, "Between both drainages (258)" = both_drainages$R.2)
-
-mean <- (as.data.frame(sapply(kk, mean)))
-mean <- cbind(Factor = rownames(mean), mean)
-rownames(mean) <- NULL
-colnames(mean)[2] <- "mean"
-
-standev <- (as.data.frame(sapply(kk, sd)))
-standev <- cbind(Factor = rownames(standev), standev)
-rownames(standev) <- NULL
-colnames(standev)[2] <- "sd"
-
-larger_table <- inner_join(mean, standev, by = "Factor")
-
-larger_table$minsd <- larger_table$mean - larger_table$sd
-larger_table$maxsd <- larger_table$mean + larger_table$sd
-
-larger_table$order <- c(1,2,3,4,5,6,7,8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
-larger_table$Question <- c("Sex", "Sex", "Sex", 
-                           "Trait type", "Trait type", "Trait type", "Trait type",
-                           "Trait type", "Trait type",
-                           "Rearing environment", "Rearing environment",
-                           "Ecological complexity", "Ecological complexity",
-                           "Time since colonization", "Time since colonization",
-                           "Evolutionary history", "Evolutionary history")
-
-larger_table$Question  <- with(larger_table, reorder(Question, rev(order)))
-
-vertical_lines <- c(3.5, 9.5, 11.5, 13.5, 15.5)
-
-(lastfig2b<-
-    larger_table %>% ggplot(x = Factor, aes(reorder(Factor, order), y = mean)) +
-    geom_point(size = 2) +
-    geom_linerange(aes(x = Factor, ymin = minsd, ymax = maxsd), size = 0.5) +
-    
-    annotate("rect", xmin = 0.5, xmax = 3.5, ymin = -Inf, ymax = Inf, fill = "yellow", alpha = 0.2) +
-    annotate("rect", xmin = 3.5, xmax = 9.5, ymin = -Inf, ymax = Inf, fill = "orange", alpha = .4) +
-    annotate("rect", xmin = 9.5, xmax = 11.5, ymin = -Inf, ymax = Inf, fill = "palegreen", alpha = .4) +
-    annotate("rect", xmin = 11.5, xmax = 13.5, ymin = -Inf, ymax = Inf, fill = "#0404B7", alpha = .3) +
-    annotate("rect", xmin = 13.5, xmax = 15.5, ymin = -Inf, ymax = Inf, fill = "purple", alpha = .4) +
-    annotate("rect", xmin = 15.5, xmax = 17.5, ymin = -Inf, ymax = Inf, fill = "hot pink", alpha = .3) +
-    
-    
-    labs(x = "Factor", 
-         y = expression(paste(R^2))) +
-    coord_flip() +
-    theme_bw() +
-    theme(axis.text = element_text(size = 14),
-          axis.title = element_text(size = 24)))
+## figure 5
 
 # hist and boxplot figure ----
 
@@ -917,22 +796,109 @@ evolhist_box_cow <- cowplot::plot_grid(evolhist_hist_a, evolhist_box,
 
 evolhist_box_cow
 
-fig5 <- cowplot::plot_grid(ecology_box_cow, evolhist_box_cow, intro_box_cow, nrow = 1,
+figure5 <- cowplot::plot_grid(ecology_box_cow, evolhist_box_cow, intro_box_cow, nrow = 1,
                            align = "hv", axis = "tblr",
                            rel_widths = c(1,1,1))
-tiff("fig5.pg.tiff", width = 8, height = 4, units = "in", res = 600)
-fig5
-dev.off()
+
+figure5
+
+# figure6 ----
+
+listforfig6 <- list("Male with colour (274)" = Malewithcolour$R.2, "Male without colour (165)" = Malenocolour$R.2, 
+           "Female (172)" = Femalesex$R.2, 
+           "Colour (109)" = Colourtrait$R.2, "Life history (48)" = LHtrait$R.2, "Size (47)" = Sizetrait$R.2, 
+           "Morphology (42)" = Morphtrait$R.2, "Other (3)" = Othertrait$R.2, "Physiology (64)" = Phystrait$R.2,
+           "Common Garden (F2) (70)" = cg$R.2, "Wild caught (373)" = wc$R.2, "Within one slope (176)" = one.slope$R.2, "Between both slopes (176)" = both.slopes$R.2, 
+           "Only natural (183)" = only_natural_broad$R.2, "Natural and introduced (183)" = natural_and_intro_broad$R.2, 
+           "Within one drainage (258)" = one_drainage$R.2, "Between both drainages (258)" = both_drainages$R.2)
+
+mean <- (as.data.frame(sapply(listforfig6, mean, na.rm = TRUE)))
+mean <- cbind(Factor = rownames(mean), mean)
+rownames(mean) <- NULL
+colnames(mean)[2] <- "mean"
+
+standev <- (as.data.frame(sapply(listforfig6, sd, na.rm = TRUE)))
+standev <- cbind(Factor = rownames(standev), standev)
+rownames(standev) <- NULL
+colnames(standev)[2] <- "sd"
+
+larger_table <- inner_join(mean, standev, by = "Factor")
+
+larger_table$minsd <- larger_table$mean - larger_table$sd
+larger_table$maxsd <- larger_table$mean + larger_table$sd
+
+larger_table$order <- c(1,2,3,4,5,6,7,8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
+larger_table$Question <- c("Sex", "Sex", "Sex", 
+                           "Trait type", "Trait type", "Trait type", "Trait type",
+                           "Trait type", "Trait type",
+                           "Rearing environment", "Rearing environment",
+                           "Ecological complexity", "Ecological complexity",
+                           "Time since colonization", "Time since colonization",
+                           "Evolutionary history", "Evolutionary history")
+
+larger_table$Question  <- with(larger_table, reorder(Question, rev(order)))
+
+vertical_lines <- c(3.5, 9.5, 11.5, 13.5, 15.5)
+
+(lastfig2b<-
+    larger_table %>% ggplot(x = Factor, aes(reorder(Factor, order), y = mean)) +
+    geom_point(size = 2) +
+    geom_linerange(aes(x = Factor, ymin = minsd, ymax = maxsd), size = 0.5) +
+    
+    annotate("rect", xmin = 0.5, xmax = 3.5, ymin = -Inf, ymax = Inf, fill = "yellow", alpha = 0.2) +
+    annotate("rect", xmin = 3.5, xmax = 9.5, ymin = -Inf, ymax = Inf, fill = "orange", alpha = .4) +
+    annotate("rect", xmin = 9.5, xmax = 11.5, ymin = -Inf, ymax = Inf, fill = "palegreen", alpha = .4) +
+    annotate("rect", xmin = 11.5, xmax = 13.5, ymin = -Inf, ymax = Inf, fill = "#0404B7", alpha = .3) +
+    annotate("rect", xmin = 13.5, xmax = 15.5, ymin = -Inf, ymax = Inf, fill = "purple", alpha = .4) +
+    annotate("rect", xmin = 15.5, xmax = 17.5, ymin = -Inf, ymax = Inf, fill = "hot pink", alpha = .3) +
+    
+    
+    labs(x = "Factor", 
+         y = expression(paste(R^2))) +
+    coord_flip() +
+    theme_bw() +
+    theme(axis.text = element_text(size = 14),
+          axis.title = element_text(size = 24)))
 
 
+# table for supplement ----
+
+suptable.R2 <- data.all %>% group_by(Study)
+suptable.R2 <- mutate(suptable.R2, min(R.2))
+suptable.R2 <- mutate(suptable.R2, max(R.2))
+
+suptable.people <- data.frame(data.all %>% group_by(Study, Poptype_broad) %>% tally())
+
+binded.suptable <- rbind(suptable.R2, suptable.people)
+
+No.traits <- data.all %>% group_by(Study, Trait) %>% tally() %>% 
+  transmute(No.traits = sum(n)) %>% 
+  distinct(No.traits, .keep_all = FALSE) 
+View(No.traits)
+
+Slope.names <- spreadsheet.data %>% group_by(Study, Slope) %>% count()
+Slope.names <- data.frame(aggregate(Slope ~ Study, data = Slope.names, paste, collapse = ","))
+
+traits.slopes <- left_join(No.traits, Slope.names)
+
+Drainage.names <- spreadsheet.data %>% group_by(Study, Drainage) %>% count()
+Drainage.names <- data.frame(aggregate(Drainage ~ Study, data = Drainage.names, paste, collapse = ","))
+
+traits.slopes.drainages <- left_join(traits.slopes, Drainage.names)
+
+Pop.type <- spreadsheet.data %>% group_by(Study, Poptype_broad) %>% count()
+Pop.type <- data.frame(aggregate(Poptype_broad ~ Study, data = Pop.names, paste, collapse = ","))
+
+traits.slopes.drinages.pops <- left_join(traits.slopes.drainages, Pop.type)
 
 
-""
+Populations.names <- spreadsheet.data %>% group_by(Study, Poptype_broad, Population) %>% 
+  filter(Poptype_broad == "Introduction") %>% count()
+Populations.names <- data.frame(aggregate(Population ~ Study, data = Populations.names, paste, collapse = ","))
 
+final.sup.table <- left_join(traits.slopes.drinages.pops, Populations.names)
 
-
-
-
+View(final.sup.table)
 
 
 data.all %>% 
