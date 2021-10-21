@@ -166,46 +166,14 @@ data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
 ## creating a dataset w no colour (to compare w those w colour)
 data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == "Colour")
 
-## basic histograms
-data.all.traits %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1.5) +
-  xlab(expression(paste(R^2))) +
-  ylab("Frequency") +
-  theme_bw()
-
-## basic histograms - no colour
-data.all.no.colour %>% 
-  ggplot(aes(x = R.2)) +
-  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
-                 fill="#E6E6E6", colour = "black", size = 1.5) +
-  xlab(expression(paste(R^2))) +
-  ylab("Frequency") +
-  theme_bw()
-
-# mean R2/sd for in-text descriptions
-## colour traits included
-w.colour.M <- data.all %>% filter(Sex == "M")
-mean(w.colour.M$R.2)
-sd(w.colour.M$R.2)
-
-w.colour.F <- data.all %>% filter(Sex == "F")
-mean(w.colour.F$R.2)
-sd(w.colour.F$R.2)
-
-## colour traits excluded
-no.colour.M <- data.all.no.colour %>% filter(Sex == "M")
-mean(no.colour.M$R.2)
-sd(no.colour.M$R.2)
-
 ## overall traits model ----
 
 ## All traits - this WILL NOT RUN with other included
-(all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), data = data.all.traits, family = binomial)) %>% summary()
+(all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
+                           data = data.all.traits, family = binomial)) %>% summary()
 
 ## Rearing enviro model ----
-data.all.reat <- data.all.traits %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+data.all.rear <- data.all.traits %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
 (all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
 
 ##  overall sex model ----
@@ -213,56 +181,6 @@ data.all.reat <- data.all.traits %>% filter(StudyType %in% c("Common Garden (F2)
 
 ## Removed colour 
 (all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
-
-## trait type plots ----
-## here is a general plot with colour
-data.all.traits %>% 
-  ggplot(aes(x = Kingsolver_traits, y = R.2, fill = Kingsolver_traits)) + 
-  geom_jitter(aes(color = Kingsolver_traits), width = .1) +
-  geom_boxplot(size = 1, aes(x = Kingsolver_traits, y = R.2) ,
-               alpha = 0.3, width = 0.3) +
-  scale_colour_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray", "pink")) +
-  scale_fill_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray", "pink")) +
-  theme_classic() 
-
-data.all.traits.rear %>% 
-  ggplot(aes(x = StudyType, y = R.2, color = Kingsolver_traits)) +
-  geom_boxplot() + 
-  geom_jitter()
-
-data.all.no.colour %>% 
-  ggplot(aes(x = Kingsolver_traits, y = R.2, fill = Kingsolver_traits)) + 
-  geom_jitter(aes(color = Kingsolver_traits), width = .1) +
-  geom_boxplot(size = 1, aes(x = Kingsolver_traits, y = R.2) ,
-               alpha = 0.3, width = 0.3) +
-  scale_colour_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray")) +
-  scale_fill_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray")) +
-  theme_classic() 
-
-## sex plots ----
-data.all.traits %>% 
-  ggplot(aes(x = Sex, y = R.2, fill = Sex)) + 
-  geom_jitter(aes(color = Sex), width = 0.1, size = 2) +
-  geom_boxplot(size = 1, aes(x = Sex, y = R.2), alpha = 0.3) +
-  scale_colour_manual(values =  c("#FFB93C", "#457111")) +
-  scale_fill_manual(values =  c("#FFB93C", "#457111")) +
-  theme_classic()  
-
-data.all.no.colour %>% 
-  ggplot(aes(x = Sex, y = R.2, fill = Sex)) + 
-  geom_jitter(aes(color = Sex), width = 0.1, size = 2) +
-  geom_boxplot(size = 1, aes(x = Sex, y = R.2), alpha = 0.3) +
-  scale_colour_manual(values =  c("#FFB93C", "#457111")) +
-  scale_fill_manual(values =  c("#FFB93C", "#457111")) +
-  theme_classic()  
-
-data.all %>% filter(Kingsolver_traits %in% c("Behaviour", "Colour", "Other_life_history", "Size") &
-                      StudyType %in% c("Common Garden (F2)", "Wildcaught"))  %>% 
-  ggplot(aes(x = StudyType, y = R.2)) +
-  geom_boxplot() +
-  geom_jitter(width = .1, size = 3, alpha = 0.5, aes(colour = Kingsolver_traits)) +
-  facet_wrap(~Kingsolver_traits) +
-  theme_bw()
 
 # multivariate models ----
 
@@ -311,9 +229,9 @@ mean(wc$R.2)
 sd(wc$R.2)
 
 # Sex
-Malewithcolour <- data.all %>% filter(Sex == "M")
-Malenocolour <- data.all.no.colour %>% filter(!Sex == M)
-Femalesex <- data.all %>% filter(Sex == "F")
+(Malewithcolour <- data.all %>% filter(Sex == "M")) %>% summary()
+(Malenocolour <- data.all.no.colour %>% filter(Sex == "M")) %>% summary()
+(Femalesex <- data.all %>% filter(Sex == "F")) %>% summary()
 
 
 # Determinants (ecological complex, evol hist, contemp evol) ----
@@ -1427,6 +1345,61 @@ dev.off()
 
 
 ## OLD AGAIN ----
+
+## updates 2021-10-21 as I'm cleaning AH
+
+## trait type plots ----
+## here is a general plot with colour
+data.all.traits %>% 
+  ggplot(aes(x = Kingsolver_traits, y = R.2, fill = Kingsolver_traits)) + 
+  geom_jitter(aes(color = Kingsolver_traits), width = .1) +
+  geom_boxplot(size = 1, aes(x = Kingsolver_traits, y = R.2) ,
+               alpha = 0.3, width = 0.3) +
+  scale_colour_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray", "pink")) +
+  scale_fill_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray", "pink")) +
+  theme_classic() 
+
+data.all.rear %>% 
+  ggplot(aes(x = StudyType, y = R.2, color = Kingsolver_traits)) +
+  geom_boxplot() + 
+  geom_jitter()
+
+data.all.no.colour %>% 
+  ggplot(aes(x = Kingsolver_traits, y = R.2, fill = Kingsolver_traits)) + 
+  geom_jitter(aes(color = Kingsolver_traits), width = .1) +
+  geom_boxplot(size = 1, aes(x = Kingsolver_traits, y = R.2) ,
+               alpha = 0.3, width = 0.3) +
+  scale_colour_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray")) +
+  scale_fill_manual(values =  c("#FFB93C", "#457111","#15899A", "#BD8DC3", "#D07D7D", "dark gray")) +
+  theme_classic() 
+
+## sex plots ----
+data.all.traits %>% 
+  ggplot(aes(x = Sex, y = R.2, fill = Sex)) + 
+  geom_jitter(aes(color = Sex), width = 0.1, size = 2) +
+  geom_boxplot(size = 1, aes(x = Sex, y = R.2), alpha = 0.3) +
+  scale_colour_manual(values =  c("#FFB93C", "#457111")) +
+  scale_fill_manual(values =  c("#FFB93C", "#457111")) +
+  theme_classic()  
+
+data.all.no.colour %>% 
+  ggplot(aes(x = Sex, y = R.2, fill = Sex)) + 
+  geom_jitter(aes(color = Sex), width = 0.1, size = 2) +
+  geom_boxplot(size = 1, aes(x = Sex, y = R.2), alpha = 0.3) +
+  scale_colour_manual(values =  c("#FFB93C", "#457111")) +
+  scale_fill_manual(values =  c("#FFB93C", "#457111")) +
+  theme_classic()  
+
+data.all %>% filter(Kingsolver_traits %in% c("Behaviour", "Colour", "Other_life_history", "Size") &
+                      StudyType %in% c("Common Garden (F2)", "Wildcaught"))  %>% 
+  ggplot(aes(x = StudyType, y = R.2)) +
+  geom_boxplot() +
+  geom_jitter(width = .1, size = 3, alpha = 0.5, aes(colour = Kingsolver_traits)) +
+  facet_wrap(~Kingsolver_traits) +
+  theme_bw()
+
+
+## older than 2021-10-21
 #### merge spreadsheet data w BOTH of these R2 to get an ecology data spreadsheet
 
 ## filter by sex (because duplicates in 'Both')
