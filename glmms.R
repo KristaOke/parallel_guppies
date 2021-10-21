@@ -193,39 +193,16 @@ Anova(sex.and.rear, type = 2)
 
 # Traits descriptive stuff for in text ----
 
-Colourtrait <- data.all %>% filter(Kingsolver_traits == "Colour")
-mean(Colourtrait$R.2)
-sd(Colourtrait$R.2)
-
-LHtrait <- data.all %>% filter(Kingsolver_traits == "Other_life_history")
-mean(LHtrait$R.2)
-sd(LHtrait$R.2)
-
-Sizetrait <- data.all %>% filter(Kingsolver_traits == "Size")
-mean(Sizetrait$R.2)
-sd(Sizetrait$R.2)
-
-Morphtrait <- data.all %>% filter(Kingsolver_traits == "Other_morphology")
-mean(Morphtrait$R.2)
-sd(Morphtrait$R.2)
-
-Othertrait <- data.all %>% filter(Kingsolver_traits == "Other")
-mean(Othertrait$R.2)
-sd(Othertrait$R.2)
-
-Phystrait <- data.all %>% filter(Kingsolver_traits == "Physiology")
-mean(Colourtrait$R.2)
-sd(Colourtrait$R.2)
+(Colourtrait <- data.all %>% filter(Kingsolver_traits == "Colour")) %>% summary()
+(LHtrait <- data.all %>% filter(Kingsolver_traits == "Other_life_history")) %>% summary()
+(Sizetrait <- data.all %>% filter(Kingsolver_traits == "Size")) %>% summary()
+(Morphtrait <- data.all %>% filter(Kingsolver_traits == "Other_morphology")) %>% summary()
+(Othertrait <- data.all %>% filter(Kingsolver_traits == "Other")) %>% summary()
+(Phystrait <- data.all %>% filter(Kingsolver_traits == "Physiology")) %>% summary()
 
 # Rearing enviro for in-text
-## with colour 
-cg <- data.all %>% filter(StudyType == "Common Garden (F2)")
-mean(cg$R.2)
-sd(cg$R.2)
-
-wc <- data.all %>% filter(StudyType == "Wildcaught")
-mean(wc$R.2)
-sd(wc$R.2)
+(cg <- data.all %>% filter(StudyType == "Common Garden (F2)")) %>% summary()
+(wc <- data.all %>% filter(StudyType == "Wildcaught")) %>% summary()
 
 # Sex
 (Malewithcolour <- data.all %>% filter(Sex == "M")) %>% summary()
@@ -269,19 +246,11 @@ data.for.ecology.models$method <- as.factor(data.for.ecology.models$method)
 ### Remove 'Both' sex category because duplicates
 data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
 
-## Make dataframes to remove colour
-ecology.data.no.colour <- data.for.ecology.models %>% filter(!Kingsolver_traits == "Colour")
-
 ## Model with everything
 (ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
 
-### Model without colour
-(ecology.no.colour <- glmer(R.2 ~ method*Sex + (1|StudyID), data = ecology.data.no.colour, family = binomial)) %>% summary()
-
 ## this is for the means that I report in the text
-# colour traits included
 (one.slope <- data.for.ecology.models %>% filter(method == "south")) %>% summary()
-
 (both.slopes <- data.for.ecology.models %>% filter(method == "all")) %>% summary()
 
 
@@ -294,60 +263,14 @@ data.for.intro.models$method <- as.factor(data.for.intro.models$method)
 ### Remove 'Both' sex category because duplicates
 data.for.intro.models <- data.for.intro.models %>% filter(Sex %in% c("M", "F"))  
 
-## Make dataframes to remove colour
-intro.data.no.colour <- data.for.intro.models %>% filter(!Kingsolver_traits == "Colour")
-
 ## Model with everything 
 (intro.full <- glmer(R.2 ~ method* + (1|StudyID), data = data.for.intro.models, family = binomial)) %>% summary()
-
-r.squaredGLMM(intro.full)
-
-## effect size plot with all models
-plot_models(intro.full, intro.no.colour, vline.color = "grey")
-
-intro.data.no.colour %>% 
-  ggplot(aes(x = method, y = R.2)) +
-  geom_boxplot(size = 1.5) +
-  geom_jitter(size = 3, alpha = 0.1, width = 0.2) +
-  scale_fill_manual(values = c("gray48", "gray90")) +
-  #facet_wrap(~Sex) +
-  theme_bw()
-
 
 ## this is for the means that I report in the text
 intro.data.no.colour %>% filter(method == "all") %>% summary()
 intro.data.no.colour %>% filter(method == "intro") %>% summary()
 
-#### Intro plots ----
-(intro.full.plot <-
-  intro.data.no.colour %>% 
-  ggplot(aes(x = method, y = R.2, fill = method)) + 
-  geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
-  geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
-  geom_boxplot(size = 1, aes(x = method, y = R.2) ,
-               alpha = 0.3, width = 0.1) +
-  scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  theme_bw()+
-  theme(legend.position = "none"))
-
-
-(intro.sex.plot <-  
-  intro.data.no.colour %>% 
-  ggplot(aes(x = method, y = R.2, fill = method)) + 
-  geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
-  geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
-  geom_boxplot(size = 1, aes(x = method, y = R.2) ,
-               alpha = 0.3, width = 0.1) +
-  scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  facet_wrap(~Sex) +
-  theme_bw())
-
-ggarrange(intro.full.plot, intro.sex.plot, ncol = 1, common.legend= TRUE)
-
-## this is for the means that I report in the text
-# colour traits included
+## this is for the means that I would report in text (but I don't - "Strict")
 only_natural <- data.for.intro.models %>% filter(method == "only_natural")
 mean(only_natural$R.2)
 sd(only_natural$R.2)
@@ -364,51 +287,11 @@ data.for.intro.models.broad$method <- as.factor(data.for.intro.models.broad$meth
 ### Remove 'Both' sex category because duplicates
 data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c("M", "F"))  
 
-## Make dataframes to remove colour
-intro.data.no.colour.broad <- data.for.intro.models.broad %>% filter(!Kingsolver_traits == "Colour")
-
 ## Model with everything 
 (intro.full.broad <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
 
-#### intro BROAD plots ----
-plot_models(intro.full, intro.no.colour, vline.color = "grey")
 
-intro.data.no.colour.broad %>% 
-  ggplot(aes(x = method, y = R.2, fill = Sex)) +
-  geom_boxplot(size = 1.5) +
-  geom_jitter(size = 3, alpha = 0.1, width = 0.2) +
-  #scale_fill_manual(values = c("gray48", "gray90")) +
-  facet_wrap(~Sex) +
-  theme_bw()
-
-(intro.full.plot <-
-  intro.data.no.colour.broad %>% 
-  ggplot(aes(x = method, y = R.2, fill = method)) + 
-  geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
-  geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
-  geom_boxplot(size = 1, aes(x = method, y = R.2) ,
-               alpha = 0.3, width = 0.1) +
-  scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  theme_bw()+
-  theme(legend.position = "none"))
-
-
-(intro.sex.plot <-  
-  intro.data.no.colour.broad %>% 
-  ggplot(aes(x = method, y = R.2, fill = method)) + 
-  geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
-  geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
-  geom_boxplot(size = 1, aes(x = method, y = R.2) ,
-               alpha = 0.3, width = 0.1) +
-  scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  facet_wrap(~Sex) +
-  theme_bw())
-
-ggarrange(intro.full.plot, intro.sex.plot, ncol = 1, common.legend= TRUE)
-
-
+## for means/sd reported in text
 only_natural_broad <- data.for.intro.models.broad %>% filter(method == "only_natural_broad") 
 mean(only_natural_broad$R.2)
 sd(only_natural_broad$R.2)
@@ -433,38 +316,7 @@ evolhist.data.no.colour <- data.for.evolhist.models %>% filter(!Kingsolver_trait
 ## Model with everything 
 (evolhist.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
 
-#### evolhist plots ----
-plot_models(evolhist.full, evolhist.no.colour, vline.color = "grey")
-
-
-(evolhist.full.plot <-
-evolhist.data.no.colour %>% 
-  ggplot(aes(x = method, y = R.2, fill = method)) + 
-  geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
-  geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
-  geom_boxplot(size = 1, aes(x = method, y = R.2) ,
-               alpha = 0.3, width = 0.1) +
-  scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-  theme_bw()+
-  theme(legend.position = "none"))
-  
-
-(evolhist.sex.plot <-  
-evolhist.data.no.colour %>% 
-    ggplot(aes(x = method, y = R.2, fill = method)) + 
-    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
-    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
-    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
-                 alpha = 0.3, width = 0.1) +
-    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
-    facet_wrap(~Sex) +
-    theme_bw() )
-
-ggarrange(evolhist.full.plot, evolhist.sex.plot, ncol = 1, common.legend= TRUE)
-
-
+## means/sd reported in text:
 one_drainage <- data.for.evolhist.models %>% filter(method == "caroni") 
 mean(one_drainage$R.2)
 sd(one_drainage$R.2)
@@ -473,7 +325,6 @@ both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages"
 mean(both_drainages$R.2)
 sd(both_drainages$R.2)
 
-  
 
 ## Troubleshooting ----
 ### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
@@ -495,10 +346,6 @@ summary(ecology.no.colour)
 Anova(ecology.full.lmer, type = 3)
 (ecology.full.glm <- glm(R.2 ~ method*Sex, data = ecology.data.no.colour, family = binomial)) %>% summary()
 
-## Plot model to compare effect sizes
-plot_models(ecology.no.colour, ecology.full.glm)
-
-#### GLMs seem to be consistent (in terms of p-values and effect sizes) with our glmer that are not singular fits
 
 ### This is singular (need to decide with this one)
 
@@ -509,8 +356,6 @@ Anova(evolhist.full.lmer, type = 3)
 
 car::Anova(evolhist.full.lmer, type = "II")
 car::Anova(evolhist.full.glm, type = "II")
-
-plot_models(evolhist.no.colour, evolhist.full.glm)
 
 summary(evolhist.no.colour)
 (evolhist.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = evolhist.data.no.colour)) %>% summary()
@@ -1394,7 +1239,107 @@ ggarrange(ecology.full.plot, ecology.sex.plot, ncol = 1, common.legend= TRUE)
 
 
 
+#### Intro plots ----
+(intro.full.plot <-
+   intro.data.no.colour %>% 
+   ggplot(aes(x = method, y = R.2, fill = method)) + 
+   geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+   geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+   geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                alpha = 0.3, width = 0.1) +
+   scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+   scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+   theme_bw()+
+   theme(legend.position = "none"))
+
+
+(intro.sex.plot <-  
+    intro.data.no.colour %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    facet_wrap(~Sex) +
+    theme_bw())
+
+ggarrange(intro.full.plot, intro.sex.plot, ncol = 1, common.legend= TRUE)
 #
+
+#### intro BROAD plots ----
+plot_models(intro.full, intro.no.colour, vline.color = "grey")
+
+intro.data.no.colour.broad %>% 
+  ggplot(aes(x = method, y = R.2, fill = Sex)) +
+  geom_boxplot(size = 1.5) +
+  geom_jitter(size = 3, alpha = 0.1, width = 0.2) +
+  #scale_fill_manual(values = c("gray48", "gray90")) +
+  facet_wrap(~Sex) +
+  theme_bw()
+
+(intro.full.plot <-
+    intro.data.no.colour.broad %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    theme_bw()+
+    theme(legend.position = "none"))
+
+
+(intro.sex.plot <-  
+    intro.data.no.colour.broad %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    facet_wrap(~Sex) +
+    theme_bw())
+
+ggarrange(intro.full.plot, intro.sex.plot, ncol = 1, common.legend= TRUE)
+
+
+
+#### evolhist plots ----
+plot_models(evolhist.full, evolhist.no.colour, vline.color = "grey")
+
+
+(evolhist.full.plot <-
+    evolhist.data.no.colour %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    theme_bw()+
+    theme(legend.position = "none"))
+
+
+(evolhist.sex.plot <-  
+    evolhist.data.no.colour %>% 
+    ggplot(aes(x = method, y = R.2, fill = method)) + 
+    geom_flat_violin(size = 1, position = position_nudge(x = 0.0, y = 0), adjust = 2) +
+    geom_jitter(aes(color = method), position = position_nudge(x = - .1, y = 0)) +
+    geom_boxplot(size = 1, aes(x = method, y = R.2) ,
+                 alpha = 0.3, width = 0.1) +
+    scale_colour_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    scale_fill_manual(values =  c("#15899A", "#BD8DC3", "#E27474")) +
+    facet_wrap(~Sex) +
+    theme_bw() )
+
+ggarrange(evolhist.full.plot, evolhist.sex.plot, ncol = 1, common.legend= TRUE)
+
+
 
 ## older than 2021-10-21
 #### merge spreadsheet data w BOTH of these R2 to get an ecology data spreadsheet
