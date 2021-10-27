@@ -454,8 +454,14 @@ cg_hist <-
     strip.text = element_text(size = 13),
     axis.title = element_text(size = 24))
 
+m_hist_w_colour <- data.all %>% filter(Sex %in% c("M", "F"))
+m_hist_w_colour <- 
+  m_hist_w_colour %>% mutate(renamedSex =
+                           case_when(Sex == "M" ~ "Male (with colour)",
+                              Sex == "F" ~ "Female"))
+
 m_hist <- 
-  data.all %>% 
+  m_hist_w_colour %>% 
   filter(Sex == "M") %>% 
   ggplot(aes(x = R.2)) +
   geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
@@ -467,13 +473,22 @@ m_hist <-
     #subtitle = "colour traits included"
   ) +
   theme_bw() +
-  facet_wrap(. ~ Sex) +
+  facet_wrap(. ~ renamedSex) +
   theme(
     strip.text = element_text(size = 13),
     axis.title = element_text(size = 24))
 
+m_hist_no_colour <- data.all %>% filter(Sex %in% c("M", "F") &
+                                          !Kingsolver_traits == "Colour")
+  
 m_hist_no_colour <- 
-  data.all.no.colour %>% 
+  m_hist_no_colour %>% mutate(renamedSex =
+                               case_when(Sex == "M" ~ "Male (without colour)",
+                                         Sex == "F" ~ "Female"))
+
+
+m_hist_no_colour <- 
+  m_hist_no_colour %>% 
   filter(Sex == "M") %>% 
   ggplot(aes(x = R.2)) +
   geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
@@ -484,14 +499,14 @@ m_hist_no_colour <-
        #title = "Males (n = 165)",
        #subtitle = "colour traits excluded"
   ) +
-  facet_wrap(. ~ Sex) +
+  facet_wrap(. ~ renamedSex) +
   theme_bw() +
   theme(
     strip.text = element_text(size = 13),
     axis.title = element_text(size = 24))
 
 f_hist_w_other <-
-  data.all %>% 
+  m_hist_w_colour %>% 
   filter(Sex == "F") %>% 
   ggplot(aes(x = R.2)) +
   geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
@@ -500,7 +515,7 @@ f_hist_w_other <-
   #xlab(expression(paste(R^2))) +
   ylab("Frequency") +
   # ggtitle("Females (n = 172)") +
-  facet_wrap(. ~ Sex) +
+  facet_wrap(. ~ renamedSex) +
   theme_bw() +
   theme(
     strip.text = element_text(size = 13),
@@ -525,6 +540,10 @@ bottom.fig.3 <- cowplot::plot_grid("", m_hist + theme(axis.title = element_blank
 figure3 <- cowplot::plot_grid(top.fig.3, bottom.fig.3, nrow = 2, rel_heights = c(1,1))
 figure3 <- figure3 + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
 figure3
+
+tiff("pg.figure3.tiff", res= 600, units = "in", height = 6, width = 8)
+figure3
+dev.off()
 
 # figure 4
 behav_hist <-
@@ -912,7 +931,7 @@ larger_table$Question  <- with(larger_table, reorder(Question, rev(order)))
 
 vertical_lines <- c(3.5, 9.5, 11.5, 13.5, 15.5)
 
-(lastfig2b<-
+(figure6<-
     larger_table %>% ggplot(x = Factor, aes(reorder(Factor, order), y = mean)) +
     geom_point(size = 2) +
     geom_linerange(aes(x = Factor, ymin = minsd, ymax = maxsd), size = 0.5) +
@@ -925,13 +944,16 @@ vertical_lines <- c(3.5, 9.5, 11.5, 13.5, 15.5)
     annotate("rect", xmin = 15.5, xmax = 17.5, ymin = -Inf, ymax = Inf, fill = "hot pink", alpha = .3) +
     
     
-    labs(x = "Factor", 
+    labs(x = "", 
          y = expression(paste(R^2))) +
     coord_flip() +
     theme_bw() +
     theme(axis.text = element_text(size = 14),
           axis.title = element_text(size = 24)))
 
+tiff("pg.figure6.tiff", res = 600, units = "in", height = 6, width = 8)
+figure6
+dev.off()
 
 # table for supplement ----
 
