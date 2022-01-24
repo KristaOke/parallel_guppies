@@ -197,6 +197,8 @@ Anova(sex.and.rear, type = 2)
 
 # Traits descriptive stuff for in text ----
 
+data.all %>% group_by(Kingsolver_traits) %>% tally()
+
 (Colourtrait <- data.all %>% filter(Kingsolver_traits == "Colour")) %>% summary()
 (LHtrait <- data.all %>% filter(Kingsolver_traits == "Other_life_history")) %>% summary()
 (Sizetrait <- data.all %>% filter(Kingsolver_traits == "Size")) %>% summary()
