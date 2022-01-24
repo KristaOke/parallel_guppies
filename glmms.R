@@ -124,6 +124,7 @@ data.for.evolhist.models<-rbind(data.caroni,data.among.drainage) %>%
 evolhist.data.males <- data.for.evolhist.models %>% 
   filter(Sex == "M" & Kingsolver_traits !="Other") %>% 
   ungroup(TraitID)
+
 evolhist.data.females <- data.for.evolhist.models %>% 
   filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
   ungroup(TraitID)
@@ -137,6 +138,7 @@ data.for.intro.models<-rbind(data.all,data.intro) %>%
 time.data.males <- data.for.intro.models %>% 
   filter(Sex == "M" & Kingsolver_traits !="Other") %>% 
   ungroup(TraitID)
+
 time.data.females <- data.for.intro.models %>% 
   filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
   ungroup(TraitID)
@@ -201,6 +203,7 @@ Anova(sex.and.rear, type = 2)
 (Morphtrait <- data.all %>% filter(Kingsolver_traits == "Other_morphology")) %>% summary()
 (Othertrait <- data.all %>% filter(Kingsolver_traits == "Other")) %>% summary()
 (Phystrait <- data.all %>% filter(Kingsolver_traits == "Physiology")) %>% summary()
+(Behavtrait <- data.all %>% filter(Kingsolver_traits == "Behaviour")) %>% summary()
 
 # Rearing enviro for in-text
 (cg <- data.all %>% filter(StudyType == "Common Garden (F2)")) %>% summary()
