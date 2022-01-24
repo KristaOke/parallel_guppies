@@ -258,6 +258,11 @@ data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F
 
 car::Anova(ecology.full, type = "II")
 
+## remove the interaction
+(ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
+
+car::Anova(ecology.full, type = "II")
+
 ## this is for the means that I report in the text
 (one.slope <- data.for.ecology.models %>% filter(method == "south")) %>% summary()
 (both.slopes <- data.for.ecology.models %>% filter(method == "all")) %>% summary()
@@ -309,7 +314,7 @@ data.for.evolhist.models$method <- as.factor(data.for.evolhist.models$method)
 data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
 
 ## Model with everything 
-(evolhist.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
+(evolhist.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
 
 car::Anova(evolhist.full, type = "II")
 
