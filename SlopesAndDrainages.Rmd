@@ -104,7 +104,7 @@ Northeastern<- c("Tompire", "Ricon", "Mission", "Toco")
 
 Other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Manzanilla", "Visigney") #mostly southern range, jessica stephenson paper, but some others
 
-South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Caura", "Manacal", "Quare","Hollis", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Valencia", "Matura", "Hollis", "Saint Joseph", "Caura", "Oropuna")  
+South<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Caura", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Manacal", "Quare","Hollis", "Oropuche", "Turure", "La Seiva", "Rio Barro", "Rio Grande", "La Selva", "Valencia", "Matura", "Hollis", "Saint Joseph", "Oropuna")  
 
 #Drainage level
 Caroni<-c("Tunapuna", "Lopinot", "Guanapo", "Aripo", "Cuara", "Tranquille", "Caroni", "Arima", "Arouca", "Mausica", "Tacarigua", "El Cedro", "Ceniza", "Naranjo", "Maracas", "Caroni Lower Dyke", "Caura", "Manacal", "Saint Joseph", "Oropuna")
@@ -115,11 +115,11 @@ Oropuche<-c("Quare", "Hollis", "Oropuche", "Turure", "La Seiva", "Rio Barro", "R
 #unknown.rivers<-subset(river.list, (!(river.list$Population %in% North | river.list$Population %in% South| river.list$Population %in% Northeastern| river.list$Population %in% Other))) 
 
 #For mapping watershed sorting STILL NEED(Maracas, Saint Joseph, Manacal, Tranquille, Mausica, Blanadra)
-map_other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Manzanilla", "Visigney", "Tompire", "Ricon", "Mission", "Toco")
+map_other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Manzanilla", "Visigney", "Tompire", "Ricon", "Mission", "Toco", "Mausica", "Maracas")
 map_aripo<-c("Aripo", "Ceniza", "Naranjo", "Valencia")
 map_quare<-c("Quare","Hollis")
 map_tunapuna<-c("Tunapuna", "Caroni Lower Dyke")
-map_tacarigua<-c("Tacarigua", "Cuara")
+map_tacarigua<-c("Tacarigua", "Caura", "Manacal")
 map_arouca<-c("Arouca", "Lopinot", "Oropuna")
 map_guanapo<-c("Guanapo")
 map_arima<-c("Arima")
@@ -232,11 +232,13 @@ Coordinates <- read_csv("~/Documents/Projects/R scripts/Meta Analysis/Data/Map/m
 Coordinates<-Coordinates %>% 
   select(1,2,4,7,17:19,21:23,25,29:30,33:35) %>% 
   arrange(TraitID)
-map_other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Manzanilla", "Visigney", "Tompire", "Ricon", "Mission", "Toco")
+
+# I'm just being lazy and copying this code again instead of formatting for a join
+map_other<-c("Pilote", "Lizard", "Guapo", "Coffee", "Silverstream", "Arena", "Vance", "Mayaro", "Cunupia Lower Dyke", "Manzanilla", "Visigney", "Tompire", "Ricon", "Mission", "Toco", "Mausica", "Maracas")
 map_aripo<-c("Aripo", "Ceniza", "Naranjo", "Valencia")
 map_quare<-c("Quare","Hollis")
 map_tunapuna<-c("Tunapuna", "Caroni Lower Dyke")
-map_tacarigua<-c("Tacarigua", "Cuara")
+map_tacarigua<-c("Tacarigua", "Caura", "Manacal")
 map_arouca<-c("Arouca", "Lopinot", "Oropuna")
 map_guanapo<-c("Guanapo")
 map_arima<-c("Arima")
@@ -264,12 +266,14 @@ Coordinates$pop_map<-case_when(
   Coordinates$Population %in% map_damier ~ "Damier",
   Coordinates$Population %in% map_other ~ "Other"
 )
-
+# this codes the poptype_broad column to indicate our system knowledge that certain watersheds were not colonized by guppies until researchers' experiments
 Coordinates$Poptype_broad<-ifelse(Coordinates$Population %in% c("Damier", "Turure"), "Introduction",
                                ifelse((Coordinates$Population %in% c("El Cedro") & Coordinates$Predation=="Low"), "Introduction", 
                                       ifelse((Coordinates$Population %in% c("El Cedro") & Coordinates$Predation=="Low"), "Introduction", 
                                              ifelse((Coordinates$Population %in% c("Arima") & Coordinates$Predation=="High" & Coordinates$Collection_start>2001), "Introduction", Coordinates$Poptype))))
+
 #write_csv(Coordinates, path = "~/Documents/Projects/R scripts/Meta Analysis/Data/Map/site_type.csv")
+
 ```
 
 
