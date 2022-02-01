@@ -117,5 +117,5 @@ output.intros<-anova_loop(dat=traits_i)
 #write.table(output.intros, file = "TraitR2_intro.csv",row.names=FALSE,col.names=TRUE, sep=",")
 
 # anova for the natural pops only (drainage Q, broad specification)
-output.intros<-anova_loop(dat=traits_i_broad)
+output.intros.broad<-anova_loop(dat=traits_i_broad)
 #write.table(output.intros, file = "TraitR2_intro_broad.csv",row.names=FALSE,col.names=TRUE, sep=",") 
