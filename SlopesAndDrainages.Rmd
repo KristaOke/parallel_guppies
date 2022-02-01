@@ -276,6 +276,123 @@ Coordinates$Poptype_broad<-ifelse(Coordinates$Population %in% c("Damier", "Turur
 
 ```
 
+### Follow Up on reviewer comment
 
+```{r anova resample loop}
+
+dat<-FALSE 
+
+i <- 1
+
+anova_loop.resample <- function(dat=dat){
+  
+  trait <- as.factor(dat$TraitID)
+
+#output.perm <- array(dim=c(1000, 3, (length(unique(dat$TraitID)))))
+output.perm <- array(dim=c(100, 3, (length(unique(dat$TraitID)))))
+
+  
+  for (i in 1: length(levels(trait))){
+    dat.temp <- dat[dat$TraitID==levels(trait)[i],]
+    print(i)
+    traitID <- levels(trait)[i]
+    
+    #resampling permutations
+
+output.permj <- matrix (ncol=3, nrow=(100))
+colnames(output.permj) <- c("traitID", "R2.RE", "RadjRE")
+
+for (j in 1:100){
+
+  dat.temp$PredationRESAMPLE <- sample(dat.temp$Predation, replace = FALSE)
+  
+  aov.modRE   <- aov(MeanValue~PredationRESAMPLE,data=dat.temp)
+  anova.modRE <- stats:::anova.lm(aov.modRE)
+  mod.ssRE    <- anova.modRE$"Sum Sq"
+  mod.pesRE   <- mod.ssRE/(mod.ssRE+mod.ssRE[length(mod.ssRE)])          # calculate pes
+  
+  rRE <- summary.lm(aov.modRE)                                     # summary of linear model
+  
+  R2.RE     <- round(rRE$"r.squared",3)                              # R squared
+  R_adjRE <- round(rRE$"adj.r.squared",3)
+  
+
+  #output.RE[j,] <- c(R,R_adj,partial_eta,F_value,p_value, traitID, justr, R2.RE, R_adjRE) 
+  output.permj[j,] <- c(traitID, R2.RE, R_adjRE)
+}
+ output.perm[,,i] <- output.permj   
+
+  }
+#   output.RE <- data.frame(output.RE)
+#   return(output.RE)
+  
+#output.perm <- data.frame(output.perm)
+return(output.perm)
+
+}
+
+output.re<-anova_loop.resample(dat=new.data) 
+view(output.re)
+```
+
+
+```{r redoing it my way?}
+test<-as.data.frame(output.re)
+colnames(test,prefix = c(1:555))<- rep(c("traitID", "R2", "R2adj"),555)
+```
+
+```{r I am at a loss }
+dimnames(output.re)[[2]] <- c("traitID", "R2", "R2adj")
+dim(output.re)
+output.re[1,,]
+output.re[,,1]
+
+r2.re.list <- list(output.re[,2,])
+r2.re.vect <- as.vector(r2.re.list)
+r2.re.num <- as.numeric(unlist(r2.re.vect))
+hist(r2.re.num)
+str(r2.re.vect)
+#adply(output.re, traitID, mean=mean(R2))
+test.adply <- adply(output.re, 3, fun=mean("R2")) #does not get mean, but does turn it into a df
+tail(test.adply)
+test.adply$R2 <- as.numeric(as.character(test.adply$R2))
+
+R2.means <- ddply( test.adply, .(traitID), function(x) mean(x$R2) ) #this gives means by trait, now need to merge back to other real data
+R2.means$R2mean <- R2.means$V1
+#R2.means <- R2.means[,-2] #drop v1
+hist(R2.means$R2mean)
+
+```
+
+#load in all the finished csvs as tables instead of rerunning the anovas
+```{r visualizing the permutations vs OG?}
+
+output.all
+
+rdat.w.exp <- merge(output.all, R2.means) #merge by traitID (same col name)
+summary(rdat.w.exp)
+rdat.w.exp$R.2 <- as.numeric(as.character(rdat.w.exp$R.2))
+plot(rdat.w.exp$R2mean, rdat.w.exp$R.2)
+require(ggplot2)
+plotx <- ggplot(rdat.w.exp, aes(R2mean, R.2))
+plotx + geom_point(size=1) + #geom_smooth(method="lm") + 
+  geom_abline(intercept = 0, slope = 1) +
+  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  #expand_limits(x=c(0,1)) + 
+  mytheme_bw() + 
+  #scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
+
+
+ex.mod <- lm(R.2 ~ R2mean, data=rdat.w.exp)
+summary(ex.mod)
+resid <- residuals(ex.mod)
+
+class(resid)
+hist(resid)
+rdat.w.exp$resid <- resid
+```
 
 
