@@ -449,7 +449,7 @@ plot_a <- ggplot(Rdat_all, aes(R2mean, R.2))
 
 plot_a + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
-  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  ylab("Actual R² (all)") + xlab("Mean R² (all) expected at random") +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
   #expand_limits(x=c(0,1)) + 
   #mytheme_bw() + 
@@ -467,7 +467,7 @@ plot_s <- ggplot(Rdat_south, aes(R2mean, R.2))
 
 plot_s + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
-  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  ylab("Actual R² (south)") + xlab("Mean R² (south) expected at random") +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
   #expand_limits(x=c(0,1)) + 
   #mytheme_bw() + 
@@ -485,7 +485,7 @@ plot_sd <- ggplot(Rdat_south_drainages, aes(R2mean, R.2))
 
 plot_sd + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
-  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  ylab("Actual R² (south drainages)") + xlab("Mean R² (south drainages) expected at random") +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
   #expand_limits(x=c(0,1)) + 
   #mytheme_bw() + 
@@ -502,7 +502,7 @@ plot_c <- ggplot(Rdat_caroni, aes(R2mean, R.2))
 
 plot_c + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
-  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  ylab("Actual R² (caroni)") + xlab("Mean R² (caroni) expected at random") +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
   #expand_limits(x=c(0,1)) + 
   #mytheme_bw() + 
@@ -519,7 +519,7 @@ plot_i <- ggplot(Rdat_intros, aes(R2mean, R.2))
 
 plot_i + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
-  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  ylab("Actual R² (intros)") + xlab("Mean R² (intros) expected at random") +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
   #expand_limits(x=c(0,1)) + 
   #mytheme_bw() + 
