@@ -224,8 +224,7 @@ traitData<-left_join(r.squared, year, by = "TraitID")
 traitData<-traitData[!duplicated(traitData$TraitID),]
 ```
 
-### Mapping miscellaneous ###
-
+### Mapping miscellaneous 
 
 ```{r mapping prep}
 Coordinates <- read_csv("~/Documents/Projects/R scripts/Meta Analysis/Data/Map/most_coordinates.csv")
@@ -276,9 +275,9 @@ Coordinates$Poptype_broad<-ifelse(Coordinates$Population %in% c("Damier", "Turur
 
 ```
 
-### Follow Up on reviewer comment
+### Follow Up on reviewer comment, R2 permutations
 
-```{r anova resample loop}
+```{r functions}
 
 dat<-FALSE 
 
@@ -324,38 +323,129 @@ for (j in 1:100){
 
   }
 output.perm<-as.data.frame(output.perm)
-colnames(output.perm)<- rep(c("TraitID", "R2", "R2adj"),555) #rename the columns as data type
+colnames(output.perm)<- rep(c("TraitID", "R2", "R2adj"),len = (ncol(output.perm))) #rename the columns as data type
 
 #reformats the output as a nice df
 output.perm<-pivot_longer(output.perm, cols = 1:3, names_to = 'type') 
 output.perm<-pivot_wider(output.perm, names_from = type, values_from = value)
 
-resampleR2<-data.frame((unlist(output.perm$TraitID)), (unlist(output.perm$R2)), (unlist(output.perm$R2adj))) %>% 
-  mutate(R2 = as.numeric(2), TraitID = as.numeric(1), R2adj = as.numeric(3)) %>% 
-  select(4:6)
+resampleR2<-data.frame(TraitID = (unlist(output.perm$TraitID)), R2 = (unlist(output.perm$R2)), R2adj = (unlist(output.perm$R2adj))) %>%
+  mutate(R2 = as.numeric(R2), TraitID = as.numeric(TraitID), R2adj = as.numeric(R2adj))
 return(resampleR2)
 
+}
+
+full_output<-function(dat = dat, resampleDat = resampleDat){
+    
+  #calculate the mean R2 per trait
+R2means<-resampleDat %>% 
+  group_by(TraitID) %>% 
+  summarize(R2mean = mean(R2))
+
+  #create output df with all R2 data
+rDat <- left_join(dat, R2means, by = 'TraitID') #merge by TraitID (same col name)
+    
+  #run model with original and mean perm R2
+ex.mod <- lm(R.2 ~ R2mean, data=rDat)
+resid <- residuals(ex.mod)
+rDat$resid <- resid
+  
+return(rDat)
 }
 
 ```
 
 
-```{r creating resample df}
-resampleR2<-anova_loop.resample(dat = new.data)
 
-#calculate the mean R2 per trait
-R2means<-resampleR2  %>% 
+
+```{r loading all dfs}
+# load in all data tables as unique outputs
+#The trait filter groups are in Tallies.rmd under ## Subsets for Among and Within, commented the corresponding df for reference
+output_all<-read.csv(paste(wd,'/Data/TraitR2_among.csv',sep="")) #new.data
+output_south<-read.csv(paste(wd,'/Data/TraitR2_South.csv',sep="")) #traits_s
+output_caroni<-read.csv(paste(wd,'/Data/TraitR2_Caroni.csv',sep=""))#traits_d
+output_south_drainages<-read.csv(paste(wd,'/Data/TraitR2_Among_Drainage.csv',sep="")) #traits_d_all
+output_intros<-read.csv(paste(wd,'/Data/TraitR2_intro.csv',sep="")) #traits_i
+output_intros_broad<-read.csv(paste(wd,'/Data/TraitR2_intro_broad.csv',sep="")) #traits_i_broad
+
+```
+
+
+```{r creating outputs}
+#running the permutations for each group
+resample_all<-anova_loop.resample(dat = new.data)
+resample_south<-anova_loop.resample(dat = traits_s)
+resample_caroni<-anova_loop.resample(dat = traits_d)
+resample_south_drainages<-anova_loop.resample(dat = traits_d_all)
+resample_intros<-anova_loop.resample(dat = traits_i)
+resample_intros_broad<-anova_loop.resample(dat = traits_i_broad)
+
+#creating nice outputs for each
+Rdat_all<-full_output(dat = output_all, resampleDat = resample_all)
+Rdat_south<-full_output(dat = output_south, resampleDat = resample_south)
+Rdat_caroni<-full_output(dat = output_caroni, resampleDat = resample_caroni)
+Rdat_south_drainages<-full_output(dat = output_south_drainages, resampleDat = resample_south_drainages)
+Rdat_intros<-full_output(dat = output_intros, resampleDat = resample_intros)
+#Rdat_intros_broad<-full_output(dat = output_intros_broad, resampleDat = resample_intros_broad) # error
+
+#writing outputs to file, R2mean is the mean perm R2 per trait, resid is the model residuals
+#write results to a csv file for further analyses DONT FORGET TO MOVE AND OVERWRITE saves inside repo not data folder
+
+#this is the overall R2, all studies and traits included
+Rdat_all<-full_output(dat = output_all, resampleDat = resample_all)
+#write.table(Rdat_all, file = "Resample_among.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+
+# for the south only (Slope Q)
+Rdat_south<-full_output(dat = output_south, resampleDat = resample_south)
+#write.table(Rdat_south, file = "Resample_South.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+
+# for the caroni only (drainage Q)
+Rdat_caroni<-full_output(dat = output_caroni, resampleDat = resample_caroni)
+#write.table(Rdat_caroni, file = "Resample_Caroni.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+
+# for the south only (drainage Q, northern pops excluded because they arent in caroni or oropuche drainages)
+Rdat_south_drainages<-full_output(dat = output_south_drainages, resampleDat = resample_south_drainages)
+#write.table(Rdat_south_drainages, file = "Resample_Among_Drainage.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+
+# anova for the natural pops only (drainage Q)
+Rdat_intros<-full_output(dat = output_intros, resampleDat = resample_intros)
+#write.table(Rdat_intros, file = "Resample_intro.csv",row.names=FALSE,col.names=TRUE, sep=",")
+
+### Not working right now
+# for the natural pops only (drainage Q, broad specification)
+##Rdat_intros_broad<-full_output(dat = output_intros_broad, resampleDat = resample_intros_broad)# error
+#write.table(Rdat_intros, file = "Resample_intro_broad.csv",row.names=FALSE,col.names=TRUE, sep=",") 
+```
+
+
+```{r intros_broad troubleshoot}
+#issues with intros_broad (dropping a data point in the model? 218 instead of 219) I will troubleshoot
+  #calculate the mean R2 per trait
+means_i<-resample_intros_broad %>% 
   group_by(TraitID) %>% 
-  summarize(R2mean = mean(R2)) 
-hist(R2means$R2mean)
+  summarize(R2mean = mean(R2))
 
-###########
-rdat.w.exp <- left_join(output.all, R2means, by = 'TraitID') #merge by TraitID (same col name)
-summary(rdat.w.exp)
-plot(rdat.w.exp$R2mean, rdat.w.exp$R.2)
+  #create output df with all R2 data
+intros_rdat <- left_join(output_intros_broad, means_i, by = 'TraitID') #merge by TraitID (same col name)
+    
+  #run model with original and mean perm R2
+ex.mod <- lm(R.2 ~ R2mean, data=intros_rdat)
+resid <- residuals(ex.mod)
+intros_rdat$resid <- resid #replacement has 218 rows, data has 219????
 
-plotx <- ggplot(rdat.w.exp, aes(R2mean, R.2))
-plotx + geom_point(size=1) + #geom_smooth(method="lm") + 
+```
+
+
+
+```{r visualization}
+# for all the traits
+plot(Rdat_all$R2mean, Rdat_all$R.2)
+hist(Rdat_all$R2mean)
+hist(Rdat_all$resid)
+
+plot_a <- ggplot(Rdat_all, aes(R2mean, R.2))
+
+plot_a + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
   ylab("Actual R²") + xlab("Mean R² expected at random") +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
@@ -365,68 +455,15 @@ plotx + geom_point(size=1) + #geom_smooth(method="lm") +
     scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
   theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
 
+# for south
 
-ex.mod <- lm(R.2 ~ R2mean, data=rdat.w.exp)
-summary(ex.mod)
-resid <- residuals(ex.mod)
+plot(Rdat_south$R2mean, Rdat_south$R.2)
+hist(Rdat_south$R2mean)
+hist(Rdat_south$resid)
 
-hist(resid) #not normal
-rdat.w.exp$resid <- resid
-```
+plot_s <- ggplot(Rdat_south, aes(R2mean, R.2))
 
-
-
-```{r visualizing the permutations vs OG?}
-# load in all data tables as unique outputs
-#The trait filter groups are in Tallies.rmd, commented the corresponding df
-output.all<-read.csv(paste(wd,'/Data/TraitR2_among.csv',sep=""))
-output.south<-read.csv(paste(wd,'/Data/TraitR2_South.csv',sep="")) #traits_s
-output.caroni<-read.csv(paste(wd,'/Data/TraitR2_Caroni.csv',sep=""))#traits_d
-output.south.drainages<-read.csv(paste(wd,'/Data/TraitR2_Among_Drainage.csv',sep="")) #traits_d_all
-output.intros<-read.csv(paste(wd,'/Data/TraitR2_intro.csv',sep="")) #traits_i
-output.intros.broad<-read.csv(paste(wd,'/Data/TraitR2_intro_broad.csv',sep="")) #traits_i_broad
-
-
-
-
-```
-
-
-```{r function to make them all}
-# load in all data tables as unique outputs
-#The trait filter groups are in Tallies.rmd, commented the corresponding df
-output.all<-read.csv(paste(wd,'/Data/TraitR2_among.csv',sep="")) #new.data (all traits)
-output.south<-read.csv(paste(wd,'/Data/TraitR2_South.csv',sep="")) #traits_s
-output.caroni<-read.csv(paste(wd,'/Data/TraitR2_Caroni.csv',sep=""))#traits_d
-output.south.drainages<-read.csv(paste(wd,'/Data/TraitR2_Among_Drainage.csv',sep="")) #traits_d_all
-output.intros<-read.csv(paste(wd,'/Data/TraitR2_intro.csv',sep="")) #traits_i
-output.intros.broad<-read.csv(paste(wd,'/Data/TraitR2_intro_broad.csv',sep="")) #traits_i_broad
-
-output.re<-anova_loop.resample(dat=new.data) 
-output.re<-as.data.frame(output.re)
-colnames(output.re)<- rep(c("TraitID", "R2", "R2adj"),555) #rename the columns as data type
-
-#rearranges the df to make a proper long df
-output.re<-pivot_longer(output.re, cols = 1:3, names_to = 'type') 
-output.re<-pivot_wider(output.re, names_from = type, values_from = value)
-TraitID<-unlist(output.re$TraitID)
-R2<-unlist(output.re$R2)
-R2adj<-unlist(output.re$R2adj)
-resampleR2<-data.frame(TraitID, R2, R2adj) %>% 
-  mutate(R2 = as.numeric(R2), TraitID = as.numeric(TraitID)) %>% 
-  arrange(TraitID)
-
-#calculate the mean R2 per trait
-R2means<-resampleR2  %>% 
-  group_by(TraitID) %>% 
-  summarize(R2mean = mean(R2)) 
-hist(R2means$R2mean)
-rdat.w.exp <- left_join(output.all, R2means, by = 'TraitID') #merge by TraitID (same col name)
-summary(rdat.w.exp)
-plot(rdat.w.exp$R2mean, rdat.w.exp$R.2)
-
-plotx <- ggplot(rdat.w.exp, aes(R2mean, R.2))
-plotx + geom_point(size=1) + #geom_smooth(method="lm") + 
+plot_s + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
   ylab("Actual R²") + xlab("Mean R² expected at random") +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
@@ -436,12 +473,61 @@ plotx + geom_point(size=1) + #geom_smooth(method="lm") +
     scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
   theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
 
+# for south_drainages
 
-ex.mod <- lm(R.2 ~ R2mean, data=rdat.w.exp)
-summary(ex.mod)
-resid <- residuals(ex.mod)
+plot(Rdat_south_drainages$R2mean, Rdat_south_drainages$R.2)
+hist(Rdat_south_drainages$R2mean)
+hist(Rdat_south_drainages$resid)
 
-hist(resid) #not normal
-rdat.w.exp$resid <- resid
+plot_sd <- ggplot(Rdat_south_drainages, aes(R2mean, R.2))
+
+plot_sd + geom_point(size=1) + #geom_smooth(method="lm") + 
+  geom_abline(intercept = 0, slope = 1) +
+  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  #expand_limits(x=c(0,1)) + 
+  #mytheme_bw() + 
+  #scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
+
+# for caroni
+plot(Rdat_caroni$R2mean, Rdat_caroni$R.2)
+hist(Rdat_caroni$R2mean)
+hist(Rdat_caroni$resid)
+
+plot_c <- ggplot(Rdat_caroni, aes(R2mean, R.2))
+
+plot_c + geom_point(size=1) + #geom_smooth(method="lm") + 
+  geom_abline(intercept = 0, slope = 1) +
+  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  #expand_limits(x=c(0,1)) + 
+  #mytheme_bw() + 
+  #scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
+
+# for all the traits
+plot(Rdat_intros$R2mean, Rdat_intros$R.2)
+hist(Rdat_intros$R2mean)
+hist(Rdat_intros$resid)
+
+plot_i <- ggplot(Rdat_intros, aes(R2mean, R.2))
+
+plot_i + geom_point(size=1) + #geom_smooth(method="lm") + 
+  geom_abline(intercept = 0, slope = 1) +
+  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  #expand_limits(x=c(0,1)) + 
+  #mytheme_bw() + 
+  #scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
+
 ```
+
+
+
+
 
