@@ -464,7 +464,6 @@ hist(Rdat_south$R2mean)
 hist(Rdat_south$resid)
 
 plot_s <- ggplot(Rdat_south, aes(R2mean, R.2))
-<<<<<<< HEAD
 
 plot_s + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
@@ -511,68 +510,13 @@ plot_c + geom_point(size=1) + #geom_smooth(method="lm") +
     scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
   theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
 
-# for all the traits
+# for intros
 plot(Rdat_intros$R2mean, Rdat_intros$R.2)
 hist(Rdat_intros$R2mean)
 hist(Rdat_intros$resid)
 
 plot_i <- ggplot(Rdat_intros, aes(R2mean, R.2))
 
-=======
-
-plot_s + geom_point(size=1) + #geom_smooth(method="lm") + 
-  geom_abline(intercept = 0, slope = 1) +
-  ylab("Actual R²") + xlab("Mean R² expected at random") +
-  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  #expand_limits(x=c(0,1)) + 
-  #mytheme_bw() + 
-  #scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
-
-# for south_drainages
-
-plot(Rdat_south_drainages$R2mean, Rdat_south_drainages$R.2)
-hist(Rdat_south_drainages$R2mean)
-hist(Rdat_south_drainages$resid)
-
-plot_sd <- ggplot(Rdat_south_drainages, aes(R2mean, R.2))
-
-plot_sd + geom_point(size=1) + #geom_smooth(method="lm") + 
-  geom_abline(intercept = 0, slope = 1) +
-  ylab("Actual R²") + xlab("Mean R² expected at random") +
-  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  #expand_limits(x=c(0,1)) + 
-  #mytheme_bw() + 
-  #scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
-
-# for caroni
-plot(Rdat_caroni$R2mean, Rdat_caroni$R.2)
-hist(Rdat_caroni$R2mean)
-hist(Rdat_caroni$resid)
-
-plot_c <- ggplot(Rdat_caroni, aes(R2mean, R.2))
-
-plot_c + geom_point(size=1) + #geom_smooth(method="lm") + 
-  geom_abline(intercept = 0, slope = 1) +
-  ylab("Actual R²") + xlab("Mean R² expected at random") +
-  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  #expand_limits(x=c(0,1)) + 
-  #mytheme_bw() + 
-  #scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
-
-# for all the traits
-plot(Rdat_intros$R2mean, Rdat_intros$R.2)
-hist(Rdat_intros$R2mean)
-hist(Rdat_intros$resid)
-
-plot_i <- ggplot(Rdat_intros, aes(R2mean, R.2))
-
->>>>>>> cf3c60a122d0e3d7b30d6020f91710e0b5305eb7
 plot_i + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
   ylab("Actual R²") + xlab("Mean R² expected at random") +
