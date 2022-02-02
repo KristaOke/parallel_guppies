@@ -371,6 +371,7 @@ output_intros_broad<-read.csv(paste(wd,'/Data/TraitR2_intro_broad.csv',sep="")) 
 ```
 
 
+<<<<<<< HEAD
 ```{r creating outputs}
 #running the permutations for each group
 resample_all<-anova_loop.resample(dat = new.data)
@@ -437,6 +438,73 @@ intros_rdat$resid <- resid #replacement has 218 rows, data has 219????
 
 
 
+=======
+
+
+```{r loading all dfs}
+# load in all data tables as unique outputs
+#The trait filter groups are in Tallies.rmd, commented the corresponding df
+output_all<-read.csv(paste(wd,'/Data/TraitR2_among.csv',sep="")) #new.data
+output_south<-read.csv(paste(wd,'/Data/TraitR2_South.csv',sep="")) #traits_s
+output_caroni<-read.csv(paste(wd,'/Data/TraitR2_Caroni.csv',sep=""))#traits_d
+output_south_drainages<-read.csv(paste(wd,'/Data/TraitR2_Among_Drainage.csv',sep="")) #traits_d_all
+output_intros<-read.csv(paste(wd,'/Data/TraitR2_intro.csv',sep="")) #traits_i
+output_intros_broad<-read.csv(paste(wd,'/Data/TraitR2_intro_broad.csv',sep="")) #traits_i_broad
+
+resample_all<-anova_loop.resample(dat = new.data)
+resample_south<-anova_loop.resample(dat = traits_s)
+resample_caroni<-anova_loop.resample(dat = traits_d)
+resample_south_drainages<-anova_loop.resample(dat = traits_d_all)
+resample_intros<-anova_loop.resample(dat = traits_i)
+resample_intros_broad<-anova_loop.resample(dat = traits_i_broad)
+```
+
+
+```{r function to create one output}
+
+full_output<-function(dat = dat, resampleDat = resampleDat){
+    
+  #calculate the mean R2 per trait
+R2means<-resampleDat %>% 
+  group_by(TraitID) %>% 
+  summarize(R2mean = mean(R2))
+
+  #create output df with all R2 data
+rDat <- left_join(dat, R2means, by = 'TraitID') #merge by TraitID (same col name)
+    
+  #run model with original and mean perm R2
+ex.mod <- lm(R.2 ~ R2mean, data=rDat)
+resid <- residuals(ex.mod)
+rDat$resid <- resid
+  
+return(rDat)
+}
+
+Rdat_all<-full_output(dat = output_all, resampleDat = resample_all)
+Rdat_south<-full_output(dat = output_south, resampleDat = resample_south)
+Rdat_caroni<-full_output(dat = output_caroni, resampleDat = resample_caroni)
+Rdat_south_drainages<-full_output(dat = output_south_drainages, resampleDat = resample_south_drainages)
+Rdat_intros<-full_output(dat = output_intros, resampleDat = resample_intros)
+#Rdat_intros_broad<-full_output(dat = output_intros_broad, resampleDat = resample_intros_broad)
+
+
+#issues with intros_broad (dropping a data point in the model? 218 instead of 219) I will troubleshoot
+  #calculate the mean R2 per trait
+means_i<-resample_intros_broad %>% 
+  group_by(TraitID) %>% 
+  summarize(R2mean = mean(R2))
+
+  #create output df with all R2 data
+intros_rdat <- left_join(output_intros_broad, means_i, by = 'TraitID') #merge by TraitID (same col name)
+    
+  #run model with original and mean perm R2
+ex.mod <- lm(R.2 ~ R2mean, data=intros_rdat)
+resid <- residuals(ex.mod)
+intros_rdat$resid <- resid #replacement has 218 rows, data has 219????
+
+```
+
+>>>>>>> cf3c60a122d0e3d7b30d6020f91710e0b5305eb7
 ```{r visualization}
 # for all the traits
 plot(Rdat_all$R2mean, Rdat_all$R.2)
@@ -462,6 +530,7 @@ hist(Rdat_south$R2mean)
 hist(Rdat_south$resid)
 
 plot_s <- ggplot(Rdat_south, aes(R2mean, R.2))
+<<<<<<< HEAD
 
 plot_s + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
@@ -515,6 +584,61 @@ hist(Rdat_intros$resid)
 
 plot_i <- ggplot(Rdat_intros, aes(R2mean, R.2))
 
+=======
+
+plot_s + geom_point(size=1) + #geom_smooth(method="lm") + 
+  geom_abline(intercept = 0, slope = 1) +
+  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  #expand_limits(x=c(0,1)) + 
+  #mytheme_bw() + 
+  #scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
+
+# for south_drainages
+
+plot(Rdat_south_drainages$R2mean, Rdat_south_drainages$R.2)
+hist(Rdat_south_drainages$R2mean)
+hist(Rdat_south_drainages$resid)
+
+plot_sd <- ggplot(Rdat_south_drainages, aes(R2mean, R.2))
+
+plot_sd + geom_point(size=1) + #geom_smooth(method="lm") + 
+  geom_abline(intercept = 0, slope = 1) +
+  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  #expand_limits(x=c(0,1)) + 
+  #mytheme_bw() + 
+  #scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
+
+# for caroni
+plot(Rdat_caroni$R2mean, Rdat_caroni$R.2)
+hist(Rdat_caroni$R2mean)
+hist(Rdat_caroni$resid)
+
+plot_c <- ggplot(Rdat_caroni, aes(R2mean, R.2))
+
+plot_c + geom_point(size=1) + #geom_smooth(method="lm") + 
+  geom_abline(intercept = 0, slope = 1) +
+  ylab("Actual R²") + xlab("Mean R² expected at random") +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  #expand_limits(x=c(0,1)) + 
+  #mytheme_bw() + 
+  #scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
+
+# for all the traits
+plot(Rdat_intros$R2mean, Rdat_intros$R.2)
+hist(Rdat_intros$R2mean)
+hist(Rdat_intros$resid)
+
+plot_i <- ggplot(Rdat_intros, aes(R2mean, R.2))
+
+>>>>>>> cf3c60a122d0e3d7b30d6020f91710e0b5305eb7
 plot_i + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
   ylab("Actual R²") + xlab("Mean R² expected at random") +
