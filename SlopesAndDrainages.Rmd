@@ -530,6 +530,22 @@ plot_i + geom_point(size=1) + #geom_smooth(method="lm") +
 ```
 
 
+```{r sample size}
+all_dat<-left_join(output_all, new.data[,c(1,20,37)], by = 'TraitID')
+
+all_mod<-lm(R.2~Number, (all_dat %>% 
+         filter(!StudyID == 22) %>% 
+           filter(!is.na(Number))))
+
+test_dat<-all_dat %>% 
+  filter(!is.na(Number))
+test_mod<-lmer(R.2~Number + (1|StudyID), all_dat)
+summary(test_mod)
+
+ggplot((all_dat %>% 
+         filter(!StudyID == 22)), aes(Number, R.2)) + geom_point()
+
+```
 
 
 
