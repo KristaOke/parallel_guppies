@@ -412,27 +412,28 @@ Rdat_south_drainages<-full_output(dat = output_south_drainages, resampleDat = re
 Rdat_intros<-full_output(dat = output_intros, resampleDat = resample_intros)
 #write.table(Rdat_intros, file = "Resample_intro.csv",row.names=FALSE,col.names=TRUE, sep=",")
 
-### Not working right now
-# for the natural pops only (drainage Q, broad specification)
-##Rdat_intros_broad<-full_output(dat = output_intros_broad, resampleDat = resample_intros_broad)# error
-#write.table(Rdat_intros, file = "Resample_intro_broad.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 ```
 
 
-```{r intros_broad troubleshoot}
-#issues with intros_broad (dropping a data point in the model? 218 instead of 219) I will troubleshoot
+```{r intros_broad}
+# for the natural pops only (drainage Q, broad specification)
+#issues with intros_broad (trait 303 creates NaN response in model), drop that trait
   #calculate the mean R2 per trait
 means_i<-resample_intros_broad %>% 
+  filter(!TraitID ==303) %>% 
   group_by(TraitID) %>% 
   summarize(R2mean = mean(R2))
 
   #create output df with all R2 data
-intros_rdat <- left_join(output_intros_broad, means_i, by = 'TraitID') #merge by TraitID (same col name)
+Rdat_intros_broad <- left_join((output_intros_broad %>% 
+                            filter(!TraitID == 303)), means_i, by = 'TraitID') #merge by TraitID (same col name)
     
   #run model with original and mean perm R2
-ex.mod <- lm(R.2 ~ R2mean, data=intros_rdat)
+ex.mod <- lm(R.2 ~ R2mean, data=Rdat_intros_broad)
 resid <- residuals(ex.mod)
-intros_rdat$resid <- resid #replacement has 218 rows, data has 219????
+Rdat_intros_broad$resid <- resid 
+
+#write.table(Rdat_intros_broad, file = "Resample_intro_broad.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
 ```
 
@@ -543,8 +544,27 @@ test_mod<-lmer(R.2~Number + (1|StudyID), all_dat)
 summary(test_mod)
 
 ggplot((all_dat %>% 
-         filter(!StudyID == 22)), aes(Number, R.2)) + geom_point()
+         filter(!StudyID == 22) %>% 
+          filter(StudyID == c(15,9,32))), aes(Number, R.2, color = as.factor(StudyID))) + geom_point()
+ggplot((all_dat %>% 
+         filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = as.factor(StudyID))) + geom_point()
+```
 
+
+```{r repeating R2}
+#similar R2 in the plots??
+sus<-left_join(new.data, output_all, by = 'TraitID') %>% 
+  select(1, 20:21,37, 46:50)
+
+sus %>% 
+  group_by(StudyID) %>% 
+  summarize(n = n_distinct(R.2), n_trait = n_distinct(TraitID), diff = (n_trait - n)) %>% 
+  filter(diff>0)
+
+sus2<-sus %>% 
+  filter(StudyID %in% c(4,9,10,15,18,23,32,37,40,47)) %>% #studies with repeating R2 
+  group_by(TraitID) %>% 
+  summarize(StudyID = median(StudyID), R2 = median(R.2))
 ```
 
 
