@@ -1,7 +1,7 @@
 # GLMMs for parallel_guppies! 
 # 2022-02-09 cleaned up
 
-# LIBRARIES ---- 
+# Libraries ---- 
 library(plyr)
 library(dplyr)
 library(tidyr)
@@ -157,82 +157,37 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 
 ## remove other (because model below will not converge with other)
 
-# Trait type model (in paper)
+## Trait type model (in paper) ----
 data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
                            data = data.all.traits, family = binomial)) %>% summary()
 car::Anova(all.model.traits, type = "II")
 
-# Rearing enviro model (in paper)
-data.all.rear <- data.all %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
-(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
-car::Anova(all.model.rearing, type = "II")
 
-# sex model (in paper)
+## sex with colour (in paper) ----
 ## with colour
 (all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
 car::Anova(all.model.sex, type = "II")
 
-## Removed colour  (in paper)
+## sex without colour  (in paper) ----
 (all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
 car::Anova(all.model.sex, type = "II")
 
+## Rearing enviro model (in paper) ----
+data.all.rear <- data.all %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
+car::Anova(all.model.rearing, type = "II")
 
-# multivariate models ----
 
-# sex and traits (in paper)
+# multivariate models (traits, sex, rearing) ----
+
+## sex and traits (in paper) ----
 (sex.and.triats <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
 Anova(sex.and.triats, type = "II")
 
-# sex and rear (in paper)
+## sex and rear (in paper) ----
 (sex.and.rear <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
 Anova(sex.and.rear, type = 2)
-
-# Traits descriptive stuff for in text ----
-
-data.all %>% group_by(Kingsolver_traits) %>% tally()
-
-(Colourtrait <- data.all %>% filter(Kingsolver_traits == "Colour")) %>% summary()
-(LHtrait <- data.all %>% filter(Kingsolver_traits == "Other_life_history")) %>% summary()
-(Sizetrait <- data.all %>% filter(Kingsolver_traits == "Size")) %>% summary()
-(Morphtrait <- data.all %>% filter(Kingsolver_traits == "Other_morphology")) %>% summary()
-(Othertrait <- data.all %>% filter(Kingsolver_traits == "Other")) %>% summary()
-(Phystrait <- data.all %>% filter(Kingsolver_traits == "Physiology")) %>% summary()
-(Behavtrait <- data.all %>% filter(Kingsolver_traits == "Behaviour")) %>% summary()
-
-# Rearing enviro for in-text
-(cg <- data.all %>% filter(StudyType == "Common Garden (F2)")) %>% summary()
-(wc <- data.all %>% filter(StudyType == "Wildcaught")) %>% summary()
-
-# Sex
-(Malewithcolour <- data.all %>% filter(Sex == "M")) %>% summary()
-(Malenocolour <- data.all.no.colour %>% filter(Sex == "M")) %>% summary()
-(Femalesex <- data.all %>% filter(Sex == "F")) %>% summary()
-
-
-# Determinants (ecological complex, evol hist, contemp evol) ----
-
-## Sample size tables ----
-
-### I don't think that you can just tally by method
-
-## Ecology
-with(data.for.ecology.models, table(Kingsolver_traits, Sex))
-with(data.for.ecology.models, table(Kingsolver_traits))
-with(data.for.ecology.models, table(Sex))
-data.for.ecology.models %>% group_by(StudyID) %>% tally()
-
-## Intro
-with(data.for.intro.models, table(Kingsolver_traits, Sex))
-with(data.for.intro.models, table(Kingsolver_traits))
-with(data.for.intro.models, table(Sex))
-data.for.intro.models %>% group_by(StudyID) %>% tally()
-
-## Evolhist
-with(data.for.evolhist.models, table(Kingsolver_traits, Sex))
-with(data.for.evolhist.models, table(Kingsolver_traits))
-with(data.for.evolhist.models, table(Sex))
-data.for.evolhist.models %>% group_by(StudyID) %>% tally()
 
 # Determinants models ----
 ## Ecology models ----
@@ -251,11 +206,6 @@ car::Anova(ecology.full, type = "II")
 (ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
 car::Anova(ecology.full, type = "II")
 
-## this is for the means that I report in the text
-(one.slope <- data.for.ecology.models %>% filter(method == "south")) %>% summary()
-(both.slopes <- data.for.ecology.models %>% filter(method == "all")) %>% summary()
-
-
 ## Intro models ----
 # (Note that I deleted the old intro file - 2022-02-09 - this is only intro broad)
 ## Fix structure
@@ -268,9 +218,6 @@ data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c
 (intro.full.broad <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
 car::Anova(intro.full.broad, type = "II")
 
-## for means/sd reported in text
-(only_natural_broad <- data.for.intro.models.broad %>% filter(method == "only_natural_broad")) %>% summary()
-(natural_and_intro_broad <- data.for.intro.models.broad %>% filter(method == "all")) %>% summary()
 
 ## Evolutionary history models ----
 # (These are all singular fits)
@@ -285,9 +232,6 @@ data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", 
 (evolhist.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
 car::Anova(evolhist.full, type = "II")
 
-## means/sd reported in text:
-(one_drainage <- data.for.evolhist.models %>% filter(method == "caroni")) %>% summary()
-(both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")) %>% summary()
 
 ### Troubleshooting Evolutionary history----
 ### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
@@ -305,6 +249,39 @@ Anova(evolhist.full.lmer, type = 3)
 
 car::Anova(evolhist.full.lmer, type = "II")
 car::Anova(evolhist.full.glm, type = "II")
+
+# Other means etc reported in text ----
+
+# Traits
+(Colourtrait <- data.all %>% filter(Kingsolver_traits == "Colour")) %>% summary()
+(LHtrait <- data.all %>% filter(Kingsolver_traits == "Other_life_history")) %>% summary()
+(Sizetrait <- data.all %>% filter(Kingsolver_traits == "Size")) %>% summary()
+(Morphtrait <- data.all %>% filter(Kingsolver_traits == "Other_morphology")) %>% summary()
+(Othertrait <- data.all %>% filter(Kingsolver_traits == "Other")) %>% summary()
+(Phystrait <- data.all %>% filter(Kingsolver_traits == "Physiology")) %>% summary()
+(Behavtrait <- data.all %>% filter(Kingsolver_traits == "Behaviour")) %>% summary()
+
+# Sex
+(Malewithcolour <- data.all %>% filter(Sex == "M")) %>% summary()
+(Malenocolour <- data.all.no.colour %>% filter(Sex == "M")) %>% summary()
+(Femalesex <- data.all %>% filter(Sex == "F")) %>% summary()
+
+# Rearing enviro
+(cg <- data.all %>% filter(StudyType == "Common Garden (F2)")) %>% summary()
+(wc <- data.all %>% filter(StudyType == "Wildcaught")) %>% summary()
+
+## Ecology
+(one.slope <- data.for.ecology.models %>% filter(method == "south")) %>% summary()
+(both.slopes <- data.for.ecology.models %>% filter(method == "all")) %>% summary()
+
+
+## Intro
+(only_natural_broad <- data.for.intro.models.broad %>% filter(method == "only_natural_broad")) %>% summary()
+(natural_and_intro_broad <- data.for.intro.models.broad %>% filter(method == "all")) %>% summary()
+
+## Evolhist
+(one_drainage <- data.for.evolhist.models %>% filter(method == "caroni")) %>% summary()
+(both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")) %>% summary()
 
 
 # figures in manuscript ----
