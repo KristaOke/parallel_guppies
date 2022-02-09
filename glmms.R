@@ -159,29 +159,22 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 
 # Trait type model (in paper)
 data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
-
-## All traits - this WILL NOT RUN with other included
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
                            data = data.all.traits, family = binomial)) %>% summary()
-
 car::Anova(all.model.traits, type = "II")
 
 # Rearing enviro model (in paper)
 data.all.rear <- data.all %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
 (all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
-
 car::Anova(all.model.rearing, type = "II")
 
 # sex model (in paper)
-
 ## with colour
 (all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
-
 car::Anova(all.model.sex, type = "II")
 
-## Removed colour 
+## Removed colour  (in paper)
 (all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
-
 car::Anova(all.model.sex, type = "II")
 
 
@@ -241,11 +234,7 @@ with(data.for.evolhist.models, table(Kingsolver_traits))
 with(data.for.evolhist.models, table(Sex))
 data.for.evolhist.models %>% group_by(StudyID) %>% tally()
 
-## Determinant Models ----
-
-### 1. Ecology models ----
-# Ecology model
-## Is there a difference between the slopes? 
+# Ecology models ----
 
 ### fix structure
 data.for.ecology.models$method <- as.factor(data.for.ecology.models$method)
@@ -253,14 +242,12 @@ data.for.ecology.models$method <- as.factor(data.for.ecology.models$method)
 ### Remove 'Both' sex category because duplicates
 data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
 
-## Model with everything
+## Ecology model (in paper)
 (ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
-
 car::Anova(ecology.full, type = "II")
 
-## remove the interaction
+## remove the interaction (in paper)
 (ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
-
 car::Anova(ecology.full, type = "II")
 
 ## this is for the means that I report in the text
@@ -268,100 +255,60 @@ car::Anova(ecology.full, type = "II")
 (both.slopes <- data.for.ecology.models %>% filter(method == "all")) %>% summary()
 
 
-### 2. Intro models ----
-## Is there a difference between studies with only natural vs w intro
-
-### Fix strucutre
-data.for.intro.models$method <- as.factor(data.for.intro.models$method)
-
-### Remove 'Both' sex category because duplicates
-data.for.intro.models <- data.for.intro.models %>% filter(Sex %in% c("M", "F"))  
-
-## Model with everything 
-(intro.full <- glmer(R.2 ~ method* + (1|StudyID), data = data.for.intro.models, family = binomial)) %>% summary()
-
-## this is for the means that I would report in text (but I don't - "Strict")
-(only_natural_strict <- data.for.intro.models %>% filter(method == "only_natural")) %>% summary()
-(natural_and_intro_strict <- data.for.intro.models %>% filter(method == "all")) %>% summary()
-
-### intro BROAD model ----
-## Is there a difference between studies with only natural vs w intro
-
-### Fix structure
+# Intro models ----
+# (Note that I deleted the old intro file - 2022-02-09 - this is only intro broad)
+## Fix structure
 data.for.intro.models.broad$method <- as.factor(data.for.intro.models.broad$method)
 
 ### Remove 'Both' sex category because duplicates
 data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c("M", "F"))  
 
-## Model with everything 
+## Intro model (in paper)
 (intro.full.broad <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
-
 car::Anova(intro.full.broad, type = "II")
 
 ## for means/sd reported in text
 (only_natural_broad <- data.for.intro.models.broad %>% filter(method == "only_natural_broad")) %>% summary()
 (natural_and_intro_broad <- data.for.intro.models.broad %>% filter(method == "all")) %>% summary()
 
-### 3. Evolutionary history models ----
-## Is there a difference when only w pops in the caroni vs also in the Oropuche? 
+# Evolutionary history models ----
+# (These are all singular fits)
 
-## These are all singular fits
-
-### fix structure
+## fix structure
 data.for.evolhist.models$method <- as.factor(data.for.evolhist.models$method)
 
-### Remove 'Both' sex category because duplicates
+## Remove 'Both' sex category because duplicates
 data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
 
-## Model with everything 
+## Evolutionary history model (in paper)
 (evolhist.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
-
 car::Anova(evolhist.full, type = "II")
 
 ## means/sd reported in text:
 (one_drainage <- data.for.evolhist.models %>% filter(method == "caroni")) %>% summary()
-
 (both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")) %>% summary()
 
-## Troubleshooting ----
+## Troubleshooting Evolutionary history----
 ### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
-
-#### (It seems to me like glm/glmer are consistent, so we should be able to use the evolutionary history model and say that we checked (?))
-
-#### Note that I can't plot lmer w an sjplot (cause lmer is plotted as an Estimate, whereas the glm/glmer are odds ratios). I think that the glm/glmer are more consistent anyway (?) but I am only basing this on agreement re significance.
-
-## Compare intro
-### This one is not singular (so is an example)
-summary(intro.no.colour)
-(intro.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = intro.data.no.colour)) %>% summary()
-Anova(intro.full.lmer, type = 2)
-(intro.full.glm <- glm(R.2 ~ method*Sex, data = intro.data.no.colour, family = binomial)) %>% summary()
-
-## Compare ecology
-summary(ecology.no.colour)
-(ecology.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = ecology.data.no.colour)) %>% summary()
-Anova(ecology.full.lmer, type = 3)
-(ecology.full.glm <- glm(R.2 ~ method*Sex, data = ecology.data.no.colour, family = binomial)) %>% summary()
-
 
 ### This is singular (need to decide with this one)
 
-summary(evolhist.full)
+summary(evolhist.full) # GLMM above
+
+# try w lmer
 (evolhist.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models)) %>% summary()
 Anova(evolhist.full.lmer, type = 3)
+
+# tri w glm
 (evolhist.full.glm <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
 
 car::Anova(evolhist.full.lmer, type = "II")
 car::Anova(evolhist.full.glm, type = "II")
 
-summary(evolhist.no.colour)
-(evolhist.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = evolhist.data.no.colour)) %>% summary()
-Anova(evolhist.full.lmer, type = 3)
-(evolhist.full.glm <- glm(R.2 ~ method*Sex, data = evolhist.data.no.colour, family = binomial)) %>% summary()
 
-plot_models(evolhist.no.colour, evolhist.full.glm)
-
+# figures in manuscript ----
 ## figure 1 is map 
+
 ## figure2
 
 fig2data <- read.csv("testPG_figure.csv", fileEncoding="UTF-8-BOM")
@@ -410,7 +357,7 @@ lowparal
 
 figure2 <- ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
 
-
+figure2
 
 
 
