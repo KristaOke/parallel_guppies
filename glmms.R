@@ -1284,10 +1284,22 @@ testZeroInflation(simulationOutput)
 countOnes <- function(x) sum(x == 1)
 testGeneric(simulationOutput, summary = countOnes, alternative = "greater") 
 
+M2 <- glmer.nb(R.2 ~ Kingsolver_traits + (1|StudyID),
+             data = data.all.traits)
+
+summary(M2)
+
+E2 <- resid(M2, type = "pearson")
+N  <- nrow(data.all.traits)
+p  <- length(coef(M2)) + 1  # '+1' is for variance parameter in NB
+sum(E2^2) / (N - p)
 
 
-
-
+f = glmm.zinb(fixed = R.2 ~ Kingsolver_traits,
+              random = ~ 1 | StudyID, data = data.all.traits) 
+summary(f)
+fixed(f)
+summary(f$fit.zero)
 
 ## validate sex ----
 all.model.sex
