@@ -1279,6 +1279,15 @@ plot(simulationOutput)
 plotQQunif(simulationOutput)
 plotResiduals(simulationOutput)
 
+testZeroInflation(simulationOutput)
+
+countOnes <- function(x) sum(x == 1)
+testGeneric(simulationOutput, summary = countOnes, alternative = "greater") 
+
+
+
+
+
 
 ## validate sex ----
 all.model.sex
