@@ -1271,10 +1271,13 @@ drop1(sex.and.triats)
 
 library("DHARMa")
 
-
-
-
-
+testDispersion(all.model.traits)
+simulationOutput <- simulateResiduals(fittedModel = all.model.traits, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
 
 
 ## validate sex ----
