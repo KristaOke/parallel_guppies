@@ -1193,6 +1193,7 @@ lmTraits <- lm(R.2 ~ Kingsolver_traits, data = data.all.traits)
 plot(lmTraits)
 data.all.traits$logR.2 <- log10(data.all.traits$R.2)
 loglmtraits <- lm(logR.2 ~ Kingsolver_traits, data = data.all.traits)
+sqrtlmtraits <- lm(sqrt(R.2) ~ Kingsolver_traits, data = data.all.traits)
 
 #step 2 GLS
 traitsForm <- formula(R.2 ~ Kingsolver_traits) 
@@ -1207,8 +1208,54 @@ lmmTraits <- lme(traitsForm, random = ~ 1 | StudyID,
 
 #step 5 compare new/old models
 anova(glsTraits, lmmTraits) 
-#tells us model w random is better
-#in manu, present like L = 89.46 (df = 8, p < 0.0001)
+#tells us model w random is better; L = 89.46 (df = 8, p < 0.0001)
+
+#step6 is it ok?
+residTraits <- resid(lmmTraits, type = "normalized")
+fittedTraits <- fitted(lmmTraits)
+par(mfrow = c(1,2), mar = c(4,4,3,2))
+plot(x = fittedTraits, y = residTraits, xlab = "Fitted values", ylab = "Residuals")
+boxplot(residTraits ~ Kingsolver_traits, data = data.all.traits,
+        main = "Kingsolver traits", lab= "Residuals")
+dev.off()
+
+#step7/8 optimal fixed str
+# this does not apply because we have 1 fixed ??
+
+#step9 validate the omodel
+summary(lmmTraits)
+# (0.188^2)/(0.188^2 + 0.202^2) = correlation between obs from the same stuyd = 0.46
+
+#steo10
+
+#step11
+library(lattice)
+xyplot(residTraits ~ Kingsolver_traits, 
+       data = data.all.traits, 
+       ylab = "Residuals",
+       xlab = "Kingsolver_traits",
+       panel = function(x,y)
+         {panel.grid(h = -1, v = 2) 
+         panel.points(x, y, col = 1) 
+         panel.loess(x, y, span = 0.5, col = 1,lwd=2)
+         }
+       )
+
+
+library(mgcv)
+
+gammTraits <- gamm(R.2 ~ Kingsolver_traits,
+                   random = list(StudyID = ~1),
+                   data = data.all.traits) 
+summary(gammTraits$gam)
+summary(gammTraits$lme)
+
+anova(gammTraits$gam)
+anova(gammTraits$lme)
+
+plot(gammTraits$gam, all.terms = TRUE)
+plot(gammTraits$lme)
+
 
 
 ## validate sex ----
