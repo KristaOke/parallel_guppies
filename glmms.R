@@ -233,6 +233,9 @@ data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", 
 (evolhist.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
 car::Anova(evolhist.full, type = "II")
 
+(evolhist.glm <- glm(R.2 ~ method + StudyID, data = data.for.evolhist.models, family = binomial)) %>% summary()
+car::Anova(evolhist.glm, type = "II")
+
 
 ### Troubleshooting Evolutionary history----
 ### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
@@ -1188,6 +1191,9 @@ sex_facet_hist
 #random = StudyID
 # glm name = all.model.traits
 
+
+# zuur book
+
 #step 1 linear regression
 lmTraits <- lm(R.2 ~ Kingsolver_traits, data = data.all.traits)
 plot(lmTraits)
@@ -1257,6 +1263,19 @@ plot(gammTraits$gam, all.terms = TRUE)
 plot(gammTraits$lme)
 
 drop1(sex.and.triats)
+
+
+# I have no idea what any of the above is showing atm 
+
+# so, dharma package instead
+
+library("DHARMa")
+
+
+
+
+
+
 
 ## validate sex ----
 all.model.sex
