@@ -19,6 +19,7 @@ library(olsrr)
 library(ggpubr)
 library(PupillometryR)
 library(MuMIn)
+library(nlme)
 
 
 # set working directory
@@ -1180,4 +1181,38 @@ sex_facet_hist <- sex_facet_hist + cowplot::draw_label("Frequency (%)", x=  0, y
 sex_facet_hist
 #dev.off()
 
-```
+# model validation ----
+## validate trait type ----
+#response = R2
+#expl = Kingsolver_traits
+#random = StudyID
+# glm name = all.model.traits
+
+#step 1 linear regression
+lmTraits <- lm(R.2 ~ Kingsolver_traits, data = data.all.traits)
+plot(lmTraits)
+data.all.traits$logR.2 <- log10(data.all.traits$R.2)
+loglmtraits <- lm(logR.2 ~ Kingsolver_traits, data = data.all.traits)
+
+#step 2 GLS
+traitsForm <- formula(R.2 ~ Kingsolver_traits) 
+glsTraits <- gls(traitsForm, data = data.all.traits)
+
+#step 3 variance
+# choose random effect?
+
+#step 4 fit model
+lmmTraits <- lme(traitsForm, random = ~ 1 | StudyID,
+                 method = "REML", data = data.all.traits)
+
+#step 5 compare new/old models
+anova(glsTraits, lmmTraits) 
+#tells us model w random is better
+#in manu, present like L = 89.46 (df = 8, p < 0.0001)
+
+
+## validate sex ----
+all.model.sex
+
+## validate rearing ----
+all.model.rearing
