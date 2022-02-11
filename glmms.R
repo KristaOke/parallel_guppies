@@ -1256,7 +1256,7 @@ anova(gammTraits$lme)
 plot(gammTraits$gam, all.terms = TRUE)
 plot(gammTraits$lme)
 
-
+drop1(sex.and.triats)
 
 ## validate sex ----
 all.model.sex
