@@ -1364,7 +1364,7 @@ plot(introlmlog)
 
 
 # step2/3
-introformula <- formula(R.2 ~ method)
+introformula <- formula(logR.2 ~ method)
 introgls <- gls(introformula, data = data.for.intro.models.broad)
 
 # step4
@@ -1372,7 +1372,40 @@ introlme <- lme(introformula, random = ~ 1 | StudyID,
                 method = "REML", data = data.for.intro.models.broad)
 
 # step5
-anova(introlme, introlm) # better with RE (L = 28.66, p < 0.0001)
+anova(introgls, introlme) # better with RE (L = 28.66, p < 0.0001)
+
+#step6
+normresidintrolme <- resid(introlme, type = "normalized")
+fittedintrolme <- fitted(introlme)
+plot(x = fittedintrolme, y = normresidintrolme)
+boxplot(normresidintrolme ~ method,
+        data = data.for.intro.models.broad)
+
+#step7/8 - skip
+
+#step9
+summary(introlme)
+# 0.66 = correlation of obs from same study
+
+#step10 p 156
+library(lattice)
+xyplot(normresidintrolme ~ method,
+                data = data.for.intro.models.broad,
+       ylab = "residuals",
+                panel = function(x,y){
+                  panel.grid(h = -1, v = 2)
+                  panel.points(x, y, col = 1)
+                  panel.loess(x, y, span = 0.5, col = 1,lwd=2)})
+
+library(mgcv)
+introgamm <- gamm(logR.2 ~ method,
+                  random = list(StudyID = ~ 1),
+                  data = data.for.intro.models.broad)
+summary(introgamm$gam)
+summary(introgamm$lme)
+anova(introgamm$gam) 
+plot(introgamm$gam) # we didn't have smoother (only categorical data)
+plot(introgamm$lme)
 
 plot(resid(introlm))
 hist(resid(introlm))
