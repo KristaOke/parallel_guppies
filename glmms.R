@@ -1346,11 +1346,12 @@ hist(resid(all.model.traits))
 # ecology
 plot(resid(ecology.full))
 hist(resid(ecology.full))
+summary(ecology.full)
 
 # evil
 plot(resid(evolhist.full))
 hist(resid(evolhist.full))
-
+summary(evolhist.full)
 # intro
 # regression
 data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(!TraitID == 303)
@@ -1411,3 +1412,36 @@ plot(resid(introlm))
 hist(resid(introlm))
 plot(resid(intro.full.broad))
 hist(resid(intro.full.broad))
+
+
+summary(intro.full.broad)
+
+
+
+
+M5 <- glmer(R.2 ~ method + (1 | StudyID), family = binomial, data = data.for.intro.models.broad)
+
+EP <- resid(M5, type = "pearson")
+ED <- resid(M5, type = "deviance")
+mu <- predict(M5, type = "response")
+E <- data.for.intro.models.broad$R.2 ~ mu
+par(mfrow = c(2,2))
+plot(x = mu, y = E, main = "response residuals")
+plot(x = mu, y = EP)
+plot(x = mu, y = ED)
+plot(M5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
