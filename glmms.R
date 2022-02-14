@@ -1454,5 +1454,54 @@ plot(test)
 
 
 
+a1b <- (glmer.nb(R.2 ~ method + (1 | StudyID), data = data.for.intro.models.broad))
+b2b <- (glmer.nb(R.2 ~ method + (1 | StudyID), data = data.for.ecology.models)) 
+c2b <- (glmer.nb(R.2 ~ method + (1 | StudyID), data = data.for.evolhist.models)) 
 
+
+
+library("DHARMa")
+
+testDispersion(c2b)
+simulationOutput <- simulateResiduals(fittedModel = c2b, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
+countOnes <- function(x) sum(x == 1)
+testGeneric(simulationOutput, summary = countOnes, alternative = "greater") 
+
+library(NBZIMM)
+f = glmm.zinb(fixed = log10(R.2+1) ~ method, 
+              random = ~ 1 | StudyID, data = data.for.intro.models.broad) 
+summary(f)
+plot(f)
+plot(intro.full.broad)
+
+g = glmm.zinb(fixed = R.2 ~ method, 
+              random = ~ 1 | StudyID, data = data.for.ecology.models) 
+summary(g)
+plot(g)
+plot(ecology.full)
+
+h = glmm.zinb(fixed = R.2 ~ method, 
+                random = ~ 1 | StudyID, data = data.for.evolhist.models) 
+summary(h)
+plot(h)
+plot(evolhist.full)
+
+plot(resid(h))
+plot(resid(f))
+plot(resid(h))
+plot(resid(introlm))
+hist(resid(introlm))
+hist(resid(h))
+hist(resid(g))
+hist(resid(f))
+plot(resid(intro.full.broad))
+hist(resid(intro.full.broad))
 
