@@ -1201,6 +1201,18 @@ data.all.traits$logR.2 <- log10(data.all.traits$R.2)
 loglmtraits <- lm(logR.2 ~ Kingsolver_traits, data = data.all.traits)
 sqrtlmtraits <- lm(sqrt(R.2) ~ Kingsolver_traits, data = data.all.traits)
 
+# visual inspection 
+par(mfrow = c(2,2))
+plot(lmTraits, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
+hist(resid(lmTraits), xlab = "Residuals", main = "") # normality - not normal
+plot(data.all.traits$Kingsolver_traits, resid(lmTraits), # note that spread not the same 
+     xlab = "Trait type", ylab = "residuals")
+par(op)
+
+# non-visual test of homogeneity (bartlett)
+# null hypothesis is that variances are equal 
+bartlett.test(resid(lmTraits), data.all.traits$Kingsolver_traits) # reject null
+
 #step 2 GLS
 traitsForm <- formula(R.2 ~ Kingsolver_traits) 
 glsTraits <- gls(traitsForm, data = data.all.traits)
