@@ -1344,8 +1344,12 @@ plot(resid(all.model.traits))
 hist(resid(all.model.traits))
 
 # ecology
-plot(resid(ecology.full))
-hist(resid(ecology.full))
+ecology.full
+
+ecology.test <- glmer(R.2 ~ method + (1 | StudyID), 
+                      family = binomial, data= data.for.ecology.models)
+plot(resid(ecology.test))
+hist(resid(ecology.test))
 summary(ecology.full)
 
 # evil
