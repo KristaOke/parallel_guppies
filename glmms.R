@@ -1419,7 +1419,7 @@ summary(intro.full.broad)
 
 
 
-M5 <- glmer(R.2 ~ method + (1 | StudyID), family = binomial, data = data.for.intro.models.broad)
+M5 <- glm(R.2 ~ method, family = binomial, data = data.for.intro.models.broad)
 
 EP <- resid(M5, type = "pearson")
 ED <- resid(M5, type = "deviance")
@@ -1433,13 +1433,20 @@ plot(M5)
 
 
 
+test <- glm(R.2 ~ method, family = quasibinomial, data = data.for.intro.models.broad)
+summary(test)
+drop1(test, test = "F")
 
 
-
-
-
-
-
+EP <- resid(test, type = "pearson")
+ED <- resid(test, type = "deviance")
+mu <- predict(test, type = "response")
+E <- data.for.intro.models.broad$R.2 ~ mu
+par(mfrow = c(2,2))
+plot(x = mu, y = E, main = "response residuals")
+plot(x = mu, y = EP)
+plot(x = mu, y = ED)
+plot(test)
 
 
 
