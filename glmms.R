@@ -1197,15 +1197,17 @@ sex_facet_hist
 #step 1 linear regression
 lmTraits <- lm(R.2 ~ Kingsolver_traits, data = data.all.traits)
 plot(lmTraits)
-data.all.traits$logR.2 <- log10(data.all.traits$R.2)
+data.all.traits$logR.2 <- log10(data.all.traits$R.2 + 1)
 loglmtraits <- lm(logR.2 ~ Kingsolver_traits, data = data.all.traits)
+asinlmtraits <- lm(asin(R.2) ~ Kingsolver_traits, data = data.all.traits)
 sqrtlmtraits <- lm(sqrt(R.2) ~ Kingsolver_traits, data = data.all.traits)
+
 
 # visual inspection 
 par(mfrow = c(2,2))
-plot(lmTraits, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
-hist(resid(lmTraits), xlab = "Residuals", main = "") # normality - not normal
-plot(data.all.traits$Kingsolver_traits, resid(lmTraits), # note that spread not the same 
+plot(sqrtlmtraits, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
+hist(resid(sqrtlmtraits), xlab = "Residuals", main = "") # normality - not normal
+plot(data.all.traits$Kingsolver_traits, resid(sqrtlmtraits), # note that spread not the same 
      xlab = "Trait type", ylab = "residuals")
 par(op)
 
@@ -1234,7 +1236,7 @@ par(mfrow = c(1,2), mar = c(4,4,3,2))
 plot(x = fittedTraits, y = residTraits, xlab = "Fitted values", ylab = "Residuals")
 boxplot(residTraits ~ Kingsolver_traits, data = data.all.traits,
         main = "Kingsolver traits", lab= "Residuals")
-dev.off()
+par(op)
 
 #step7/8 optimal fixed str
 # this does not apply because we have 1 fixed ??
@@ -1315,5 +1317,64 @@ summary(f$fit.zero)
 ## validate sex ----
 all.model.sex
 
+lmSex <- lm(R.2 ~ Sex, data = data.all)
+
+
+par(mfrow = c(2,2))
+plot(lmSex, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
+hist(resid(lmSex), xlab = "Residuals", main = "") # normality - not normal
+plot(data.all$Sex, resid(lmSex), # note that spread not the same 
+     xlab = "Sex", ylab = "residuals")
+par(op)
+
+loglmSex <- lm(log10(R.2) ~ Sex, data = data.all)
+
+plot(resid(all.model.sex))
+hist(resid(all.model.sex))
+
 ## validate rearing ----
 all.model.rearing
+hist(resid(all.model.rearing))
+plot(resid(all.model.rearing))
+par(op)
+
+
+# traits
+plot(resid(all.model.traits))
+hist(resid(all.model.traits))
+
+# ecology
+plot(resid(ecology.full))
+hist(resid(ecology.full))
+
+# evil
+plot(resid(evolhist.full))
+hist(resid(evolhist.full))
+
+# intro
+# regression
+data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(!TraitID == 303)
+
+introlm <- lm(R.2 ~ method, data = data.for.intro.models.broad)
+plot(introlm) # trash
+data.for.intro.models.broad$logR.2 <- log10(data.for.intro.models.broad$R.2 + 1)
+introlmlog <- lm(logR.2 ~ method, data = data.for.intro.models.broad)
+E <- rstandard(introlmlog)
+plot(introlmlog)
+
+
+# step2/3
+introformula <- formula(R.2 ~ method)
+introgls <- gls(introformula, data = data.for.intro.models.broad)
+
+# step4
+introlme <- lme(introformula, random = ~ 1 | StudyID,
+                method = "REML", data = data.for.intro.models.broad)
+
+# step5
+anova(introlme, introlm) # better with RE (L = 28.66, p < 0.0001)
+
+plot(resid(introlm))
+hist(resid(introlm))
+plot(resid(intro.full.broad))
+hist(resid(intro.full.broad))
