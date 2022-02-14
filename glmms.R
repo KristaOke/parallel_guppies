@@ -1225,8 +1225,7 @@ lmmTraits <- lme(traitsForm, random = ~ 1 | StudyID,
                  method = "REML", data = data.all.traits)
 
 #step 5 compare new/old models
-anova(glsTraits, lmmTraits) 
-#tells us model w random is better; L = 89.46 (df = 8, p < 0.0001)
+anova(glsTraits, lmmTraits) #model w random is better; L = 89.46 (df = 8, p < 0.0001)
 
 #step6 is it ok?
 residTraits <- resid(lmmTraits, type = "normalized")
