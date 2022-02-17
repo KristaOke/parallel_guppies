@@ -1505,3 +1505,62 @@ hist(resid(f))
 plot(resid(intro.full.broad))
 hist(resid(intro.full.broad))
 
+all.model.rearing
+
+testDispersion(all.model.rearing)
+simulationOutput <- simulateResiduals(fittedModel = all.model.rearing, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
+
+## ecology
+
+ecology.full
+
+testDispersion(ecology.full)
+simulationOutput <- simulateResiduals(fittedModel = ecology.full, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
+
+
+## evilhist
+
+evolhist.full
+
+testDispersion(evolhist.full)
+simulationOutput <- simulateResiduals(fittedModel = evolhist.full, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
+
+
+## introductions
+
+intro.full.broad
+
+testDispersion(intro.full.broad)
+simulationOutput <- simulateResiduals(fittedModel = intro.full.broad, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
