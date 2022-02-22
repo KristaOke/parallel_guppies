@@ -530,31 +530,33 @@ plot_i + geom_point(size=1) + #geom_smooth(method="lm") +
 
 ```
 
-
+FYI Andrew's response to the email about the sample size plot: "Possibly, yes, but you would want to fit a function to this to see if there really is a decline. I am not sure that is the case. I suppose you could do a linear fit (perhaps no decrease) and a fit to the upper quantile to show that maximum values tend to be at the lowest sample sizes. Regardless, the plot is cool and I would like to include it somehow."
 ```{r sample size}
 all_dat<-left_join(output_all, new.data[,c(1,3,20,37)], by = 'TraitID')
+### find outliers
+isnt_out_z <- function(x, thres = 3, na.rm = TRUE) {
+  abs(x - mean(x, na.rm = na.rm)) <= thres * sd(x, na.rm = na.rm)
+}
+all_dat$outlier<-isnt_out_z(all_dat$Number)
 
-all_mod<-lm(R.2~Number, (all_dat %>% 
-         filter(!StudyID == 22) %>% 
+#run simple models
+all_mod<-lm(R.2~Number, (all_dat  %>% 
            filter(!is.na(Number))))
+filter_mod<-lm(R.2~Number, (all_dat %>% 
+                              filter(!is.na(Number) & outlier==TRUE)))
 
+summary(all_mod)
+summary(filter_mod)
+
+## what was I doing? making a proper model?
 test_dat<-all_dat %>% 
   filter(!is.na(Number))
 test_mod<-lmer(R.2~Number + (1|StudyID), all_dat)
 summary(test_mod)
 
-ggplot((all_dat %>% 
-         filter(!StudyID == 22) %>% 
-          filter(StudyID == c(15,9,32))), aes(Number, R.2, color = as.factor(StudyID))) + geom_point()
-ggplot((all_dat %>% 
-         filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = as.factor(StudyID))) + geom_point()
-
-ggplot((all_dat %>% 
-         filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = as.factor(Published))) + geom_point()
-
-ggplot((all_dat %>% 
-         filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = (Published))) + geom_point()+ scale_color_gradient(low="red", high="yellow")
 ```
+
+
 
 
 ```{r repeating R2}
@@ -571,6 +573,19 @@ sus2<-sus %>%
   filter(StudyID %in% c(4,9,10,15,18,23,32,37,40,47)) %>% #studies with repeating R2 
   group_by(TraitID) %>% 
   summarize(StudyID = median(StudyID), R2 = median(R.2))
+
+### visualizations from meeting
+ggplot((all_dat %>% 
+         filter(!StudyID == 22) %>% 
+          filter(StudyID == c(15,9,32))), aes(Number, R.2, color = as.factor(StudyID))) + geom_point()
+ggplot((all_dat %>% 
+         filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = as.factor(StudyID))) + geom_point()
+
+ggplot((all_dat %>% 
+         filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = as.factor(Published))) + geom_point()
+
+ggplot((all_dat %>% 
+         filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = (Published))) + geom_point()+ scale_color_gradient(low="red", high="yellow")
 ```
 
 
