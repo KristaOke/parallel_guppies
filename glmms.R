@@ -1550,6 +1550,94 @@ testZeroInflation(simulationOutput)
 
 
 
+#step 1 linear regression
+lmTraits <- lm(R.2 ~ method, data = data.for.evolhist.models)
+plot(lmTraits)
+data.for.evolhist.models$logR.2 <- log10(data.for.evolhist.models$R.2 + 1)
+loglmtraits <- lm(logR.2 ~ method, data = data.for.evolhist.models)
+asinlmtraits <- lm(asin(R.2) ~ method, data = data.for.evolhist.models)
+sqrtlmtraits <- lm(sqrt(R.2) ~ method, data = data.for.evolhist.models)
+
+
+# visual inspection 
+par(mfrow = c(2,2))
+plot(sqrtlmtraits, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
+hist(resid(loglmtraits), xlab = "Residuals", main = "") # normality - not normal
+plot(data.for.evolhist.models$method, resid(loglmtraits), # note that spread not the same 
+     xlab = "Trait type", ylab = "residuals")
+par(op)
+
+# non-visual test of homogeneity (bartlett)
+# null hypothesis is that variances are equal 
+bartlett.test(resid(lmTraits), data.for.evolhist.models$method) # reject null
+
+bartlett.test(resid(loglmtraits), data.for.evolhist.models$method) # reject null
+
+#step 2 GLS
+traitsForm <- formula(R.2 ~ method) 
+glsTraits <- gls(traitsForm, data = data.for.evolhist.models)
+
+#step 3 variance
+# choose random effect?
+
+#step 4 fit model
+lmmTraits <- lme(traitsForm, random = ~ 1 | StudyID,
+                 method = "REML", data = data.for.evolhist.models)
+
+#step 5 compare new/old models
+anova(glsTraits, lmmTraits) #model w random is better
+
+#step6 is it ok?
+residTraits <- resid(lmmTraits, type = "normalized")
+fittedTraits <- fitted(lmmTraits)
+par(mfrow = c(1,2), mar = c(4,4,3,2))
+plot(x = fittedTraits, y = residTraits, xlab = "Fitted values", ylab = "Residuals")
+boxplot(residTraits ~ method, data = data.for.evolhist.models,
+        main = "Methods", lab= "Residuals")
+par(op)
+
+#step7/8 optimal fixed str
+# this does not apply because we have 1 fixed ??
+
+#step9 validate the omodel
+summary(lmmTraits)
+# (0.188^2)/(0.188^2 + 0.202^2) = correlation between obs from the same stuyd = 0.46
+
+#steo10
+
+#step11
+library(lattice)
+xyplot(residTraits ~ method, 
+       data = data.for.evolhist.models, 
+       ylab = "Residuals",
+       xlab = "Method",
+       panel = function(x,y)
+       {panel.grid(h = -1, v = 2) 
+         panel.points(x, y, col = 1) 
+         panel.loess(x, y, span = 0.5, col = 1,lwd=2)
+       }
+)
+
+
+library(mgcv)
+
+gammTraits <- gamm(R.2 ~ method,
+                   random = list(StudyID = ~1),
+                   data = data.for.evolhist.models) 
+summary(gammTraits$gam)
+summary(gammTraits$lme)
+
+anova(gammTraits$gam)
+anova(gammTraits$lme)
+
+plot(gammTraits$gam, all.terms = TRUE)
+plot(gammTraits$lme)
+
+drop1(sex.and.triats)
+
+
+
+
 ## introductions
 
 intro.full.broad
