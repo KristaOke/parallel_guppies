@@ -574,18 +574,16 @@ sus2<-sus %>%
   group_by(TraitID) %>% 
   summarize(StudyID = median(StudyID), R2 = median(R.2))
 
+
+#sample size plot
+N_plot<-ggplot(all_dat, aes(Number, R.2)) + geom_point() +theme_bw() + theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        plot.title = element_text(size = 16)) +labs(x = "Sample Size", y = "R2")
+ggsave("N_plot.pdf")
+
 ### visualizations from meeting
-ggplot((all_dat %>% 
-         filter(!StudyID == 22) %>% 
-          filter(StudyID == c(15,9,32))), aes(Number, R.2, color = as.factor(StudyID))) + geom_point()
-ggplot((all_dat %>% 
-         filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = as.factor(StudyID))) + geom_point()
-
-ggplot((all_dat %>% 
-         filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = as.factor(Published))) + geom_point()
-
-ggplot((all_dat %>% 
-         filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = (Published))) + geom_point()+ scale_color_gradient(low="red", high="yellow")
+#ggplot((all_dat %>% 
+         #filter(!(StudyID == 22|StudyID ==20))), aes(Number, R.2, color = (Published))) + geom_point()+ scale_color_gradient(low="red", high="yellow")
 ```
 
 
