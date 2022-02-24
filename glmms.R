@@ -172,7 +172,7 @@ car::Anova(all.model.sex, type = "II")
 
 ## sex without colour  (in paper) ----
 (all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
-car::Anova(all.model.sex, type = "II")
+car::Anova(all.model.sex.no.colour, type = "II")
 
 ## Rearing enviro model (in paper) ----
 data.all.rear <- data.all %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
