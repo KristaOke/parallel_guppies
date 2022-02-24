@@ -153,6 +153,7 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 
 ## remove 'both'
 (data.all <- data.all %>% filter(Sex %in% c("M", "F"))  ) %>% summary()
+(data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
 
 # Overall models (traits, sex, rearing) ----
 
