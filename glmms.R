@@ -230,8 +230,12 @@ data.for.evolhist.models$method <- as.factor(data.for.evolhist.models$method)
 ## Remove 'Both' sex category because duplicates
 data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
 
-## Evolutionary history model (in paper)
-(evolhist.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
+## Evolutionary history model w interaction (in paper)
+(evolhist.full <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
+car::Anova(evolhist.full, type = "II")
+
+## interaction removed wout interaction (in paper)
+(evolhist.full <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
 car::Anova(evolhist.full, type = "II")
 
 (evolhist.glm <- glm(R.2 ~ method + StudyID, data = data.for.evolhist.models, family = binomial)) %>% summary()
