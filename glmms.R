@@ -1664,3 +1664,182 @@ plotResiduals(simulationOutput)
 
 testZeroInflation(simulationOutput)
 
+# Residuals ---- 
+
+R2.data.among.resid <- read.csv("Resample_among.csv")
+R2.data.south.resid <- read.csv("Resample_South.csv")
+R2.data.intro.resid <- read.csv("Resample_intro.csv")
+R2.data.intro.resid.broad <- read.csv("Resample_intro_broad.csv")
+R2.data.caroni.resid <- read.csv("Resample_Caroni.csv")
+R2.data.among.drainage.resid <- read.csv("Resample_Among_Drainage.csv")
+
+## fix structure
+R2.data.among.resid$TraitID <- as.factor(R2.data.among.resid$TraitID)
+R2.data.south.resid$TraitID <- as.factor(R2.data.south.resid$TraitID)
+R2.data.intro.resid$TraitID <- as.factor(R2.data.intro.resid$TraitID)
+R2.data.intro.resid.broad$TraitID <- as.factor(R2.data.intro.resid.broad$TraitID)
+R2.data.caroni.resid$TraitID <- as.factor(R2.data.caroni.resid$TraitID)
+R2.data.among.drainage.resid$TraitID <- as.factor(R2.data.among.drainage.resid$TraitID)
+
+# combine R2 and spreadsheet data
+## prep for when we bind them together, this variable will go in the model to indicate the type of R2
+R2.data.among.resid$method <- "all"
+R2.data.south.resid$method <- "south"
+R2.data.intro.resid$method <- "only_natural"
+R2.data.intro.resid.broad$method <- "only_natural_broad"
+R2.data.caroni.resid$method <- "caroni"
+R2.data.among.drainage.resid$method <- "both.drainages"
+
+## get relevant data with one entry for each Trait
+### I was inclusive with columns, many probably aren't needed so you can cut them out
+data.all.resid <- inner_join(spreadsheet.data, R2.data.among.resid, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) #removes replicated TraitIDs and retains the columns
+
+## repeat for south only R2 and others...
+data.south.resid <- inner_join(spreadsheet.data, R2.data.south.resid, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.intro.resid<- inner_join(spreadsheet.data, R2.data.intro.resid, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.intro.broad.resid<- inner_join(spreadsheet.data, R2.data.intro.resid.broad, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.caroni.resid<- inner_join(spreadsheet.data, R2.data.caroni.resid, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.among.drainage.resid<- inner_join(spreadsheet.data, R2.data.among.drainage.resid, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE)
+
+## then we can bind them together as we wish! First ecology...
+data.for.ecology.models.resid<-rbind(data.all.resid,data.south.resid) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
+
+## evolutionary history question
+data.for.evolhist.models.resid<-rbind(data.caroni.resid,data.among.drainage.resid) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+
+## Intro "broad", 
+data.for.intro.models.broad.resid<-rbind(data.all.resid,data.intro.broad.resid) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+
+### as a note and fail safe I would run the grouping with TraitID on the sex specific dfs to make sure theres two traitID entries for each
+
+## remove 'both'
+(data.all.resid <- data.all.resid %>% filter(Sex %in% c("M", "F"))  ) %>% summary()
+(data.all.resid.no.colour <- data.all.resid %>% filter(!Kingsolver_traits == 'Colour'))
+# Overall models (traits, sex, rearing) ----
+
+## remove other (because model below will not converge with other)
+
+## Trait type model (in paper) ----
+data.all.resid.traits <- data.all.resid %>% filter(!Kingsolver_traits == "Other")
+(all.model.traits.resid <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
+                                 data = data.all.resid.traits, family = binomial)) %>% summary()
+car::Anova(all.model.traits.resid, type = "II")
+
+
+## sex with colour (in paper) ----
+## with colour
+(all.model.sex.resid <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid, family = binomial)) %>% summary()
+car::Anova(all.model.sex.resid, type = "II")
+
+## sex without colour  (in paper) ----
+(all.model.sex.no.colour.resid <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid.no.colour, family = binomial)) %>% summary()
+car::Anova(all.model.sex.no.colour.resid, type = "II")
+
+## Rearing enviro model (in paper) ----
+data.all.resid.rear <- data.all.resid %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.resid.rear, family = binomial)) %>% summary()
+car::Anova(all.model.rearing, type = "II")
+
+
+# multivariate models (traits, sex, rearing) ----
+
+## sex and traits (in paper) ----
+(sex.and.triats.resid <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all.resid, family = binomial)) %>% summary()
+Anova(sex.and.triats.resid, type = "II")
+
+## sex and rear (in paper) ----
+(sex.and.rear.resid <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.resid.rear, family = binomial)) %>% summary()
+Anova(sex.and.rear.resid, type = 2)
+
+# Determinants models ----
+## Ecology models ----
+
+### fix structure
+data.for.ecology.models.resid$method <- as.factor(data.for.ecology.models.resid$method)
+
+### Remove 'Both' sex category because duplicates
+data.for.ecology.models.resid <- data.for.ecology.models.resid %>% filter(Sex %in% c("M", "F"))  
+
+## Ecology model (in paper)
+(ecology.full.resid <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models.resid, family = binomial)) %>% summary()
+car::Anova(ecology.full.resid, type = "II")
+
+## remove the interaction (in paper)
+(ecology.full.resid <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models.resid, family = binomial)) %>% summary()
+car::Anova(ecology.full.resid, type = "II")
+
+## Intro models ----
+# (Note that I deleted the old intro file - 2022-02-09 - this is only intro broad)
+## Fix structure
+data.for.intro.models.broad.resid$method <- as.factor(data.for.intro.models.broad.resid$method)
+
+### Remove 'Both' sex category because duplicates
+data.for.intro.models.broad.resid <- data.for.intro.models.broad.resid %>% filter(Sex %in% c("M", "F"))  
+
+## Intro model (in paper)
+(intro.full.broad.resid <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad.resid, family = binomial)) %>% summary()
+car::Anova(intro.full.broad.resid, type = "II")
+
+
+## Evolutionary history models ----
+# (These are all singular fits)
+
+## fix structure
+data.for.evolhist.models.resid$method <- as.factor(data.for.evolhist.models.resid$method)
+
+## Remove 'Both' sex category because duplicates
+data.for.evolhist.models.resid <- data.for.evolhist.models.resid %>% filter(Sex %in% c("M", "F"))  
+
+## Evolutionary history model w interaction (in paper)
+(evolhist.full.resid <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
+car::Anova(evolhist.full.resid, type = "II")
+
+## interaction removed wout interaction (in paper)
+(evolhist.full.resid <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
+car::Anova(evolhist.full.resid, type = "II")
+
+(evolhist.glm.resid <- glm(R.2 ~ method + StudyID, data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
+car::Anova(evolhist.glm.resid, type = "II")
+
+
+### Troubleshooting Evolutionary history----
+### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
+
+### This is singular (need to decide with this one)
+
+summary(evolhist.full.resid) # GLMM above
+
+# try w lmer
+(evolhist.full.lmer.resid <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models.resid)) %>% summary()
+Anova(evolhist.full.lmer.resid, type = 3)
+
+# tri w glm
+(evolhist.full.glm.resid <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
+
+car::Anova(evolhist.full.lmer.resid, type = "II")
+car::Anova(evolhist.full.glm.resid, type = "II")
