@@ -576,9 +576,10 @@ sus2<-sus %>%
 
 
 #sample size plot
-N_plot<-ggplot(all_dat, aes(Number, R.2)) + geom_point() +theme_bw() + theme(axis.title = element_text(size = 14),
+N_plot<-ggplot(all_dat, aes(Number, R.2)) + geom_point(alpha = .35) +geom_smooth(method="lm")+
+  theme_bw() + theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
-        plot.title = element_text(size = 16)) +labs(x = "Sample Size", y = "R2")
+        plot.title = element_text(size = 16)) +labs(x = "Sample Size", y = "R2")#+ geom_quantile(quantiles = .75, color = "orange")
 ggsave("N_plot.pdf")
 
 ### visualizations from meeting
