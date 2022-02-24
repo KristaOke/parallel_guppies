@@ -235,7 +235,7 @@ data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", 
 car::Anova(evolhist.full, type = "II")
 
 ## interaction removed wout interaction (in paper)
-(evolhist.full <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
+(evolhist.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
 car::Anova(evolhist.full, type = "II")
 
 (evolhist.glm <- glm(R.2 ~ method + StudyID, data = data.for.evolhist.models, family = binomial)) %>% summary()
