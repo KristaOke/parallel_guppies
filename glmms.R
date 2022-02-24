@@ -1823,16 +1823,8 @@ car::Anova(evolhist.full.resid, type = "II")
 (evolhist.full.resid <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
 car::Anova(evolhist.full.resid, type = "II")
 
-(evolhist.glm.resid <- glm(R.2 ~ method + StudyID, data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
+(evolhist.glm.resid <- glm(R.2 ~ method, data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
 car::Anova(evolhist.glm.resid, type = "II")
-
-
-### Troubleshooting Evolutionary history----
-### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
-
-### This is singular (need to decide with this one)
-
-summary(evolhist.full.resid) # GLMM above
 
 # try w lmer
 (evolhist.full.lmer.resid <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models.resid)) %>% summary()
