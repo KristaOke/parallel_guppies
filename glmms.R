@@ -205,7 +205,7 @@ data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F
 car::Anova(ecology.full, type = "II")
 
 ## remove the interaction (in paper)
-(ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
+(ecology.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
 car::Anova(ecology.full, type = "II")
 
 ## Intro models ----
