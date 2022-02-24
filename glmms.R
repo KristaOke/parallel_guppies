@@ -296,14 +296,20 @@ car::Anova(evolhist.full.glm, type = "II")
 fig2data <- read.csv("testPG_figure.csv", fileEncoding="UTF-8-BOM")
 fig2data$population <- as.factor(fig2data$population)
 
-fig2data$population <- factor(fig2data$population, levels = (c("HP1", "LP1", "HP2", "LP2")))
+fig2data$population <- factor(fig2data$population, levels = (c("Marianne high", 
+                                                               "Marianne low", 
+                                                               "Aripo high", "Aripo low",
+                                                               "Damier high",
+                                                               "Damier low",
+                                                               "Yarra high",
+                                                               "Yarra low")))
 
 levels(fig2data$population)
 
 highparal <- fig2data %>% filter(facet == 'a') %>% 
   ggplot(aes(x = population, y = mean, color = predation)) +
   geom_point(size = 4) +
-  labs(title = "Example of high R2 (0.984)",
+  labs(title = "Example of high R  (0.984)",
        subtitle = #"Study = Reddon et al. 2018, \n
          # "Trait = Male standard length (mm)"
   ) +
@@ -314,13 +320,13 @@ highparal <- fig2data %>% filter(facet == 'a') %>%
        x = "\nPopulation") +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
-        plot.title = element_text(size = 16))
-
+        plot.title = element_text(size = 16),
+        axis.text.x = element_text(angle = 45,  hjust = 1))
 
 lowparal <- fig2data %>% filter(facet == 'b') %>% 
   ggplot(aes(x = population, y = mean, color = predation)) +
   geom_point(size = 4) +
-  labs(title = "Example of low R2 (0.000)",
+  labs(title = "Example of low R  (0.000)",
        subtitle = #"Study = Easty et al. 2011, \n
          # "Trait = Mean relative area of black (%)"
   ) +
@@ -331,7 +337,8 @@ lowparal <- fig2data %>% filter(facet == 'b') %>%
        x = "\nPopulation") +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
-        plot.title = element_text(size = 16))
+        plot.title = element_text(size = 16),
+        axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
 
