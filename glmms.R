@@ -100,6 +100,14 @@ data.among.drainage<- inner_join(spreadsheet.data, R2.data.among.drainage, by = 
   dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
   distinct(TraitID, .keep_all = TRUE)
 
+##adding sample size (Number averaged per trait)
+
+nTemp<-spreadsheet.data %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number))
+
+left_join(data.all, nTemp, by = "TraitID")
+
 ## then we can bind them together as we wish! First ecology...
 data.for.ecology.models<-rbind(data.all,data.south) %>% 
   arrange(TraitID) %>% #puts them in a nice order
