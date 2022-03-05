@@ -111,7 +111,7 @@ ids<-new.data %>%
   filter(n>1) %>%
   filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
   filter(!duplicated(TraitID)) %>% 
-  select(TraitID)
+  dplyr::select(TraitID)
 
 traits_s<-new.data %>% 
   filter(TraitID %in% ids$TraitID) %>% 
@@ -126,7 +126,7 @@ ids_south<-new.data %>%
   filter(n>1) %>%
   filter(length(unique(Predation))>1) %>%
   filter(!duplicated(TraitID)) %>% 
-  select(TraitID) #432 traits total, use this to select traits with enough south pops to be viable for drainage analysis
+  dplyr::select(TraitID) #432 traits total, use this to select traits with enough south pops to be viable for drainage analysis
 
 ids_d<-new.data %>%
   filter(TraitID %in% ids_south$TraitID) %>% 
@@ -139,7 +139,7 @@ ids_d<-new.data %>%
   filter(n>1) %>%
   filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
   filter(!duplicated(TraitID)) %>% 
-  select(TraitID)
+  dplyr::select(TraitID)
 
 traits_d<-new.data %>%
   filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
@@ -160,7 +160,7 @@ ids_i<-new.data %>%
   filter(n>1) %>%
   filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
   filter(!duplicated(TraitID)) %>% 
-  select(TraitID)
+  dplyr::select(TraitID)
 
 traits_i<-new.data %>% 
   filter(TraitID %in% ids_i$TraitID) %>% 
@@ -175,7 +175,7 @@ ids_i_broad<-new.data %>%
   filter(n>1) %>%
   filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
   filter(!duplicated(TraitID)) %>% 
-  select(TraitID)
+  dplyr::select(TraitID)
 
 traits_i_broad<-new.data %>% 
   filter(TraitID %in% ids_i_broad$TraitID) %>% 
