@@ -127,19 +127,6 @@ data.south.n <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>%
   left_join(n_s, by = "TraitID")  %>% 
   filter(!is.na(meanNumber))
 
-#creating df
-data.for.ecology.models.n<-rbind(data.all.n,data.south.n) %>% 
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
-
-ecology.data.males.n <- data.for.ecology.models.n %>% 
-  filter(Sex == "M" & Kingsolver_traits !="Other") %>% 
-  ungroup(TraitID)
-
-ecology.data.females.n <- data.for.ecology.models.n %>% 
-  filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
-  ungroup(TraitID)
 
 #caroni drainage only traits (drainage Q)
 n_d<-traits_d %>% 
@@ -193,7 +180,7 @@ data.intro.n <- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>%
 data.for.ecology.models.n<-rbind(data.all,data.south.n) %>% 
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
 
 
 ####################################################################################
