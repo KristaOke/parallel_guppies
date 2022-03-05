@@ -39,7 +39,7 @@ R2.data.south <- read.csv(paste(wd,'/Data/TraitR2_south.csv',sep=""), header=TRU
 R2.data.intro <- read.csv(paste(wd,'/Data/TraitR2_intro.csv',sep=""), header=TRUE, sep=",")
 R2.data.caroni <- read.csv(paste(wd,'/Data/TraitR2_Caroni.csv',sep=""), header=TRUE, sep=",")
 R2.data.among.drainage <- read.csv(paste(wd,'/Data/TraitR2_Among_Drainage.csv',sep=""), header=TRUE, sep=",")
-R2.data.intro.broad <- read.csv(paste(wd, '/Data/TraitR2_intro_broad.csv', sep = ""), header = TRUE, sep = "")
+R2.data.intro.broad <- read.csv(paste(wd, '/Data/TraitR2_intro_broad.csv', sep = ""), header = TRUE, sep = ",")
 
 ## fix structure
 str(spreadsheet.data)
@@ -100,14 +100,103 @@ data.among.drainage<- inner_join(spreadsheet.data, R2.data.among.drainage, by = 
   dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
   distinct(TraitID, .keep_all = TRUE)
 
-##adding sample size (Number averaged per trait)
+## adding sample size ----
+#(Number averaged per trait), done for each subset
+#for each subset look in the Tallies code for traits_x groups
 
-nTemp<-spreadsheet.data %>% 
+n_all<-spreadsheet.data %>% 
   group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number))
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
 
-left_join(data.all, nTemp, by = "TraitID")
+data.all.n<-inner_join(spreadsheet.data, R2.data.among, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(y = n_all, by = "TraitID") %>% 
+  filter(!is.na(meanNumber))
 
+#south slope only traits (slope Q)
+n_s<-traits_s %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.south.n <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_s, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+#creating df
+data.for.ecology.models.n<-rbind(data.all.n,data.south.n) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
+
+ecology.data.males.n <- data.for.ecology.models.n %>% 
+  filter(Sex == "M" & Kingsolver_traits !="Other") %>% 
+  ungroup(TraitID)
+
+ecology.data.females.n <- data.for.ecology.models.n %>% 
+  filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
+  ungroup(TraitID)
+
+#caroni drainage only traits (drainage Q)
+n_d<-traits_d %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.caroni.n <- inner_join(spreadsheet.data, R2.data.caroni, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_d, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+# south drainages only (drainage Q)
+n_d_all<-traits_d_all %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.among.drainage.n <- inner_join(spreadsheet.data, R2.data.among.drainage, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_d_all, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+# intro broad (introduction Q)
+n_i_broad<-traits_i_broad %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.intro.broad.n <- inner_join(spreadsheet.data, R2.data.intro.broad, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_i_broad, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+#intros (introduction Q)
+n_i<-traits_i %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.intro.n <- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_i, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+#dfs
+data.for.ecology.models.n<-rbind(data.all,data.south.n) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
+
+
+####################################################################################
 ## then we can bind them together as we wish! First ecology...
 data.for.ecology.models<-rbind(data.all,data.south) %>% 
   arrange(TraitID) %>% #puts them in a nice order
