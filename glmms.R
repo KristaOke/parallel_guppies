@@ -100,7 +100,7 @@ data.among.drainage<- inner_join(spreadsheet.data, R2.data.among.drainage, by = 
   dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
   distinct(TraitID, .keep_all = TRUE)
 
-## adding sample size ----
+## Sample Size Data Wrangling ----
 #(Number averaged per trait), done for each subset
 #for each subset look in the Tallies code for traits_x groups
 
@@ -127,19 +127,6 @@ data.south.n <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>%
   left_join(n_s, by = "TraitID")  %>% 
   filter(!is.na(meanNumber))
 
-#creating df
-data.for.ecology.models.n<-rbind(data.all.n,data.south.n) %>% 
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
-
-ecology.data.males.n <- data.for.ecology.models.n %>% 
-  filter(Sex == "M" & Kingsolver_traits !="Other") %>% 
-  ungroup(TraitID)
-
-ecology.data.females.n <- data.for.ecology.models.n %>% 
-  filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
-  ungroup(TraitID)
 
 #caroni drainage only traits (drainage Q)
 n_d<-traits_d %>% 
@@ -177,23 +164,55 @@ data.intro.broad.n <- inner_join(spreadsheet.data, R2.data.intro.broad, by = "Tr
   left_join(n_i_broad, by = "TraitID")  %>% 
   filter(!is.na(meanNumber))
 
-#intros (introduction Q)
-n_i<-traits_i %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
+#intros (introduction Q) not used
+#n_i<-traits_i %>% 
+  #group_by(TraitID) %>% 
+  #summarize(meanNumber = mean(Number)) %>% 
+  #mutate(TraitID = as.factor(TraitID))
 
-data.intro.n <- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(n_i, by = "TraitID")  %>% 
-  filter(!is.na(meanNumber))
+#data.intro.n <- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
+  #dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  #distinct(TraitID, .keep_all = TRUE) %>% 
+  #left_join(n_i, by = "TraitID")  %>% 
+  #filter(!is.na(meanNumber))
 
-#dfs
-data.for.ecology.models.n<-rbind(data.all,data.south.n) %>% 
+#dfs for models
+## trait types and sex
+data.all.no.colour.n <- data.all.n %>% 
+  filter(Sex %in% c("M", "F")) %>% 
+  filter(!Kingsolver_traits == 'Colour')
+
+data.all.n<-data.all.n %>% 
+  filter(Sex %in% c("M", "F"))
+
+## determinants models
+data.for.ecology.models.n<-rbind(data.all.n,data.south.n) %>%
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
+  filter(n() > 1) %>%  #filters only trait IDs that have more than 1 entry within the group (n = 162 traits)
+  mutate(method = as.factor(method)) %>% # fix structure
+  filter(Sex %in% c("M", "F")) %>%
+  ungroup()
+
+data.for.evolhist.models.n<-rbind(data.caroni.n,data.among.drainage.n) %>%
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) %>% #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+  mutate(method = as.factor(method)) %>% # fix structure
+  filter(Sex %in% c("M", "F")) %>%
+  ungroup()
+
+data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) %>% #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+  mutate(method = as.factor(method)) %>% # fix structure
+  filter(Sex %in% c("M", "F")) %>%
+  ungroup()
+
+## Sample Size Models ----
+
+
 
 
 ####################################################################################
