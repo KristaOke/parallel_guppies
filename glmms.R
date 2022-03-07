@@ -467,6 +467,11 @@ data.for.intro.models.broad.resid<-rbind(data.all.resid,data.intro.broad.resid) 
 ## remove 'both'
 (data.all.resid <- data.all.resid %>% filter(Sex %in% c("M", "F"))  ) %>% summary()
 (data.all.resid.no.colour <- data.all.resid %>% filter(!Kingsolver_traits == 'Colour'))
+
+# Before models, test dist of residuals 
+ggqqplot(data.all.resid$R.2)
+shapiro.test(data.all.resid$R.2)
+
 # Overall models (traits, sex, rearing) ----
 
 ## remove other (because model below will not converge with other)
@@ -476,7 +481,6 @@ data.all.resid.traits <- data.all.resid %>% filter(!Kingsolver_traits == "Other"
 (all.model.traits.resid <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
                                  data = data.all.resid.traits, family = binomial)) %>% summary()
 car::Anova(all.model.traits.resid, type = "II")
-
 
 ## sex with colour (in paper) ----
 ## with colour
