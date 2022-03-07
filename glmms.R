@@ -1,4 +1,5 @@
 # GLMMs for parallel_guppies! 
+# 2022-02-09 cleaned up
 
 # Libraries ---- 
 library(plyr)
@@ -126,6 +127,19 @@ data.south.n <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>%
   left_join(n_s, by = "TraitID")  %>% 
   filter(!is.na(meanNumber))
 
+#creating df
+data.for.ecology.models.n<-rbind(data.all.n,data.south.n) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
+
+ecology.data.males.n <- data.for.ecology.models.n %>% 
+  filter(Sex == "M" & Kingsolver_traits !="Other") %>% 
+  ungroup(TraitID)
+
+ecology.data.females.n <- data.for.ecology.models.n %>% 
+  filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
+  ungroup(TraitID)
 
 #caroni drainage only traits (drainage Q)
 n_d<-traits_d %>% 
@@ -179,7 +193,7 @@ data.intro.n <- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>%
 data.for.ecology.models.n<-rbind(data.all,data.south.n) %>% 
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
 
 
 ####################################################################################
@@ -236,11 +250,7 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 
 ## remove 'both'
 (data.all <- data.all %>% filter(Sex %in% c("M", "F")))
-
-## remove 'other' 
-(data.all <- data.all %>% filter(!Kingsolver_traits == "Other"))
-
-## create a no 'colour' dataset
+data.all <- data.all %>% filter(!Kingsolver_traits == "Other")
 (data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
 
 # Overall models (traits, sex, rearing) ----
@@ -248,10 +258,11 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 ## remove other (because model below will not converge with other)
 
 ## Trait type model (in paper) ----
-#data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
+data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
-                           data = data.all, family = binomial)) %>% summary()
+                           data = data.all.traits, family = binomial)) %>% summary()
 car::Anova(all.model.traits, type = "II")
+
 
 ## sex with colour (in paper) ----
 ## with colour
@@ -271,8 +282,8 @@ car::Anova(all.model.rearing, type = "II")
 # multivariate models (traits, sex, rearing) ----
 
 ## sex and traits (in paper) ----
-(sex.and.traits <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
-Anova(sex.and.traits, type = "II")
+(sex.and.triats <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
+Anova(sex.and.triats, type = "II")
 
 ## sex and rear (in paper) ----
 (sex.and.rear <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
