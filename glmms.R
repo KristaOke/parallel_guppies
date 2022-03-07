@@ -301,6 +301,8 @@ data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F
 ## Ecology model (in paper)
 (ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
 car::Anova(ecology.full, type = "II")
+qqnorm(resid(ecology.full))
+qqline(resid(ecology.full))
 
 ## remove the interaction (in paper)
 (ecology.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
@@ -480,32 +482,55 @@ shapiro.test(data.all.resid$R.2)
 data.all.resid.traits <- data.all.resid %>% filter(!Kingsolver_traits == "Other")
 (all.model.traits.resid <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
                                  data = data.all.resid.traits, family = binomial)) %>% summary()
+(all.model.traits.resid.lmer <- lmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
+                                 data = data.all.resid.traits)) %>% summary()
 car::Anova(all.model.traits.resid, type = "II")
+
+qqnorm(residuals(all.model.traits.resid.lmer))
+qqline(residuals(all.model.traits.resid.lmer))
+shapiro.test(residuals(all.model.traits.resid.lmer))
 
 ## sex with colour (in paper) ----
 ## with colour
 (all.model.sex.resid <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid, family = binomial)) %>% summary()
 car::Anova(all.model.sex.resid, type = "II")
 
+(all.model.sex.resid.lmer <- lmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid)) %>% summary()
+
+shapiro.test(residuals(all.model.sex.resid.lmer))
+
 ## sex without colour  (in paper) ----
 (all.model.sex.no.colour.resid <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid.no.colour, family = binomial)) %>% summary()
 car::Anova(all.model.sex.no.colour.resid, type = "II")
+
+(all.model.sex.no.colour.resid.lmer <- lmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid.no.colour)) %>% summary()
+
+shapiro.test(residuals(all.model.sex.no.colour.resid.lmer))
+
 
 ## Rearing enviro model (in paper) ----
 data.all.resid.rear <- data.all.resid %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
 (all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.resid.rear, family = binomial)) %>% summary()
 car::Anova(all.model.rearing, type = "II")
 
+(all.model.rearing.lmer <- lmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.resid.rear)) %>% summary()
+shapiro.test(residuals(all.model.rearing.lmer))
 
 # multivariate models (traits, sex, rearing) ----
 
 ## sex and traits (in paper) ----
-(sex.and.triats.resid <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all.resid, family = binomial)) %>% summary()
-Anova(sex.and.triats.resid, type = "II")
+(sex.and.traits.resid <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all.resid, family = binomial)) %>% summary()
+Anova(sex.and.traits.resid, type = "II")
+
+sex.and.traits.resid.lmer <- lmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all.resid)
+shapiro.test(residuals(sex.and.traits.resid.lmer))
 
 ## sex and rear (in paper) ----
 (sex.and.rear.resid <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.resid.rear, family = binomial)) %>% summary()
 Anova(sex.and.rear.resid, type = 2)
+
+(sex.and.rear.resid.lmer <- lmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.resid.rear)) %>% summary()
+shapiro.test(residuals(sex.and.rear.resid.lmer))
 
 # Determinants models ----
 ## Ecology models ----
@@ -520,9 +545,15 @@ data.for.ecology.models.resid <- data.for.ecology.models.resid %>% filter(Sex %i
 (ecology.full.resid <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models.resid, family = binomial)) %>% summary()
 car::Anova(ecology.full.resid, type = "II")
 
+(ecology.full.resid.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models.resid)) %>% summary()
+shapiro.test(resid(ecology.full.resid.lmer))
+
 ## remove the interaction (in paper)
 (ecology.full.resid <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models.resid, family = binomial)) %>% summary()
 car::Anova(ecology.full.resid, type = "II")
+
+(ecology.full.resid.lmer <- lmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models.resid)) %>% summary()
+shapiro.test(residuals(ecology.full.resid.lmer))
 
 ## Intro models ----
 # (Note that I deleted the old intro file - 2022-02-09 - this is only intro broad)
@@ -536,6 +567,8 @@ data.for.intro.models.broad.resid <- data.for.intro.models.broad.resid %>% filte
 (intro.full.broad.resid <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad.resid, family = binomial)) %>% summary()
 car::Anova(intro.full.broad.resid, type = "II")
 
+intro.full.broad.resid.lmer <- lmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad.resid)
+shapiro.test(residuals(intro.full.broad.resid.lmer))
 
 ## Evolutionary history models ----
 # (These are all singular fits)
@@ -560,6 +593,8 @@ car::Anova(evolhist.glm.resid, type = "II")
 # try w lmer
 (evolhist.full.lmer.resid <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models.resid)) %>% summary()
 Anova(evolhist.full.lmer.resid, type = 3)
+
+shapiro.test(residuals(evolhist.full.lmer.resid))
 
 # tri w glm
 (evolhist.full.glm.resid <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
