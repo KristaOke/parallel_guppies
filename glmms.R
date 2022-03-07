@@ -185,6 +185,9 @@ data.all.no.colour.n <- data.all.n %>%
 data.all.n<-data.all.n %>% 
   filter(Sex %in% c("M", "F"))
 
+data.all.rear.n <- data.all.n %>% 
+  filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+
 ## determinants models
 data.for.ecology.models.n<-rbind(data.all.n,data.south.n) %>%
   arrange(TraitID) %>% #puts them in a nice order
@@ -211,9 +214,83 @@ data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
   ungroup()
 
 ## Sample Size Models ----
+###NOTE all with Other as of right now
 
+##single factor models
+## trait type model (in paper)
+(all.model.traits <- glmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.n, family = binomial,
+                           glmerControl(optimizer = nmkbw))) %>% 
+  summary() #singular
+car::Anova(all.model.traits, type = "II")
 
+## Rearing enviro model (in paper)
 
+(all.model.rearing <- glmer(R.2 ~ StudyType + meanNumber + (1|StudyID), data = data.all.rear.n, family = binomial)) %>% 
+  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
+car::Anova(all.model.rearing, type = "II")
+
+## sex with colour (in paper)
+(all.model.sex <- glmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.n, family = binomial)) %>% 
+  summary() #no sig effects (without studyID sex is p = 0.525)
+car::Anova(all.model.sex, type = "II")
+
+## sex without colour  (in paper)
+(all.model.sex.no.colour <- glmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.no.colour.n, family = binomial)) %>% 
+  summary() #no sig effects (without StudyID same)
+car::Anova(all.model.sex.no.colour, type = "II")
+
+## Multivariate Models
+## sex and traits (in paper)
+#singular with StudyID as a random factor or just meanNumber as fixed
+(sex.and.traits <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|meanNumber), data = data.all.n, family = binomial)) %>% 
+  summary() #phys and colour traits significant
+car::Anova(sex.and.traits, type = "II") #traits significant
+
+## sex and rear (in paper)
+#keeping formula to match sex.and.traits
+(sex.and.rear <- glmer(R.2 ~ StudyType + Sex + (1|meanNumber), data = data.all.rear.n, family = binomial)) %>% 
+  summary()
+car::Anova(sex.and.rear, type = "II") #nothing sig
+
+##Determinant Models
+
+## Ecology model (in paper)
+(ecology.full <- glmer(R.2 ~ method*Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
+  summary() #singular, sex significant
+
+## remove the interaction (in paper)
+(ecology.full <- glmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
+  summary() #singular, sex significant
+
+#(ecology.full <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n, family = binomial)) %>% summary()
+#singular, sex significant
+
+## Intro model (in paper)
+(intro.full.broad <- glmer(R.2 ~ method + meanNumber + (1|StudyID), data = data.for.intro.models.broad.n, family = binomial)) %>% 
+  summary() #singular  ### indicates sample size is significant
+#allFit(intro.full.broad)
+
+#(intro.full.broad <- glmer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n, family = binomial)) %>% summary() 
+#singular, nothing sig
+
+## Evolutionary history model w interaction (in paper)
+(evolhist.full <- glmer(R.2 ~ method * Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #fail to converge, nothing sig
+allFit(evolhist.full) #singular fits
+
+#(evolhist.full <- glmer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
+#singular, sex sig
+
+## interaction removed wout interaction (in paper)
+(evolhist.full <- glmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #singular, method sig.
+
+#(evolhist.full <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
+#singular, method sig. and sex sig.
+
+## Evolutionary history model as a GLM (in paper)
+(evolhist.glm <- glm(R.2 ~ method + meanNumber + StudyID, data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #nothing sig
 
 ####################################################################################
 ## then we can bind them together as we wish! First ecology...
