@@ -253,14 +253,16 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 data.all <- data.all %>% filter(!Kingsolver_traits == "Other")
 (data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
 
+data.all <- data.all %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
+data.all <- data.all %>% mutate(Sex = droplevels(Sex)) 
+
+data.all.no.colour <- data.all.no.colour %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
+
 # Overall models (traits, sex, rearing) ----
 
-## remove other (because model below will not converge with other)
-
 ## Trait type model (in paper) ----
-data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
-                           data = data.all.traits, family = binomial)) %>% summary()
+                           data = data.all, family = binomial)) %>% summary()
 car::Anova(all.model.traits, type = "II")
 
 
@@ -297,6 +299,8 @@ data.for.ecology.models$method <- as.factor(data.for.ecology.models$method)
 
 ### Remove 'Both' sex category because duplicates
 data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
+data.for.ecology.models <- data.all %>% mutate(Sex = droplevels(Sex)) 
+
 
 ## Ecology model (in paper)
 (ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
@@ -315,6 +319,7 @@ data.for.intro.models.broad$method <- as.factor(data.for.intro.models.broad$meth
 
 ### Remove 'Both' sex category because duplicates
 data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c("M", "F"))  
+data.for.intro.models.broad <- data.for.intro.models.broad %>% mutate(Sex = droplevels(Sex)) 
 
 ## Intro model (in paper)
 (intro.full.broad <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
@@ -329,6 +334,7 @@ data.for.evolhist.models$method <- as.factor(data.for.evolhist.models$method)
 
 ## Remove 'Both' sex category because duplicates
 data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
+data.for.evolhist.models <- data.for.evolhist.models %>% mutate(Sex = droplevels(Sex)) 
 
 ## Evolutionary history model w interaction (in paper)
 (evolhist.full <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
