@@ -393,25 +393,27 @@ Rdat_intros<-full_output(dat = output_intros, resampleDat = resample_intros)
 #write results to a csv file for further analyses DONT FORGET TO MOVE AND OVERWRITE saves inside repo not data folder
 
 #this is the overall R2, all studies and traits included
-Rdat_all<-full_output(dat = output_all, resampleDat = resample_all)
+Rdat_all<-read.csv(file = '../Data/Resample_among.csv')
 #write.table(Rdat_all, file = "Resample_among.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
 # for the south only (Slope Q)
-Rdat_south<-full_output(dat = output_south, resampleDat = resample_south)
+Rdat_south<-read.csv(file = '../Data/Resample_South.csv')
 #write.table(Rdat_south, file = "Resample_South.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
 # for the caroni only (drainage Q)
-Rdat_caroni<-full_output(dat = output_caroni, resampleDat = resample_caroni)
+Rdat_caroni<-read.csv(file = '../Data/Resample_Caroni.csv')
 #write.table(Rdat_caroni, file = "Resample_Caroni.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
 # for the south only (drainage Q, northern pops excluded because they arent in caroni or oropuche drainages)
-Rdat_south_drainages<-full_output(dat = output_south_drainages, resampleDat = resample_south_drainages)
+Rdat_south_drainages<-read.csv(file = '../Data/Resample_Among_Drainage.csv')
 #write.table(Rdat_south_drainages, file = "Resample_Among_Drainage.csv",row.names=FALSE,col.names=TRUE, sep=",") 
 
 # anova for the natural pops only (drainage Q)
-Rdat_intros<-full_output(dat = output_intros, resampleDat = resample_intros)
+Rdat_intros<-read.csv(file = '../Data/Resample_intro.csv')
 #write.table(Rdat_intros, file = "Resample_intro.csv",row.names=FALSE,col.names=TRUE, sep=",")
 
+#for intros and naturals (drainage Q)
+Rdat_intros_broad<-read.csv(file = '../Data/Resample_intro_broad.csv')
 ```
 
 
@@ -448,7 +450,7 @@ hist(Rdat_all$resid)
 
 plot_a <- ggplot(Rdat_all, aes(R2mean, R.2))
 
-plot_a + geom_point(size=1) + #geom_smooth(method="lm") + 
+plot_a  + geom_point(size=1) + #geom_smooth(method="lm") + 
   geom_abline(intercept = 0, slope = 1) +
   ylab("Actual R² (all)") + xlab("Mean R² (all) expected at random") +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
@@ -526,7 +528,7 @@ plot_i + geom_point(size=1) + #geom_smooth(method="lm") +
   #mytheme_bw() + 
   #scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
-  theme(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
+  theme_bw(plot.margin=unit(c(0.3,0.4,0.3,0.3),"cm"))
 
 ```
 
