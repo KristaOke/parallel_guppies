@@ -305,7 +305,7 @@ car::Anova(evolhist.full.glm, type = "II")
 
 # Sample Size ----
 
-####### IMPORTANT run line 36-74 to restructure and read in data before coming here. ##############
+####### IMPORTANT run line 36-74 to restructure and read in data before coming here. 
 
 ## Sample Size Data Wrangling ----
 # subsets originally in the Tallies code
@@ -505,6 +505,7 @@ data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
 
 ##single factor models
 ## trait type model (in paper)
+
 (all.model.traits.n <- glmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.n, family = binomial,
                            glmerControl(optimizer = nmkbw))) %>% 
   summary() #singular
@@ -529,6 +530,7 @@ car::Anova(all.model.sex.no.colour.n, type = "II")
 ## Multivariate Models
 ## sex and traits (in paper)
 #singular with StudyID as a random factor or just meanNumber as fixed
+
 (sex.and.traits.n <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|meanNumber), data = data.all.n, family = binomial)) %>% 
   summary() #phys and colour traits significant
 car::Anova(sex.and.traits.n, type = "II") #traits significant
@@ -542,6 +544,7 @@ car::Anova(sex.and.rear.n, type = "II") #nothing sig
 ##Determinant Models
 
 ## Ecology model (in paper)
+
 (ecology.full.n <- glmer(R.2 ~ method*Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
   summary() #singular, sex significant
 
@@ -576,6 +579,7 @@ allFit(evolhist.full.n) #singular fits
 #singular, method sig. and sex sig.
 
 ## Evolutionary history model as a GLM (in paper)
+
 (evolhist.glm.n <- glm(R.2 ~ method + meanNumber + StudyID, data = data.for.evolhist.models.n, family = binomial)) %>% 
   summary() #nothing sig
 
