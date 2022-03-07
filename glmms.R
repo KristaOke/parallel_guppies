@@ -248,7 +248,7 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 ## remove other (because model below will not converge with other)
 
 ## Trait type model (in paper) ----
-data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
+#data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
                            data = data.all, family = binomial)) %>% summary()
 car::Anova(all.model.traits, type = "II")
@@ -271,8 +271,8 @@ car::Anova(all.model.rearing, type = "II")
 # multivariate models (traits, sex, rearing) ----
 
 ## sex and traits (in paper) ----
-(sex.and.triats <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
-Anova(sex.and.triats, type = "II")
+(sex.and.traits <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
+Anova(sex.and.traits, type = "II")
 
 ## sex and rear (in paper) ----
 (sex.and.rear <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
