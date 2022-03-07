@@ -1,5 +1,4 @@
 # GLMMs for parallel_guppies! 
-# 2022-02-09 cleaned up
 
 # Libraries ---- 
 library(plyr)
@@ -236,7 +235,12 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 ### as a note and fail safe I would run the grouping with TraitID on the sex specific dfs to make sure theres two traitID entries for each
 
 ## remove 'both'
-(data.all <- data.all %>% filter(Sex %in% c("M", "F"))  ) %>% summary()
+(data.all <- data.all %>% filter(Sex %in% c("M", "F")))
+
+## remove 'other' 
+(data.all <- data.all %>% filter(!Kingsolver_traits == "Other"))
+
+## create a no 'colour' dataset
 (data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
 
 # Overall models (traits, sex, rearing) ----
@@ -246,9 +250,8 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 ## Trait type model (in paper) ----
 data.all.traits <- data.all %>% filter(!Kingsolver_traits == "Other")
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
-                           data = data.all.traits, family = binomial)) %>% summary()
+                           data = data.all, family = binomial)) %>% summary()
 car::Anova(all.model.traits, type = "II")
-
 
 ## sex with colour (in paper) ----
 ## with colour
