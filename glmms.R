@@ -506,8 +506,7 @@ data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
 ##single factor models
 ## trait type model (in paper)
 
-(all.model.traits.n <- glmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.n, family = binomial,
-                           glmerControl(optimizer = nmkbw))) %>% 
+(all.model.traits.n <- glmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.n, family = binomial)) %>% 
   summary() #singular
 car::Anova(all.model.traits.n, type = "II")
 
