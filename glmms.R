@@ -157,8 +157,8 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 data.all <- data.all %>% filter(!Kingsolver_traits == "Other")
 (data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
 
-data.all <- data.all %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
-data.all <- data.all %>% mutate(Sex = droplevels(Sex)) 
+#data.all <- data.all %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
+#data.all <- data.all %>% mutate(Sex = droplevels(Sex)) 
 
 data.all.no.colour <- data.all.no.colour %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
 
@@ -203,7 +203,9 @@ data.for.ecology.models$method <- as.factor(data.for.ecology.models$method)
 
 ### Remove 'Both' sex category because duplicates
 data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
-data.for.ecology.models <- data.all %>% mutate(Sex = droplevels(Sex)) 
+
+# !!!!!!THIS IS THE PROBLEM!!!!!!!
+#data.for.ecology.models <- data.all %>% mutate(Sex = droplevels(Sex)) 
 
 
 ## Ecology model (in paper)
@@ -223,7 +225,7 @@ data.for.intro.models.broad$method <- as.factor(data.for.intro.models.broad$meth
 
 ### Remove 'Both' sex category because duplicates
 data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c("M", "F"))  
-data.for.intro.models.broad <- data.for.intro.models.broad %>% mutate(Sex = droplevels(Sex)) 
+#data.for.intro.models.broad <- data.for.intro.models.broad %>% mutate(Sex = droplevels(Sex)) 
 
 ## Intro model (in paper)
 (intro.full.broad <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
