@@ -154,12 +154,16 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 
 ## remove 'both'
 (data.all <- data.all %>% filter(Sex %in% c("M", "F")))
+
+## remove 'other'
 data.all <- data.all %>% filter(!Kingsolver_traits == "Other")
+
+## remove 'colour'
 (data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
 
+## drop the removed levels, just in case 
 data.all <- data.all %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
 data.all <- data.all %>% mutate(Sex = droplevels(Sex)) 
-
 data.all.no.colour <- data.all.no.colour %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
 
 # Overall models (traits, sex, rearing) ----
@@ -188,8 +192,8 @@ car::Anova(all.model.rearing, type = "II")
 # multivariate models (traits, sex, rearing) ----
 
 ## sex and traits (in paper) ----
-(sex.and.triats <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
-Anova(sex.and.triats, type = "II")
+(sex.and.traits <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
+Anova(sex.and.traits, type = "II")
 
 ## sex and rear (in paper) ----
 (sex.and.rear <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
@@ -1791,7 +1795,7 @@ anova(gammTraits$lme)
 plot(gammTraits$gam, all.terms = TRUE)
 plot(gammTraits$lme)
 
-drop1(sex.and.triats)
+drop1(sex.and.traits)
 
 
 # I have no idea what any of the above is showing atm 
@@ -2149,7 +2153,7 @@ anova(gammTraits$lme)
 plot(gammTraits$gam, all.terms = TRUE)
 plot(gammTraits$lme)
 
-drop1(sex.and.triats)
+drop1(sex.and.traits)
 
 
 
