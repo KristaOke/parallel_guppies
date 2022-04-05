@@ -268,22 +268,17 @@ car::Anova(evolhist.full, type = "II") # anova to get Chi-sq
 
 car::Anova(evolhist.full, type = "II") # anova to get Chi-sq
 
-### Evolhist GLM (in paper) ----
-(evolhist.glm <- glm(R.2 ~ method + StudyID, data = data.for.evolhist.models, family = binomial)) %>% summary()
-
-car::Anova(evolhist.glm, type = "II") # anova to get Chi-sq
-
 ### Troubleshooting Evolutionary history----
 #### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
 
 summary(evolhist.full) # GLMM from above - the one that is singular
 
-#### try w lmer
+#### evolhist lmm (in paper) ----
 (evolhist.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models)) %>% summary()
 
 Anova(evolhist.full.lmer, type = 3) # anova to get Chi-sq
 
-#### try w glm
+#### evolhist glm (in paper) ----
 (evolhist.full.glm <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
 
 car::Anova(evolhist.full.glm, type = 3) # anova to get Chi-sq
