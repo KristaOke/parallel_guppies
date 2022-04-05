@@ -161,7 +161,7 @@ data.all <- data.all %>% filter(!Kingsolver_traits == "Other")
 ## remove 'colour'
 (data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
 
-## drop the removed levels, just in case 
+## drop the unused levels, just in case 
 data.all <- data.all %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
 data.all <- data.all %>% mutate(Sex = droplevels(Sex)) 
 data.all.no.colour <- data.all.no.colour %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
@@ -171,35 +171,39 @@ data.all.no.colour <- data.all.no.colour %>% mutate(Kingsolver_traits = dropleve
 ## Trait type model (in paper) ----
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
                            data = data.all, family = binomial)) %>% summary()
-car::Anova(all.model.traits, type = "II")
 
+car::Anova(all.model.traits, type = "II") # anova to get Chi-sq
 
 ## sex with colour (in paper) ----
-## with colour
 (all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
-car::Anova(all.model.sex, type = "II")
+
+car::Anova(all.model.sex, type = "II") # anova to get Chi-sq
 
 ## sex without colour  (in paper) ----
 (all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
-car::Anova(all.model.sex.no.colour, type = "II")
+
+car::Anova(all.model.sex.no.colour, type = "II") # anova to get Chi-sq
 
 ## Rearing enviro model (in paper) ----
 data.all.rear <- data.all %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
 (all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
-car::Anova(all.model.rearing, type = "II")
 
+car::Anova(all.model.rearing, type = "II") # anova to get Chi-sq
 
 # multivariate models (traits, sex, rearing) ----
 
 ## sex and traits (in paper) ----
 (sex.and.traits <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
-Anova(sex.and.traits, type = "II")
+
+Anova(sex.and.traits, type = "II") # anova to get Chi-sq
 
 ## sex and rear (in paper) ----
 (sex.and.rear <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
-Anova(sex.and.rear, type = 2)
+
+Anova(sex.and.rear, type = 2) # anova to get Chi-sq
 
 # Determinants models ----
+
 ## Ecology models ----
 
 ### fix structure
@@ -208,74 +212,81 @@ data.for.ecology.models$method <- as.factor(data.for.ecology.models$method)
 ### Remove 'Both' sex category because duplicates
 data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
 
+### Drop unused 'sex' level
 data.for.ecology.models <- data.for.ecology.models %>% mutate(Sex = droplevels(Sex)) 
 
-## If you run this it will be singular 
+### Remove 'other' traits
+### IF YOU RUN THIS (W/OUT OTHER) IT WILL BE SINGULAR
 data.for.ecology.models <- data.for.ecology.models %>% filter(!Kingsolver_traits == "Other") 
+
+### Drop unused trait level ('other')
 data.for.ecology.models <- data.for.ecology.models %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
 
-## Ecology model (in paper)
+### Ecology model (in paper) ----
 (ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
-car::Anova(ecology.full, type = "II")
-qqnorm(resid(ecology.full))
-qqline(resid(ecology.full))
 
-## remove the interaction (in paper)
+car::Anova(ecology.full, type = "II") # anova to get Chi-sq
+
+### Ecology without interaction (in paper) ----
 (ecology.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
-car::Anova(ecology.full, type = "II")
 
-## Intro models ----
-# (Note that I deleted the old intro file - 2022-02-09 - this is only intro broad)
-## Fix structure
+car::Anova(ecology.full, type = "II") # anova to get Chi-sq
+
+## Intro models (broad) ----
+### Fix structure
 data.for.intro.models.broad$method <- as.factor(data.for.intro.models.broad$method)
 
 ### Remove 'Both' sex category because duplicates
 data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c("M", "F"))  
+
+### Drop unused level
 data.for.intro.models.broad <- data.for.intro.models.broad %>% mutate(Sex = droplevels(Sex)) 
 
-## Intro model (in paper)
+### Intro model (in paper) ----
 (intro.full.broad <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
 car::Anova(intro.full.broad, type = "II")
 
-
 ## Evolutionary history models ----
-# (These are all singular fits)
+### (These are all singular fits)
 
-## fix structure
+### fix structure
 data.for.evolhist.models$method <- as.factor(data.for.evolhist.models$method)
 
-## Remove 'Both' sex category because duplicates
+### Remove 'Both' sex category because duplicates
 data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
+
+### Drop unused 'sex' level
 data.for.evolhist.models <- data.for.evolhist.models %>% mutate(Sex = droplevels(Sex)) 
 
-## Evolutionary history model w interaction (in paper)
+### Evolutionary history model w interaction (in paper) ----
 (evolhist.full <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
-car::Anova(evolhist.full, type = "II")
 
-## interaction removed wout interaction (in paper)
+car::Anova(evolhist.full, type = "II") # anova to get Chi-sq
+
+### Evolhist without interaction (in paper) ----
 (evolhist.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
-car::Anova(evolhist.full, type = "II")
 
+car::Anova(evolhist.full, type = "II") # anova to get Chi-sq
+
+### Evolhist GLM (in paper) ----
 (evolhist.glm <- glm(R.2 ~ method + StudyID, data = data.for.evolhist.models, family = binomial)) %>% summary()
-car::Anova(evolhist.glm, type = "II")
 
+car::Anova(evolhist.glm, type = "II") # anova to get Chi-sq
 
 ### Troubleshooting Evolutionary history----
-### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
+#### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
 
-### This is singular (need to decide with this one)
+summary(evolhist.full) # GLMM from above - the one that is singular
 
-summary(evolhist.full) # GLMM above
-
-# try w lmer
+#### try w lmer
 (evolhist.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models)) %>% summary()
-Anova(evolhist.full.lmer, type = 3)
 
-# try w glm
+Anova(evolhist.full.lmer, type = 3) # anova to get Chi-sq
+
+#### try w glm
 (evolhist.full.glm <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
 
-car::Anova(evolhist.full.lmer, type = "II")
-car::Anova(evolhist.full.glm, type = "II")
+car::Anova(evolhist.full.glm, type = 3) # anova to get Chi-sq
 
 # Other means etc reported in text ----
 
@@ -309,7 +320,6 @@ car::Anova(evolhist.full.glm, type = "II")
 ## Evolhist
 (one_drainage <- data.for.evolhist.models %>% filter(method == "caroni")) %>% summary()
 (both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")) %>% summary()
-
 
 # Sample Size ----
 
