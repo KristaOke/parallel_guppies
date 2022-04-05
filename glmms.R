@@ -290,7 +290,7 @@ car::Anova(evolhist.full.glm, type = 3) # anova to get Chi-sq
 
 # Other means etc reported in text ----
 
-# Traits
+## Traits
 (Colourtrait <- data.all %>% filter(Kingsolver_traits == "Colour")) %>% summary()
 (LHtrait <- data.all %>% filter(Kingsolver_traits == "Other_life_history")) %>% summary()
 (Sizetrait <- data.all %>% filter(Kingsolver_traits == "Size")) %>% summary()
@@ -299,12 +299,12 @@ car::Anova(evolhist.full.glm, type = 3) # anova to get Chi-sq
 (Phystrait <- data.all %>% filter(Kingsolver_traits == "Physiology")) %>% summary()
 (Behavtrait <- data.all %>% filter(Kingsolver_traits == "Behaviour")) %>% summary()
 
-# Sex
+## Sex
 (Malewithcolour <- data.all %>% filter(Sex == "M")) %>% summary()
 (Malenocolour <- data.all.no.colour %>% filter(Sex == "M")) %>% summary()
 (Femalesex <- data.all %>% filter(Sex == "F")) %>% summary()
 
-# Rearing enviro
+## Rearing enviro
 (cg <- data.all %>% filter(StudyType == "Common Garden (F2)")) %>% summary()
 (wc <- data.all %>% filter(StudyType == "Wildcaught")) %>% summary()
 
@@ -871,7 +871,7 @@ evolhist_box_cow
 fig5 <- cowplot::plot_grid(ecology_box_cow, evolhist_box_cow, intro_box_cow, nrow = 1,
                            align = "hv", axis = "tblr",
                            rel_widths = c(1,1,1))
-#tiff("pg.fig5.tiff", res= 600, units = "in", height = 6, width =8)
+# tiff("pg.fig5.tiff", res= 600, units = "in", height = 6, width =8)
 fig5
 dev.off()
 
@@ -1226,7 +1226,13 @@ sex_facet_hist
 
 # Sample Size ----
 
-####### IMPORTANT run line 36-74 to restructure and read in data before coming here. 
+##%######################################################%##
+#                                                          #
+####      IMPORTANT run line 36-74 to restructure       ####
+####        and read in data before coming here.        ####
+#                                                          #
+##%######################################################%##
+ 
 
 ## Sample Size Data Wrangling ----
 # subsets originally in the Tallies code
