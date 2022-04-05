@@ -273,15 +273,29 @@ car::Anova(evolhist.full, type = "II") # anova to get Chi-sq
 
 summary(evolhist.full) # GLMM from above - the one that is singular
 
+#### evolhist glm (in paper) ----
+#### (with interaction)
+(evolhist.full.glm <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
+
+car::Anova(evolhist.full.glm, type = 3) # anova to get Chi-sq
+
+#### (without interaction)
+(evolhist.full.glm <- glm(R.2 ~ method + Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
+
+car::Anova(evolhist.full.glm, type = 3) # anova to get Chi-sq
+
+
 #### evolhist lmm (in paper) ----
+#### (with interaction)
 (evolhist.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models)) %>% summary()
 
 Anova(evolhist.full.lmer, type = 3) # anova to get Chi-sq
 
-#### evolhist glm (in paper) ----
-(evolhist.full.glm <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
+#### (without interaction)
+(evolhist.full.lmer <- lmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models)) %>% summary()
 
-car::Anova(evolhist.full.glm, type = 3) # anova to get Chi-sq
+Anova(evolhist.full.lmer, type = 3) # anova to get Chi-sq
+
 
 # Other means etc reported in text ----
 
