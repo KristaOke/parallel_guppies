@@ -1427,6 +1427,94 @@ data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
   filter(Sex %in% c("M", "F")) %>%
   ungroup()
 
+# THESE ARE THE ONES ALEXIS DID TO REMOVE STUDY ID FROM THE MODELS
+# THE ONES ALLEGRA DID THAT MORE SIMILARLY STRUCUTRE THE REAL MODELS ARE BELOW
+
+## Sample Size Models ----
+###NOTE all with Other as of right now
+
+##single factor models
+## trait type model (in paper)
+
+(all.model.traits.n <- glm(R.2 ~ Kingsolver_traits + meanNumber, data = data.all.n, family = binomial)) %>% 
+  summary() 
+car::Anova(all.model.traits.n, type = "II")
+
+## Rearing enviro model (in paper)
+
+(all.model.rearing.n <- glm(R.2 ~ StudyType + meanNumber, data = data.all.rear.n, family = binomial)) %>% 
+  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
+car::Anova(all.model.rearing.n, type = "II")
+
+## sex with colour (in paper)
+(all.model.sex.n <- glm(R.2 ~ Sex + meanNumber, data = data.all.n, family = binomial)) %>% 
+  summary() #no sig effects (without studyID sex is p = 0.525)
+car::Anova(all.model.sex.n, type = "II")
+
+## sex without colour  (in paper)
+(all.model.sex.no.colour.n <- glm(R.2 ~ Sex + meanNumber, data = data.all.no.colour.n, family = binomial)) %>% 
+  summary() #no sig effects (without StudyID same)
+car::Anova(all.model.sex.no.colour.n, type = "II")
+
+## Multivariate Models
+## sex and traits (in paper)
+(sex.and.traits.n <- glm(R.2 ~ Kingsolver_traits + Sex + meanNumber, data = data.all.n, family = binomial)) %>% 
+  summary() #colour traits significant
+car::Anova(sex.and.traits.n, type = "II") #traits significant
+
+## sex and rear (in paper)
+(sex.and.rear.n <- glm(R.2 ~ StudyType + Sex + meanNumber, data = data.all.rear.n, family = binomial)) %>% 
+  summary()
+car::Anova(sex.and.rear.n, type = "II") #nothing sig
+
+##Determinant Models
+
+## Ecology model (in paper)
+
+(ecology.full.n <- glm(R.2 ~ method*Sex + meanNumber, data = data.for.ecology.models.n, family = binomial)) %>% 
+  summary() #singular, sex significant
+Anova(ecology.full.n, type = 2)
+## remove the interaction (in paper)
+(ecology.full.n <- glm(R.2 ~ method + Sex + meanNumber, data = data.for.ecology.models.n, family = binomial)) %>% 
+  summary() #singular, sex significant
+Anova(ecology.full.n, type = 2)
+
+#(ecology.full.n <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n, family = binomial)) %>% summary()
+#singular, sex significant
+
+## Intro model (in paper)
+(intro.full.broad.n <- glm(R.2 ~ method + meanNumber, data = data.for.intro.models.broad.n, family = binomial)) %>% 
+  summary() #singular  ### indicates sample size is significant
+#allFit(intro.full.broad.n)
+Anova(intro.full.broad.n, type = 2)
+
+#(intro.full.broad.n <- glmer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n, family = binomial)) %>% summary() 
+#singular, nothing sig
+
+## Evolutionary history model w interaction (in paper)
+(evolhist.full.n <- glm(R.2 ~ method * Sex + meanNumber, data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #fail to converge, nothing sig
+Anova(evolhist.full.n, type = 2)
+
+allFit(evolhist.full.n) #singular fits
+
+#(evolhist.full.n <- glmer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
+#singular, sex sig
+
+## interaction removed wout interaction (in paper)
+(evolhist.full.n <- glm(R.2 ~ method + Sex + meanNumber, data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #singular, method sig.
+Anova(evolhist.full.n, type = 2)
+#(evolhist.full <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
+#singular, method sig. and sex sig.
+
+## Evolutionary history model as a GLM (in paper)
+
+(evolhist.glm.n <- glm(R.2 ~ method + meanNumber, data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #nothing sig
+
+
+# THESE ARE THE ONES ALLEGRA DID TO MIMIC THE STRUCTURE OF MODELS IN THE PAPER
 ## Sample Size Models ----
 ###NOTE all with Other as of right now
 
