@@ -321,285 +321,6 @@ car::Anova(evolhist.full.glm, type = 3) # anova to get Chi-sq
 (one_drainage <- data.for.evolhist.models %>% filter(method == "caroni")) %>% summary()
 (both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")) %>% summary()
 
-# Sample Size ----
-
-####### IMPORTANT run line 36-74 to restructure and read in data before coming here. 
-
-## Sample Size Data Wrangling ----
-# subsets originally in the Tallies code
-
-ids<-spreadsheet.data %>%
-  group_by(TraitID, Slope, Predation) %>%
-  tally() %>% #tallies how many populations in high and low for each Slope within a trait
-  group_by(TraitID) %>% 
-  filter(length(unique(Slope))>1) %>% #selects traits with multiple slopes
-  filter(Slope == "South") %>% #select only South pops to determine which traits are viable
-  filter(n>1) %>%
-  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
-  filter(!duplicated(TraitID)) %>% 
-  dplyr::select(TraitID)
-
-traits_s<-spreadsheet.data %>% 
-  filter(TraitID %in% ids$TraitID) %>% 
-  filter(Slope== "South") # 204 traits, done and on drive
-
-ids_south<-spreadsheet.data %>%
-  group_by(TraitID, Slope, Predation) %>%
-  tally() %>% 
-  group_by(TraitID) %>% 
-  filter(Slope == "South") %>%
-  filter(n>1) %>%
-  filter(length(unique(Predation))>1) %>%
-  filter(!duplicated(TraitID)) %>% 
-  dplyr::select(TraitID) #432 traits total, use this to select traits with enough south pops to be viable for drainage analysis
-
-ids_d<-spreadsheet.data %>%
-  filter(TraitID %in% ids_south$TraitID) %>% 
-  filter(Slope == "South") %>% #only use south pops
-  group_by(TraitID, Drainage, Predation) %>%
-  tally() %>% #tallies how many populations in high and low for each driange within a trait
-  group_by(TraitID) %>% 
-  filter(length(unique(Drainage))>1) %>% #selects traits with both drainages
-  filter(Drainage == "Caroni") %>% #select only caroni pops to determine which traits are viable
-  filter(n>1) %>%
-  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
-  filter(!duplicated(TraitID)) %>% 
-  dplyr::select(TraitID)
-
-traits_d<-spreadsheet.data %>%
-  filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
-  filter(Drainage == "Caroni") # 317 traits
-
-#this will be used as the among drainage comparisons to control for variation between slopes
-traits_d_all<-spreadsheet.data %>%
-  filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
-  filter(Slope == "South")
-
-#Introductions
-ids_i<-spreadsheet.data %>% 
-  group_by(TraitID, Poptype, Predation) %>%
-  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
-  group_by(TraitID) %>% 
-  filter(length(unique(Poptype))>1) %>% #selects traits with both natural and introduction populations
-  filter(Poptype == "Natural") %>% #select only natural pops to determine which traits are viable
-  filter(n>1) %>%
-  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
-  filter(!duplicated(TraitID)) %>% 
-  dplyr::select(TraitID)
-
-traits_i<-spreadsheet.data %>% 
-  filter(TraitID %in% ids_i$TraitID) %>% 
-  filter(Poptype == "Natural") #209 traits, done and on drive
-
-ids_i_broad<-spreadsheet.data %>% 
-  group_by(TraitID, Poptype_broad, Predation) %>%
-  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
-  group_by(TraitID) %>% 
-  filter(length(unique(Poptype_broad))>1) %>% #selects traits with both natural and introduction populations
-  filter(Poptype_broad == "Natural") %>% #select only natural pops to determine which traits are viable
-  filter(n>1) %>%
-  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
-  filter(!duplicated(TraitID)) %>% 
-  dplyr::select(TraitID)
-
-traits_i_broad<-spreadsheet.data %>% 
-  filter(TraitID %in% ids_i_broad$TraitID) %>% 
-  filter(Poptype_broad == "Natural") #219 traits, done and on drive
-
-#(Number averaged per trait), done for each subset
-
-n_all<-spreadsheet.data %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
-
-data.all.n<-inner_join(spreadsheet.data, R2.data.among, by = "TraitID") %>% 
-  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(y = n_all, by = "TraitID") %>% 
-  filter(!is.na(meanNumber))
-
-#south slope only traits (slope Q)
-n_s<-traits_s %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
-
-data.south.n <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>% 
-  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(n_s, by = "TraitID")  %>% 
-  filter(!is.na(meanNumber))
-
-
-#caroni drainage only traits (drainage Q)
-n_d<-traits_d %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
-
-data.caroni.n <- inner_join(spreadsheet.data, R2.data.caroni, by = "TraitID") %>% 
-  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(n_d, by = "TraitID")  %>% 
-  filter(!is.na(meanNumber))
-
-# south drainages only (drainage Q)
-n_d_all<-traits_d_all %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
-
-data.among.drainage.n <- inner_join(spreadsheet.data, R2.data.among.drainage, by = "TraitID") %>% 
-  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(n_d_all, by = "TraitID")  %>% 
-  filter(!is.na(meanNumber))
-
-# intro broad (introduction Q)
-n_i_broad<-traits_i_broad %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
-
-data.intro.broad.n <- inner_join(spreadsheet.data, R2.data.intro.broad, by = "TraitID") %>% 
-  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(n_i_broad, by = "TraitID")  %>% 
-  filter(!is.na(meanNumber))
-
-#intros (introduction Q) not used
-#n_i<-traits_i %>% 
-#group_by(TraitID) %>% 
-#summarize(meanNumber = mean(Number)) %>% 
-#mutate(TraitID = as.factor(TraitID))
-
-#data.intro.n <- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
-#dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
-#distinct(TraitID, .keep_all = TRUE) %>% 
-#left_join(n_i, by = "TraitID")  %>% 
-#filter(!is.na(meanNumber))
-
-
-## Sample Size dfs for models ----
-## trait types and sex
-data.all.no.colour.n <- data.all.n %>% 
-  filter(Sex %in% c("M", "F")) %>% 
-  filter(!Kingsolver_traits == 'Colour')
-
-data.all.n<-data.all.n %>% 
-  filter(Sex %in% c("M", "F"))
-
-data.all.rear.n <- data.all.n %>% 
-  filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
-
-## determinants models
-data.for.ecology.models.n<-rbind(data.all.n,data.south.n) %>%
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) %>%  #filters only trait IDs that have more than 1 entry within the group (n = 162 traits)
-  mutate(method = as.factor(method)) %>% # fix structure
-  filter(Sex %in% c("M", "F")) %>%
-  ungroup()
-
-data.for.evolhist.models.n<-rbind(data.caroni.n,data.among.drainage.n) %>%
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) %>% #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
-  mutate(method = as.factor(method)) %>% # fix structure
-  filter(Sex %in% c("M", "F")) %>%
-  ungroup()
-
-data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) %>% #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
-  mutate(method = as.factor(method)) %>% # fix structure
-  filter(Sex %in% c("M", "F")) %>%
-  ungroup()
-
-## Sample Size Models ----
-###NOTE all with Other as of right now
-
-##single factor models
-## trait type model (in paper)
-
-(all.model.traits.n <- glmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.n, family = binomial)) %>% 
-  summary() #singular
-car::Anova(all.model.traits.n, type = "II")
-
-## Rearing enviro model (in paper)
-
-(all.model.rearing.n <- glmer(R.2 ~ StudyType + meanNumber + (1|StudyID), data = data.all.rear.n, family = binomial)) %>% 
-  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
-car::Anova(all.model.rearing.n, type = "II")
-
-## sex with colour (in paper)
-(all.model.sex.n <- glmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.n, family = binomial)) %>% 
-  summary() #no sig effects (without studyID sex is p = 0.525)
-car::Anova(all.model.sex.n, type = "II")
-
-## sex without colour  (in paper)
-(all.model.sex.no.colour.n <- glmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.no.colour.n, family = binomial)) %>% 
-  summary() #no sig effects (without StudyID same)
-car::Anova(all.model.sex.no.colour.n, type = "II")
-
-## Multivariate Models
-## sex and traits (in paper)
-#singular with StudyID as a random factor or just meanNumber as fixed
-
-(sex.and.traits.n <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|meanNumber), data = data.all.n, family = binomial)) %>% 
-  summary() #phys and colour traits significant
-car::Anova(sex.and.traits.n, type = "II") #traits significant
-
-## sex and rear (in paper)
-#keeping formula to match sex.and.traits
-(sex.and.rear.n <- glmer(R.2 ~ StudyType + Sex + (1|meanNumber), data = data.all.rear.n, family = binomial)) %>% 
-  summary()
-car::Anova(sex.and.rear.n, type = "II") #nothing sig
-
-##Determinant Models
-
-## Ecology model (in paper)
-
-(ecology.full.n <- glmer(R.2 ~ method*Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
-  summary() #singular, sex significant
-
-## remove the interaction (in paper)
-(ecology.full.n <- glmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
-  summary() #singular, sex significant
-
-#(ecology.full.n <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n, family = binomial)) %>% summary()
-#singular, sex significant
-
-## Intro model (in paper)
-(intro.full.broad.n <- glmer(R.2 ~ method + meanNumber + (1|StudyID), data = data.for.intro.models.broad.n, family = binomial)) %>% 
-  summary() #singular  ### indicates sample size is significant
-#allFit(intro.full.broad.n)
-
-#(intro.full.broad.n <- glmer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n, family = binomial)) %>% summary() 
-#singular, nothing sig
-
-## Evolutionary history model w interaction (in paper)
-(evolhist.full.n <- glmer(R.2 ~ method * Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n, family = binomial)) %>% 
-  summary() #fail to converge, nothing sig
-allFit(evolhist.full.n) #singular fits
-
-#(evolhist.full.n <- glmer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
-#singular, sex sig
-
-## interaction removed wout interaction (in paper)
-(evolhist.full.n <- glmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n, family = binomial)) %>% 
-  summary() #singular, method sig.
-
-#(evolhist.full <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
-#singular, method sig. and sex sig.
-
-## Evolutionary history model as a GLM (in paper)
-
-(evolhist.glm.n <- glm(R.2 ~ method + meanNumber + StudyID, data = data.for.evolhist.models.n, family = binomial)) %>% 
-  summary() #nothing sig
-
 # figures in manuscript ----
 
 ## figure 1 is map 
@@ -1503,6 +1224,284 @@ sex_facet_hist <- sex_facet_hist + cowplot::draw_label("Frequency (%)", x=  0, y
 sex_facet_hist
 #dev.off()
 
+# Sample Size ----
+
+####### IMPORTANT run line 36-74 to restructure and read in data before coming here. 
+
+## Sample Size Data Wrangling ----
+# subsets originally in the Tallies code
+
+ids<-spreadsheet.data %>%
+  group_by(TraitID, Slope, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for each Slope within a trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Slope))>1) %>% #selects traits with multiple slopes
+  filter(Slope == "South") %>% #select only South pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  dplyr::select(TraitID)
+
+traits_s<-spreadsheet.data %>% 
+  filter(TraitID %in% ids$TraitID) %>% 
+  filter(Slope== "South") # 204 traits, done and on drive
+
+ids_south<-spreadsheet.data %>%
+  group_by(TraitID, Slope, Predation) %>%
+  tally() %>% 
+  group_by(TraitID) %>% 
+  filter(Slope == "South") %>%
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>%
+  filter(!duplicated(TraitID)) %>% 
+  dplyr::select(TraitID) #432 traits total, use this to select traits with enough south pops to be viable for drainage analysis
+
+ids_d<-spreadsheet.data %>%
+  filter(TraitID %in% ids_south$TraitID) %>% 
+  filter(Slope == "South") %>% #only use south pops
+  group_by(TraitID, Drainage, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for each driange within a trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Drainage))>1) %>% #selects traits with both drainages
+  filter(Drainage == "Caroni") %>% #select only caroni pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  dplyr::select(TraitID)
+
+traits_d<-spreadsheet.data %>%
+  filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
+  filter(Drainage == "Caroni") # 317 traits
+
+#this will be used as the among drainage comparisons to control for variation between slopes
+traits_d_all<-spreadsheet.data %>%
+  filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
+  filter(Slope == "South")
+
+#Introductions
+ids_i<-spreadsheet.data %>% 
+  group_by(TraitID, Poptype, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Poptype))>1) %>% #selects traits with both natural and introduction populations
+  filter(Poptype == "Natural") %>% #select only natural pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  dplyr::select(TraitID)
+
+traits_i<-spreadsheet.data %>% 
+  filter(TraitID %in% ids_i$TraitID) %>% 
+  filter(Poptype == "Natural") #209 traits, done and on drive
+
+ids_i_broad<-spreadsheet.data %>% 
+  group_by(TraitID, Poptype_broad, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Poptype_broad))>1) %>% #selects traits with both natural and introduction populations
+  filter(Poptype_broad == "Natural") %>% #select only natural pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  dplyr::select(TraitID)
+
+traits_i_broad<-spreadsheet.data %>% 
+  filter(TraitID %in% ids_i_broad$TraitID) %>% 
+  filter(Poptype_broad == "Natural") #219 traits, done and on drive
+
+#(Number averaged per trait), done for each subset
+
+n_all<-spreadsheet.data %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.all.n<-inner_join(spreadsheet.data, R2.data.among, by = "TraitID") %>% 
+  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(y = n_all, by = "TraitID") %>% 
+  filter(!is.na(meanNumber))
+
+#south slope only traits (slope Q)
+n_s<-traits_s %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.south.n <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>% 
+  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_s, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+
+#caroni drainage only traits (drainage Q)
+n_d<-traits_d %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.caroni.n <- inner_join(spreadsheet.data, R2.data.caroni, by = "TraitID") %>% 
+  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_d, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+# south drainages only (drainage Q)
+n_d_all<-traits_d_all %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.among.drainage.n <- inner_join(spreadsheet.data, R2.data.among.drainage, by = "TraitID") %>% 
+  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_d_all, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+# intro broad (introduction Q)
+n_i_broad<-traits_i_broad %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.intro.broad.n <- inner_join(spreadsheet.data, R2.data.intro.broad, by = "TraitID") %>% 
+  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_i_broad, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+#intros (introduction Q) not used
+#n_i<-traits_i %>% 
+#group_by(TraitID) %>% 
+#summarize(meanNumber = mean(Number)) %>% 
+#mutate(TraitID = as.factor(TraitID))
+
+#data.intro.n <- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
+#dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+#distinct(TraitID, .keep_all = TRUE) %>% 
+#left_join(n_i, by = "TraitID")  %>% 
+#filter(!is.na(meanNumber))
+
+
+## Sample Size dfs for models ----
+## trait types and sex
+data.all.no.colour.n <- data.all.n %>% 
+  filter(Sex %in% c("M", "F")) %>% 
+  filter(!Kingsolver_traits == 'Colour')
+
+data.all.n<-data.all.n %>% 
+  filter(Sex %in% c("M", "F"))
+
+data.all.rear.n <- data.all.n %>% 
+  filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+
+## determinants models
+data.for.ecology.models.n<-rbind(data.all.n,data.south.n) %>%
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) %>%  #filters only trait IDs that have more than 1 entry within the group (n = 162 traits)
+  mutate(method = as.factor(method)) %>% # fix structure
+  filter(Sex %in% c("M", "F")) %>%
+  ungroup()
+
+data.for.evolhist.models.n<-rbind(data.caroni.n,data.among.drainage.n) %>%
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) %>% #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+  mutate(method = as.factor(method)) %>% # fix structure
+  filter(Sex %in% c("M", "F")) %>%
+  ungroup()
+
+data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) %>% #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+  mutate(method = as.factor(method)) %>% # fix structure
+  filter(Sex %in% c("M", "F")) %>%
+  ungroup()
+
+## Sample Size Models ----
+###NOTE all with Other as of right now
+
+##single factor models
+## trait type model (in paper)
+
+(all.model.traits.n <- glmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.n, family = binomial)) %>% 
+  summary() #singular
+car::Anova(all.model.traits.n, type = "II")
+
+## Rearing enviro model (in paper)
+
+(all.model.rearing.n <- glmer(R.2 ~ StudyType + meanNumber + (1|StudyID), data = data.all.rear.n, family = binomial)) %>% 
+  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
+car::Anova(all.model.rearing.n, type = "II")
+
+## sex with colour (in paper)
+(all.model.sex.n <- glmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.n, family = binomial)) %>% 
+  summary() #no sig effects (without studyID sex is p = 0.525)
+car::Anova(all.model.sex.n, type = "II")
+
+## sex without colour  (in paper)
+(all.model.sex.no.colour.n <- glmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.no.colour.n, family = binomial)) %>% 
+  summary() #no sig effects (without StudyID same)
+car::Anova(all.model.sex.no.colour.n, type = "II")
+
+## Multivariate Models
+## sex and traits (in paper)
+#singular with StudyID as a random factor or just meanNumber as fixed
+
+(sex.and.traits.n <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|meanNumber), data = data.all.n, family = binomial)) %>% 
+  summary() #phys and colour traits significant
+car::Anova(sex.and.traits.n, type = "II") #traits significant
+
+## sex and rear (in paper)
+#keeping formula to match sex.and.traits
+(sex.and.rear.n <- glmer(R.2 ~ StudyType + Sex + (1|meanNumber), data = data.all.rear.n, family = binomial)) %>% 
+  summary()
+car::Anova(sex.and.rear.n, type = "II") #nothing sig
+
+##Determinant Models
+
+## Ecology model (in paper)
+
+(ecology.full.n <- glmer(R.2 ~ method*Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
+  summary() #singular, sex significant
+
+## remove the interaction (in paper)
+(ecology.full.n <- glmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
+  summary() #singular, sex significant
+
+#(ecology.full.n <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n, family = binomial)) %>% summary()
+#singular, sex significant
+
+## Intro model (in paper)
+(intro.full.broad.n <- glmer(R.2 ~ method + meanNumber + (1|StudyID), data = data.for.intro.models.broad.n, family = binomial)) %>% 
+  summary() #singular  ### indicates sample size is significant
+#allFit(intro.full.broad.n)
+
+#(intro.full.broad.n <- glmer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n, family = binomial)) %>% summary() 
+#singular, nothing sig
+
+## Evolutionary history model w interaction (in paper)
+(evolhist.full.n <- glmer(R.2 ~ method * Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #fail to converge, nothing sig
+allFit(evolhist.full.n) #singular fits
+
+#(evolhist.full.n <- glmer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
+#singular, sex sig
+
+## interaction removed wout interaction (in paper)
+(evolhist.full.n <- glmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #singular, method sig.
+
+#(evolhist.full <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
+#singular, method sig. and sex sig.
+
+## Evolutionary history model as a GLM (in paper)
+
+(evolhist.glm.n <- glm(R.2 ~ method + meanNumber + StudyID, data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #nothing sig
 
 # Residuals ---- 
 
