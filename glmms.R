@@ -1693,7 +1693,7 @@ shapiro.test(data.all.resid$R.2)
 
 ### Trait type model (in paper) ----
 data.all.resid.traits <- data.all.resid %>% filter(!Kingsolver_traits == "Other")
-(all.model.traits.resid <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
+(all.model.traits.resid <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID), 
                                  data = data.all.resid.traits, family = binomial)) %>% summary()
 (all.model.traits.resid.lmer <- lmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
                                      data = data.all.resid.traits)) %>% summary()
