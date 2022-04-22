@@ -158,15 +158,21 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 ## remove 'colour'
 (data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
 
+## remove 'other'
+data.all.no.other <- data.all %>% filter(!Kingsolver_traits == "Other")
+
 ## drop the unused levels, just in case 
 data.all <- data.all %>% mutate(Sex = droplevels(Sex)) 
 data.all.no.colour <- data.all.no.colour %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
+data.all.no.other <- data.all.no.other %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
 
 # Overall models (traits, sex, rearing) ----
 
 ## Trait type model (in paper) ----
+### Exclude 'Other' traits
+
 (all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
-                           data = data.all, family = binomial)) %>% summary()
+                           data = data.all.no.other, family = binomial)) %>% summary()
 
 car::Anova(all.model.traits, type = "II") # anova to get Chi-sq
 
