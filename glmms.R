@@ -1014,6 +1014,189 @@ final.sup.table <- left_join(traits.slopes.drinages.pops, Populations.names)
 
 View(final.sup.table)
 
+## Supplemental table 3 
+
+R2Female <- data.all %>% filter(Sex == "F")
+mean(R2Female$R.2)
+sd(R2Female$R.2)
+
+mean(R2Male.noColour$R.2)
+sd(R2Male.noColour$R.2)
+
+R2Female.Colour <- data.all %>% filter(Sex == "F" &
+                                  Kingsolver_traits == "Colour")
+mean(R2Female.Colour$R.2)
+sd(R2Female.Colour$R.2)
+
+R2Female.Behaviour <- data.all %>% filter(Sex == "F" &
+                                         Kingsolver_traits == "Behaviour")
+mean(R2Female.Behaviour$R.2)
+sd(R2Female.Behaviour$R.2)
+
+R2Female.LH <- data.all %>% filter(Sex == "F" &
+                                            Kingsolver_traits == "Other_life_history")
+mean(R2Female.LH$R.2)
+sd(R2Female.LH$R.2)
+
+R2Female.Size <- data.all %>% filter(Sex == "F" &
+                                     Kingsolver_traits == "Size")
+mean(R2Female.Size$R.2)
+sd(R2Female.Size$R.2)
+
+R2Female.Morph <- data.all %>% filter(Sex == "F" &
+                                        Kingsolver_traits == "Other_morphology")
+mean(R2Female.Morph$R.2)
+sd(R2Female.Morph$R.2)
+
+R2Female.Physiology <- data.all %>% filter(Sex == "F" &
+                                        Kingsolver_traits == "Physiology")
+mean(R2Female.Physiology$R.2)
+sd(R2Female.Physiology$R.2)
+
+R2Female.Other <- data.all %>% filter(Sex == "F" &
+                                       Kingsolver_traits == "Other")
+mean(R2Female.Other$R.2)
+sd(R2Female.Other$R.2)
+
+R2Female.cg <- data.all.rear %>% filter(Sex == "F" &
+                                          StudyType == c("Common Garden (F2)"))
+mean(R2Female.cg$R.2)
+sd(R2Female.cg$R.2)
+
+R2Female.wc <- data.all.rear %>% filter(Sex == "F" &
+                                          StudyType == c("Wildcaught"))
+mean(R2Female.wc$R.2)
+sd(R2Female.wc$R.2)
+                                                           
+
+R2femaleeco.within <- data.for.ecology.models %>% filter(Sex == "F" &
+                                                  method == "south")
+
+mean(R2femaleeco.within$R.2)
+sd(R2femaleeco.within$R.2)
+
+R2femaleeco.between <- data.for.ecology.models %>% filter(Sex == "F" &
+                                                    method == "all")
+
+mean(R2femaleeco.between$R.2)
+sd(R2femaleeco.between$R.2)
+
+R2femaleevo.within <- data.for.evolhist.models %>% filter(Sex == "F" &
+                                                           method == "caroni")
+
+mean(R2femaleevo.within$R.2)
+sd(R2femaleevo.within$R.2)
+
+R2femaleevo.between <- data.for.evolhist.models %>% filter(Sex == "F" &
+                                                            method == "both.drainages")
+
+mean(R2femaleevo.between$R.2)
+sd(R2femaleevo.between$R.2)
+
+R2femaletime.within <- data.for.intro.models.broad %>% filter(Sex == "F" &
+                                                            method == "only_natural_broad")
+
+mean(R2femaletime.within$R.2)
+sd(R2femaletime.within$R.2)
+
+R2femaletime.between <- data.for.intro.models.broad %>% filter(Sex == "F" &
+                                                             method == "all")
+
+mean(R2femaletime.between$R.2)
+sd(R2femaletime.between$R.2)
+
+
+R2Male.wcolour <- data.all %>% filter(Sex == "M")
+mean(R2Male.wcolour$R.2)
+sd(R2Male.wcolour$R.2)
+
+R2Male.noColour <- data.all %>% filter(Sex == "M" &
+                                         !Kingsolver_traits == "Colour")
+mean(R2Male.noColour$R.2)
+sd(R2Male.noColour$R.2)
+
+R2Male.Colour <- data.all %>% filter(Sex == "M" &
+                                       Kingsolver_traits == "Colour")
+mean(R2Male.Colour$R.2)
+sd(R2Male.Colour$R.2)
+
+R2Male.Behaviour <- data.all %>% filter(Sex == "M" &
+                                          Kingsolver_traits == "Behaviour")
+mean(R2Male.Behaviour$R.2)
+sd(R2Male.Behaviour$R.2)
+
+R2Male.LH <- data.all %>% filter(Sex == "M" &
+                                   Kingsolver_traits == "Other_life_history")
+mean(R2Male.LH$R.2)
+sd(R2Male.LH$R.2)
+
+R2Male.Size <- data.all %>% filter(Sex == "M" &
+                                     Kingsolver_traits == "Size")
+mean(R2Male.Size$R.2)
+sd(R2Male.Size$R.2)
+
+R2Male.Morph <- data.all %>% filter(Sex == "M" &
+                                      Kingsolver_traits == "Other_morphology")
+mean(R2Male.Morph$R.2)
+sd(R2Male.Morph$R.2)
+
+R2Male.Physiology <- data.all %>% filter(Sex == "M" &
+                                           Kingsolver_traits == "Physiology")
+mean(R2Male.Physiology$R.2)
+sd(R2Male.Physiology$R.2)
+
+R2Male.Other <- data.all %>% filter(Sex == "M" &
+                                      Kingsolver_traits == "Other")
+mean(R2Male.Other$R.2)
+sd(R2Male.Other$R.2)
+
+R2Male.cg <- data.all.rear %>% filter(Sex == "M" &
+                                        StudyType == "Common Garden (F2)")
+mean(R2Male.cg$R.2)
+sd(R2Male.cg$R.2)
+
+R2Male.wc <- data.all.rear %>% filter(Sex == "M" &
+                                        StudyType == "Wildcaught")
+mean(R2Male.wc$R.2)
+sd(R2Male.wc$R.2)
+
+R2Maleeco.within <- data.for.ecology.models %>% filter(Sex == "M" &
+                                                         method == "south")
+
+mean(R2Maleeco.within$R.2)
+sd(R2Maleeco.within$R.2)
+
+R2Maleeco.between <- data.for.ecology.models %>% filter(Sex == "M" &
+                                                          method == "all")
+
+mean(R2Maleeco.between$R.2)
+sd(R2Maleeco.between$R.2)
+
+R2Maleevo.within <- data.for.evolhist.models %>% filter(Sex == "M" &
+                                                          method == "caroni")
+
+mean(R2Maleevo.within$R.2)
+sd(R2Maleevo.within$R.2)
+
+R2Maleevo.between <- data.for.evolhist.models %>% filter(Sex == "M" &
+                                                           method == "both.drainages")
+
+mean(R2Maleevo.between$R.2)
+sd(R2Maleevo.between$R.2)
+
+R2Maletime.within <- data.for.intro.models.broad %>% filter(Sex == "M" &
+                                                              method == "only_natural_broad")
+
+mean(R2Maletime.within$R.2)
+sd(R2Maletime.within$R.2)
+
+R2Maletime.between <- data.for.intro.models.broad %>% filter(Sex == "M" &
+                                                               method == "all")
+
+mean(R2Maletime.between$R.2)
+sd(R2Maletime.between$R.2)
+
+
 ## Supplemental figure 1 ----
 
 (sup1<-
