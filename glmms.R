@@ -298,36 +298,63 @@ Anova(evolhist.full.lmer, type = 2) # anova to get Chi-sq
 
 # Other means etc reported in text ----
 
+count(data.all %>% filter(R.2 < 0.5))  # 364
+count(data.all)  # 446
+364/446  # proportion of R2 values less than 0.5
+
+# Mean R2
+mean(data.all$R.2)
+sd(data.all$R.2)
+
 ## Traits
 (Colourtrait <- data.all %>% filter(Kingsolver_traits == "Colour")) %>% summary()
+sd(Colourtrait$R.2)
 (LHtrait <- data.all %>% filter(Kingsolver_traits == "Other_life_history")) %>% summary()
+sd(LHtrait$R.2)
 (Sizetrait <- data.all %>% filter(Kingsolver_traits == "Size")) %>% summary()
+sd(Sizetrait$R.2)
 (Morphtrait <- data.all %>% filter(Kingsolver_traits == "Other_morphology")) %>% summary()
+sd(Morphtrait$R.2)
 (Othertrait <- data.all %>% filter(Kingsolver_traits == "Other")) %>% summary()
+sd(Othertrait$R.2)
 (Phystrait <- data.all %>% filter(Kingsolver_traits == "Physiology")) %>% summary()
+sd(Phystrait$R.2)
 (Behavtrait <- data.all %>% filter(Kingsolver_traits == "Behaviour")) %>% summary()
+sd(Behavtrait$R.2)
 
 ## Sex
 (Malewithcolour <- data.all %>% filter(Sex == "M")) %>% summary()
+sd(Malewithcolour$R.2)
 (Malenocolour <- data.all.no.colour %>% filter(Sex == "M")) %>% summary()
+sd(Malenocolour$R.2)
 (Femalesex <- data.all %>% filter(Sex == "F")) %>% summary()
+sd(Femalesex$R.2)
 
 ## Rearing enviro
 (cg <- data.all %>% filter(StudyType == "Common Garden (F2)")) %>% summary()
+sd(cg$R.2)
 (wc <- data.all %>% filter(StudyType == "Wildcaught")) %>% summary()
+sd(wc$R.2)
 
 ## Ecology
 (one.slope <- data.for.ecology.models %>% filter(method == "south")) %>% summary()
+sd(one.slope$R.2)
 (both.slopes <- data.for.ecology.models %>% filter(method == "all")) %>% summary()
-
+sd(both.slopes$R.2)
 
 ## Intro
+data.for.intro.models.broad <- data.for.intro.models.broad %>% drop_na(R.2)
 (only_natural_broad <- data.for.intro.models.broad %>% filter(method == "only_natural_broad")) %>% summary()
+sd(only_natural_broad$R.2)
 (natural_and_intro_broad <- data.for.intro.models.broad %>% filter(method == "all")) %>% summary()
+sd(natural_and_intro_broad$R.2)
 
 ## Evolhist
 (one_drainage <- data.for.evolhist.models %>% filter(method == "caroni")) %>% summary()
+sd(one_drainage$R.2)
+
 (both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")) %>% summary()
+sd(both_drainages$R.2)
 
 # figures in manuscript ----
 
@@ -1443,8 +1470,8 @@ data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
 
 ##single factor models
 ## trait type model (in paper)
-
-(all.model.traits.n <- glm(R.2 ~ Kingsolver_traits + meanNumber, data = data.all.n, family = binomial)) %>% 
+data.all.no.other.n <- data.all.n %>% filter(!Kingsolver_traits == "Other")
+(all.model.traits.n <- glm(R.2 ~ Kingsolver_traits + meanNumber, data = data.all.no.other.n, family = binomial)) %>% 
   summary() 
 car::Anova(all.model.traits.n, type = "II")
 
@@ -1481,7 +1508,7 @@ car::Anova(sex.and.rear.n, type = "II") #nothing sig
 
 (ecology.full.n <- glm(R.2 ~ method*Sex + meanNumber, data = data.for.ecology.models.n, family = binomial)) %>% 
   summary() #singular, sex significant
-Anova(ecology.full.n, type = 2)
+Anova(ecology.full.n, type = 3)
 ## remove the interaction (in paper)
 (ecology.full.n <- glm(R.2 ~ method + Sex + meanNumber, data = data.for.ecology.models.n, family = binomial)) %>% 
   summary() #singular, sex significant
@@ -1502,7 +1529,7 @@ Anova(intro.full.broad.n, type = 2)
 ## Evolutionary history model w interaction (in paper)
 (evolhist.full.n <- glm(R.2 ~ method * Sex + meanNumber, data = data.for.evolhist.models.n, family = binomial)) %>% 
   summary() #fail to converge, nothing sig
-Anova(evolhist.full.n, type = 2)
+Anova(evolhist.full.n, type = 3)
 
 allFit(evolhist.full.n) #singular fits
 
@@ -1694,8 +1721,6 @@ shapiro.test(data.all.resid$R.2)
 data.all.resid.traits <- data.all.resid %>% filter(!Kingsolver_traits == "Other")
 (all.model.traits.resid <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID), 
                                  data = data.all.resid.traits, family = binomial)) %>% summary()
-(all.model.traits.resid.lmer <- lmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
-                                     data = data.all.resid.traits)) %>% summary()
 car::Anova(all.model.traits.resid, type = "II")
 
 qqnorm(residuals(all.model.traits.resid.lmer))
@@ -1755,7 +1780,7 @@ data.for.ecology.models.resid <- data.for.ecology.models.resid %>% filter(Sex %i
 
 #### Ecology model (in paper) ----
 (ecology.full.resid <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models.resid, family = binomial)) %>% summary()
-car::Anova(ecology.full.resid, type = "II")
+car::Anova(ecology.full.resid, type = "III")
 
 (ecology.full.resid.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models.resid)) %>% summary()
 shapiro.test(resid(ecology.full.resid.lmer))
@@ -1792,7 +1817,7 @@ data.for.evolhist.models.resid <- data.for.evolhist.models.resid %>% filter(Sex 
 
 #### Evolutionary history model w interaction (in paper) ----
 (evolhist.full.resid <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
-car::Anova(evolhist.full.resid, type = "II")
+car::Anova(evolhist.full.resid, type = "III")
 
 #### interaction removed wout interaction (in paper) ----
 (evolhist.full.resid <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
