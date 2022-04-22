@@ -155,14 +155,10 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
 ## remove 'both'
 (data.all <- data.all %>% filter(Sex %in% c("M", "F")))
 
-## remove 'other'
-data.all <- data.all %>% filter(!Kingsolver_traits == "Other")
-
 ## remove 'colour'
 (data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
 
 ## drop the unused levels, just in case 
-data.all <- data.all %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
 data.all <- data.all %>% mutate(Sex = droplevels(Sex)) 
 data.all.no.colour <- data.all.no.colour %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
 
