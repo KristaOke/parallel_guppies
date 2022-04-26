@@ -302,6 +302,11 @@ count(data.all %>% filter(R.2 < 0.5))  # 364
 count(data.all)  # 446
 364/446  # proportion of R2 values less than 0.5
 
+count(data.all %>% filter(R.2 < 0.1))
+190/446
+
+count(data.all %>% filter(R.2 > 0.9))
+6/446
 # Mean R2
 mean(data.all$R.2)
 sd(data.all$R.2)
