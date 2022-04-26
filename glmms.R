@@ -1653,7 +1653,7 @@ data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
 # THESE ARE THE ONES ALEXIS DID TO REMOVE STUDY ID FROM THE MODELS
 # THE ONES ALLEGRA DID THAT MORE SIMILARLY STRUCUTRE THE REAL MODELS ARE BELOW
 
-## Sample Size Models ----
+## Sample Size Models GLM----
 ###NOTE all with Other as of right now
 
 ##single factor models
@@ -1738,7 +1738,7 @@ Anova(evolhist.full.n, type = 2)
 
 
 # THESE ARE THE ONES ALLEGRA DID TO MIMIC THE STRUCTURE OF MODELS IN THE PAPER
-## Sample Size Models ----
+## Sample Size Models similar to GLMMs ----
 ###NOTE all with Other as of right now
 
 ##single factor models
@@ -1819,6 +1819,84 @@ allFit(evolhist.full.n) #singular fits
 
 (evolhist.glm.n <- glm(R.2 ~ method + meanNumber + StudyID, data = data.for.evolhist.models.n, family = binomial)) %>% 
   summary() #nothing sig
+
+
+## LMM Sample Size Models ----
+
+##single factor models
+## trait type model (in paper)
+data.all.no.other.n <- data.all.n %>% filter(!Kingsolver_traits == "Other")
+(all.model.traits.n <- lmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.no.other.n)) %>% 
+  summary() 
+car::Anova(all.model.traits.n, type = "II")
+
+## Rearing enviro model (in paper)
+
+(all.model.rearing.n <- lmer(R.2 ~ StudyType + meanNumber + (1|StudyID), data = data.all.rear.n)) %>% 
+  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
+car::Anova(all.model.rearing.n, type = "II")
+
+## sex with colour (in paper)
+(all.model.sex.n <- lmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.n)) %>% 
+  summary() #no sig effects (without studyID sex is p = 0.525)
+car::Anova(all.model.sex.n, type = "II")
+
+## sex without colour  (in paper)
+(all.model.sex.no.colour.n <- lmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.no.colour.n)) %>% 
+  summary() #no sig effects (without StudyID same)
+car::Anova(all.model.sex.no.colour.n, type = "II")
+
+## Multivariate Models
+## sex and traits (in paper)
+(sex.and.traits.n <- lmer(R.2 ~ Kingsolver_traits + Sex + meanNumber + (1|StudyID), data = data.all.n)) %>% 
+  summary() #colour traits significant
+car::Anova(sex.and.traits.n, type = "II") #traits significant
+
+## sex and rear (in paper)
+(sex.and.rear.n <- lmer(R.2 ~ StudyType + Sex + meanNumber + (1|StudyID), data = data.all.rear.n)) %>% 
+  summary()
+car::Anova(sex.and.rear.n, type = "II") #nothing sig
+
+##Determinant Models
+
+## Ecology model (in paper)
+
+(ecology.full.n <- lmer(R.2 ~ method*Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n)) %>% 
+  summary() #singular, sex significant
+Anova(ecology.full.n, type = 3)
+## remove the interaction (in paper)
+(ecology.full.n <- lmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n)) %>% 
+  summary() #singular, sex significant
+Anova(ecology.full.n, type = 2)
+
+#(ecology.full.n <- lmerer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n)) %>% summary()
+#singular, sex significant
+
+## Intro model (in paper)
+(intro.full.broad.n <- lmer(R.2 ~ method + meanNumber + (1|StudyID), data = data.for.intro.models.broad.n)) %>% 
+  summary() #singular  ### indicates sample size is significant
+#allFit(intro.full.broad.n)
+Anova(intro.full.broad.n, type = 2)
+
+#(intro.full.broad.n <- lmerer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n)) %>% summary() 
+#singular, nothing sig
+
+## Evolutionary history model w interaction (in paper)
+(evolhist.full.n <- lmer(R.2 ~ method * Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n)) %>% 
+  summary() #fail to converge, nothing sig
+Anova(evolhist.full.n, type = 3)
+
+allFit(evolhist.full.n) #singular fits
+
+#(evolhist.full.n <- lmerer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n)) %>% summary() 
+#singular, sex sig
+
+## interaction removed wout interaction (in paper)
+(evolhist.full.n <- lmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n)) %>% 
+  summary() #singular, method sig.
+Anova(evolhist.full.n, type = 2)
+#(evolhist.full <- lmerer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n)) %>% summary() 
+#singular, method sig. and sex sig.
 
 # Residuals ---- 
 
