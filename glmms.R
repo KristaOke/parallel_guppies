@@ -1738,7 +1738,7 @@ Anova(evolhist.full.n, type = 2)
 
 
 # THESE ARE THE ONES ALLEGRA DID TO MIMIC THE STRUCTURE OF MODELS IN THE PAPER
-## Sample Size Models similar to GLMMs ----
+## Sample Size Models GLMM ----
 ###NOTE all with Other as of right now
 
 ##single factor models
@@ -1821,7 +1821,7 @@ allFit(evolhist.full.n) #singular fits
   summary() #nothing sig
 
 
-## LMM Sample Size Models ----
+## Sample Size Models LMM ----
 
 ##single factor models
 ## trait type model (in paper)
