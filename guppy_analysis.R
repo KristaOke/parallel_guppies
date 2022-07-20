@@ -1,0 +1,2564 @@
+# Analysis for 'Compiling forty years of guppy research to investigate the factors contributing to (non)parallel evolution'
+
+# Libraries ---- 
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(lme4)
+library(ggplot2)
+library(bbmle)
+library(gridExtra)
+library(car)
+library(corrplot)
+library(tidyverse)
+library(fitdistrplus)
+library(tidyverse)
+library(sjPlot)
+library(olsrr)
+library(ggpubr)
+library(PupillometryR)
+library(MuMIn)
+library(nlme)
+
+
+# import and format R2 values for anlayses (change to relative paths)
+
+spreadsheet.data <- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")
+R2.data.among <- read.csv(paste(wd,'/Data/TraitR2_among.csv',sep=""), header=TRUE, sep=",")
+R2.data.south <- read.csv(paste(wd,'/Data/TraitR2_south.csv',sep=""), header=TRUE, sep=",")
+R2.data.intro <- read.csv(paste(wd,'/Data/TraitR2_intro.csv',sep=""), header=TRUE, sep=",")
+R2.data.caroni <- read.csv(paste(wd,'/Data/TraitR2_Caroni.csv',sep=""), header=TRUE, sep=",")
+R2.data.among.drainage <- read.csv(paste(wd,'/Data/TraitR2_Among_Drainage.csv',sep=""), header=TRUE, sep=",")
+R2.data.intro.broad <- read.csv(paste(wd, '/Data/TraitR2_intro_broad.csv', sep = ""), header = TRUE, sep = ",")
+
+## fix structure
+str(spreadsheet.data)
+str(R2.data.among)
+
+spreadsheet.data$StudyID <- as.factor(spreadsheet.data$StudyID)
+spreadsheet.data$Collection_start <- as.factor(spreadsheet.data$Collection_start)
+spreadsheet.data$Collection_end <- as.factor(spreadsheet.data$Collection_end)
+spreadsheet.data$Published <- as.factor(spreadsheet.data$Published)
+spreadsheet.data$TraitID <- as.factor(spreadsheet.data$TraitID)
+
+spreadsheet.data$Sex <- as.factor(spreadsheet.data$Sex)
+spreadsheet.data$TraitID <- as.factor(spreadsheet.data$TraitID)
+spreadsheet.data$Slope <- as.factor(spreadsheet.data$Slope)
+spreadsheet.data$Drainage <- as.factor(spreadsheet.data$Drainage)
+spreadsheet.data$Kingsolver_traits <- as.factor(spreadsheet.data$Kingsolver_traits)
+
+R2.data.among$TraitID <- as.factor(R2.data.among$TraitID)
+R2.data.south$TraitID <- as.factor(R2.data.south$TraitID)
+R2.data.intro$TraitID <- as.factor(R2.data.intro$TraitID)
+R2.data.intro.broad$TraitID <- as.factor(R2.data.intro.broad$TraitID)
+R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
+R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
+
+# combine R2 and spreadsheet data
+## prep for when we bind them together, this variable will go in the model to indicate the type of R2
+R2.data.among$method <- "all"
+R2.data.south$method <- "south"
+R2.data.intro$method <- "only_natural"
+R2.data.intro.broad$method <- "only_natural_broad"
+R2.data.caroni$method <- "caroni"
+R2.data.among.drainage$method <- "both.drainages"
+
+## get relevant data with one entry for each Trait
+### I was inclusive with columns, many probably aren't needed so you can cut them out
+data.all <- inner_join(spreadsheet.data, R2.data.among, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) #removes replicated TraitIDs and retains the columns
+
+data.south <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.intro<- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.intro.broad<- inner_join(spreadsheet.data, R2.data.intro.broad, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.caroni<- inner_join(spreadsheet.data, R2.data.caroni, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.among.drainage<- inner_join(spreadsheet.data, R2.data.among.drainage, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE)
+
+
+## preparing dataframes for each model analysis
+data.for.ecology.models<-rbind(data.all,data.south) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
+
+ecology.data.males <- data.for.ecology.models %>% 
+  filter(Sex == "M" & Kingsolver_traits !="Other") %>% 
+  ungroup(TraitID)
+
+ecology.data.females <- data.for.ecology.models %>% 
+  filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
+  ungroup(TraitID)
+
+## evolutionary history question
+data.for.evolhist.models<-rbind(data.caroni,data.among.drainage) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+
+evolhist.data.males <- data.for.evolhist.models %>% 
+  filter(Sex == "M" & Kingsolver_traits !="Other") %>% 
+  ungroup(TraitID)
+
+evolhist.data.females <- data.for.evolhist.models %>% 
+  filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
+  ungroup(TraitID)
+
+## Intro "strict", I'm pretty sure these are the right csvs for this question
+data.for.intro.models<-rbind(data.all,data.intro) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+
+time.data.males <- data.for.intro.models %>% 
+  filter(Sex == "M" & Kingsolver_traits !="Other") %>% 
+  ungroup(TraitID)
+
+time.data.females <- data.for.intro.models %>% 
+  filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
+  ungroup(TraitID)
+
+
+## Intro "broad", 
+data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+
+### as a note and fail safe I would run the grouping with TraitID on the sex specific dfs to make sure theres two traitID entries for each
+
+## remove 'both'
+(data.all <- data.all %>% filter(Sex %in% c("M", "F")))
+
+## remove 'colour'
+(data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
+
+## remove 'other'
+data.all.no.other <- data.all %>% filter(!Kingsolver_traits == "Other")
+
+## drop the unused levels, just in case 
+data.all <- data.all %>% mutate(Sex = droplevels(Sex)) 
+data.all.no.colour <- data.all.no.colour %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
+data.all.no.other <- data.all.no.other %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
+
+# Overall models (traits, sex, rearing) ----
+
+## Trait type model (in paper) ----
+### Use df without 'Other' traits
+
+(all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
+                           data = data.all.no.other, family = binomial)) %>% summary()
+
+car::Anova(all.model.traits, type = "II") # anova to get Chi-sq
+
+## sex with colour (in paper) ----
+(all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
+
+car::Anova(all.model.sex, type = "II") # anova to get Chi-sq
+
+## sex without colour  (in paper) ----
+### Use df without 'Colour' traits
+
+(all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
+
+car::Anova(all.model.sex.no.colour, type = "II") # anova to get Chi-sq
+
+## Rearing enviro model (in paper) ----
+### Remove common garden F1
+data.all.rear <- data.all %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
+
+car::Anova(all.model.rearing, type = "II") # anova to get Chi-sq
+
+# multivariate models (traits, sex, rearing) ----
+
+## sex and traits (in paper) ----
+(sex.and.traits <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
+
+Anova(sex.and.traits, type = "II") # anova to get Chi-sq
+
+## sex and rear (in paper) ----
+### Use df without F1
+(sex.and.rear <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
+
+Anova(sex.and.rear, type = 2) # anova to get Chi-sq
+
+# Determinants models ----
+
+## Ecology models ----
+
+### fix structure
+data.for.ecology.models$method <- as.factor(data.for.ecology.models$method)
+
+### Remove 'Both' sex category because duplicates
+data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
+
+### Drop unused 'sex' level
+data.for.ecology.models <- data.for.ecology.models %>% mutate(Sex = droplevels(Sex)) 
+
+### Ecology model (in paper) ----
+(ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
+
+car::Anova(ecology.full, type = "III") # anova to get Chi-sq
+
+### Ecology without interaction (in paper) ----
+(ecology.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
+
+car::Anova(ecology.full, type = "II") # anova to get Chi-sq
+
+## Intro models (broad) ----
+### Fix structure
+data.for.intro.models.broad$method <- as.factor(data.for.intro.models.broad$method)
+
+### Remove 'Both' sex category because duplicates
+data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c("M", "F"))  
+
+### Drop unused level
+data.for.intro.models.broad <- data.for.intro.models.broad %>% mutate(Sex = droplevels(Sex)) 
+
+### Intro model (in paper) ----
+(intro.full.broad <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
+car::Anova(intro.full.broad, type = "II")
+
+## Evolutionary history models ----
+### (These are all singular fits)
+
+### fix structure
+data.for.evolhist.models$method <- as.factor(data.for.evolhist.models$method)
+
+### Remove 'Both' sex category because duplicates
+data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
+
+### Drop unused 'sex' level
+data.for.evolhist.models <- data.for.evolhist.models %>% mutate(Sex = droplevels(Sex)) 
+
+### Evolutionary history model w interaction (in paper) ----
+(evolhist.full <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
+
+car::Anova(evolhist.full, type = "III") # anova to get Chi-sq
+
+### Evolhist without interaction (in paper) ----
+(evolhist.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
+
+car::Anova(evolhist.full, type = "II") # anova to get Chi-sq
+
+### Troubleshooting Evolutionary history----
+#### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
+
+summary(evolhist.full) # GLMM from above - the one that is singular
+
+#### evolhist glm (in paper) ----
+#### (with interaction)
+(evolhist.full.glm <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
+
+car::Anova(evolhist.full.glm, type = 3) # anova to get Chi-sq
+
+#### (without interaction)
+(evolhist.full.glm <- glm(R.2 ~ method + Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
+
+car::Anova(evolhist.full.glm, type = 2) # anova to get Chi-sq
+
+
+#### evolhist lmm (in paper) ----
+#### (with interaction)
+(evolhist.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models)) %>% summary()
+
+Anova(evolhist.full.lmer, type = 3) # anova to get Chi-sq
+
+#### (without interaction)
+(evolhist.full.lmer <- lmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models)) %>% summary()
+
+Anova(evolhist.full.lmer, type = 2) # anova to get Chi-sq
+
+
+# Other means etc reported in text ----
+
+count(data.all %>% filter(R.2 < 0.5))  # 364
+count(data.all)  # 446
+364/446  # proportion of R2 values less than 0.5
+
+count(data.all %>% filter(R.2 < 0.1))
+190/446
+
+count(data.all %>% filter(R.2 > 0.9))
+6/446
+# Mean R2
+mean(data.all$R.2)
+sd(data.all$R.2)
+
+## Traits
+(Colourtrait <- data.all %>% filter(Kingsolver_traits == "Colour")) %>% summary()
+sd(Colourtrait$R.2)
+(LHtrait <- data.all %>% filter(Kingsolver_traits == "Other_life_history")) %>% summary()
+sd(LHtrait$R.2)
+(Sizetrait <- data.all %>% filter(Kingsolver_traits == "Size")) %>% summary()
+sd(Sizetrait$R.2)
+(Morphtrait <- data.all %>% filter(Kingsolver_traits == "Other_morphology")) %>% summary()
+sd(Morphtrait$R.2)
+(Othertrait <- data.all %>% filter(Kingsolver_traits == "Other")) %>% summary()
+sd(Othertrait$R.2)
+(Phystrait <- data.all %>% filter(Kingsolver_traits == "Physiology")) %>% summary()
+sd(Phystrait$R.2)
+(Behavtrait <- data.all %>% filter(Kingsolver_traits == "Behaviour")) %>% summary()
+sd(Behavtrait$R.2)
+
+## Sex
+(Malewithcolour <- data.all %>% filter(Sex == "M")) %>% summary()
+sd(Malewithcolour$R.2)
+(Malenocolour <- data.all.no.colour %>% filter(Sex == "M")) %>% summary()
+sd(Malenocolour$R.2)
+(Femalesex <- data.all %>% filter(Sex == "F")) %>% summary()
+sd(Femalesex$R.2)
+
+## Rearing enviro
+(cg <- data.all %>% filter(StudyType == "Common Garden (F2)")) %>% summary()
+sd(cg$R.2)
+(wc <- data.all %>% filter(StudyType == "Wildcaught")) %>% summary()
+sd(wc$R.2)
+
+## Ecology
+(one.slope <- data.for.ecology.models %>% filter(method == "south")) %>% summary()
+sd(one.slope$R.2)
+(both.slopes <- data.for.ecology.models %>% filter(method == "all")) %>% summary()
+sd(both.slopes$R.2)
+
+## Intro
+data.for.intro.models.broad <- data.for.intro.models.broad %>% drop_na(R.2)
+(only_natural_broad <- data.for.intro.models.broad %>% filter(method == "only_natural_broad")) %>% summary()
+sd(only_natural_broad$R.2)
+(natural_and_intro_broad <- data.for.intro.models.broad %>% filter(method == "all")) %>% summary()
+sd(natural_and_intro_broad$R.2)
+
+## Evolhist
+(one_drainage <- data.for.evolhist.models %>% filter(method == "caroni")) %>% summary()
+sd(one_drainage$R.2)
+
+(both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")) %>% summary()
+sd(both_drainages$R.2)
+
+# figures in manuscript ----
+
+## figure 1 is map 
+
+## figure 2 ----
+fig2data <- read.csv("testPG_figure.csv", fileEncoding="UTF-8-BOM")
+fig2data$population <- as.factor(fig2data$population)
+
+fig2data$population <- factor(fig2data$population, levels = (c("Marianne high", 
+                                                               "Marianne low", 
+                                                               "Aripo high", "Aripo low",
+                                                               "Damier high",
+                                                               "Damier low",
+                                                               "Yarra high",
+                                                               "Yarra low")))
+
+levels(fig2data$population)
+
+highparal <- fig2data %>% filter(facet == 'a') %>% 
+  ggplot(aes(x = population, y = mean, color = predation)) +
+  geom_point(size = 4) +
+  labs(title = "Example of high R  (0.984)",
+       subtitle = #"Study = Reddon et al. 2018, \n
+         # "Trait = Male standard length (mm)"
+  ) +
+  scale_colour_manual(values =  c("black", "grey")) +
+  theme_classic() +
+  theme_bw() +
+  labs(y = "Male standard length (mm)",
+       x = "\nPopulation") +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        plot.title = element_text(size = 16),
+        axis.text.x = element_text(angle = 45,  hjust = 1))
+
+lowparal <- fig2data %>% filter(facet == 'b') %>% 
+  ggplot(aes(x = population, y = mean, color = predation)) +
+  geom_point(size = 4) +
+  labs(title = "Example of low R  (0.000)",
+       subtitle = #"Study = Easty et al. 2011, \n
+         # "Trait = Mean relative area of black (%)"
+  ) +
+  scale_colour_manual(values =  c("black", "grey")) +
+  theme_classic() +
+  theme_bw() +
+  labs(y = "Mean relative area of black (%)",
+       x = "\nPopulation") +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        plot.title = element_text(size = 16),
+        axis.text.x = element_text(angle = 45,  hjust = 1))
+
+ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
+
+(highparal <- highparal + annotate("segment", x = 1, xend = 2, y = 12.01, yend = 13.5))
+(highparal <- highparal + annotate("segment", x = 3, xend = 4, y = 12.1, yend = 13.76))
+highparal
+
+(lowparal <- lowparal + annotate("segment", x = 1, xend = 2, y = 8.74, yend = 9.85))
+(lowparal <- lowparal + annotate("segment", x = 3, xend = 4, y = 8.2, yend = 7.0))
+lowparal
+
+fig2 <- ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
+
+#tiff("pg.fig2.tiff", res = 600, units = "in", height = 5, width = 7)
+fig2
+#dev.off()
+
+## figure 3 ----
+
+data.all$overall <- "Overall"
+overall_hist <- 
+  data.all %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(. ~ overall) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+wildcaught_hist <-
+  data.all %>% 
+  filter(StudyType == "Wildcaught") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  #ggtitle("Wildcaught (n = 373)") +
+  facet_wrap(. ~ StudyType) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+cg_hist <- 
+  data.all %>% 
+  filter(StudyType == "Common Garden (F2)") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  #ggtitle("Common Garden F1/F2 (n = 73)") +
+  facet_wrap(. ~ StudyType) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+m_hist_w_colour <- data.all %>% filter(Sex %in% c("M", "F"))
+m_hist_w_colour <- 
+  m_hist_w_colour %>% mutate(renamedSex =
+                               case_when(Sex == "M" ~ "Male (with colour)",
+                                         Sex == "F" ~ "Female"))
+
+m_hist <- 
+  m_hist_w_colour %>% 
+  filter(Sex == "M") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 #fill="#E6E6E6", 
+                 colour = "black", fill = "#E6E6E6", size = 1) +
+  labs(#x = expression(paste(R^2)),
+    y = "Frequency", 
+    # title = "Males (n = 274)",
+    #subtitle = "colour traits included"
+  ) +
+  theme_bw() +
+  facet_wrap(. ~ renamedSex) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+m_hist_no_colour <- data.all %>% filter(Sex %in% c("M", "F") &
+                                          !Kingsolver_traits == "Colour")
+
+m_hist_no_colour <- 
+  m_hist_no_colour %>% mutate(renamedSex =
+                                case_when(Sex == "M" ~ "Male (without colour)",
+                                          Sex == "F" ~ "Female"))
+
+
+m_hist_no_colour <- 
+  m_hist_no_colour %>% 
+  filter(Sex == "M") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 #fill="#E6E6E6", 
+                 colour = "black", fill = "#E6E6E6", size = 1) +
+  labs(x = expression(paste(R^2)),
+       y = "Frequency",
+       #title = "Males (n = 165)",
+       #subtitle = "colour traits excluded"
+  ) +
+  facet_wrap(. ~ renamedSex) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+f_hist_w_other <-
+  m_hist_w_colour %>% 
+  filter(Sex == "F") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 #fill="#E6E6E6", 
+                 colour = "black", fill = "#E6E6E6", size = 1) +
+  #xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  # ggtitle("Females (n = 172)") +
+  facet_wrap(. ~ renamedSex) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+top.fig.3 <- cowplot::plot_grid("", overall_hist + theme(axis.title = element_blank()),
+                                wildcaught_hist + theme(axis.title = element_blank()),
+                                cg_hist + theme(axis.title = element_blank()), 
+                                nrow = 1, labels = c("", "A", "B", "C"), 
+                                rel_widths = c(0.15, 1, 1, 1))
+
+bottom.fig.3 <- cowplot::plot_grid("", m_hist + theme(axis.title = element_blank()),
+                                   m_hist_no_colour + theme(axis.title.y = element_blank()),
+                                   f_hist_w_other + theme(axis.title = element_blank()),
+                                   
+                                   #f_hist_no_other + theme(axis.title.y = element_blank()), 
+                                   nrow = 1,
+                                   labels = c("", "D", "E", "F", "G"),
+                                   align = "h", axis = "bt",
+                                   rel_widths = c(0.15, 1, 1,1))
+
+fig3 <- cowplot::plot_grid(top.fig.3, bottom.fig.3, nrow = 2, rel_heights = c(1,1))
+fig3 <- figure3 + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
+
+#tiff("pg.figure3.tiff", res= 600, units = "in", height = 6, width = 8)
+fig3
+#dev.off()
+
+## figure 4 ----
+behav_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Behaviour") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+colour_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Colour") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+other_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Other") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+data.olh <- data.all
+levels(data.olh$Kingsolver_traits) <- c("Life history",
+                                        "Behaviour",
+                                        "Colour",
+                                        "Other",
+                                        "Morphology",
+                                        "Physiology",
+                                        "Size")
+
+levels(data.olh$Kingsolver_traits)
+
+olh_hist <-
+  data.olh %>% 
+  filter(Kingsolver_traits == "Life history") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+morpho_hist <-
+  data.olh %>% 
+  filter(Kingsolver_traits == "Morphology") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+phys_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Physiology") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  xlab(expression(paste(R^2))) +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title.y = element_blank(),
+    axis.title.x = element_text(size = 24))
+
+size_hist <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Size") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  #ggtitle("Overall (n = 446)") +
+  theme_bw() +
+  facet_wrap(.~ Kingsolver_traits) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_blank())
+
+
+toptraits <- cowplot::plot_grid("", behav_hist, colour_hist, other_hist, olh_hist, nrow = 1, 
+                                rel_widths = c(0.15, 1, 1, 1, 1))
+bottomtraits <- cowplot::plot_grid("", "", morpho_hist, phys_hist, size_hist, "", nrow = 1,
+                                   rel_widths = c(0.15, 0.4, 0.8, 0.8, 0.8, 0.4), 
+                                   align = "h", axis = "bt")
+fig4 <- cowplot::plot_grid(toptraits,bottomtraits, nrow = 2, align = "bt", rel_heights = c(0.9, 1))
+fig4 <- traitsplot + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
+
+#tiff("fig4.pg.tiff", res = 600, width = 8, height = 5, units = "in")
+fig4
+#dev.off()
+
+## figure 5 ----
+
+### intro
+levels(data.for.intro.models.broad$method)
+
+data.intro.broad <- data.for.intro.models.broad
+levels(data.intro.broad$method) <- c("Natural and introduced",
+                                     "Only natural")
+
+(intro_hist_broad_a <-
+    data.intro.broad %>% 
+    filter(method == "Natural and introduced") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    facet_wrap(.~method) +
+    labs(x = expression(paste(R^2))) +
+    theme_bw() +
+    theme(
+      axis.ticks.x = element_blank(),
+    ) +
+    xlim(-0.1,1) +
+    theme(axis.title = element_blank(),
+          strip.text = element_text(size = 13),
+          axis.text = element_text(size = 10)))
+
+intro_hist_broad_a
+
+(intro_hist_broad_b <-
+    data.intro.broad %>% 
+    filter(method == "Only natural") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    facet_wrap(.~method) +
+    labs(x = expression(paste(R^2))) +
+    theme_bw() +
+    theme(
+      axis.ticks.x = element_blank(),
+    ) +
+    xlim(-0.1,1) +
+    #theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm")) +
+    theme(axis.title = element_blank(),
+          strip.text = element_text(size = 13),
+          axis.text = element_text(size = 10)))
+
+
+
+intro_box <-
+  data.for.intro.models.broad %>% 
+  ggplot(aes(x = R.2)) +
+  geom_boxplot(size = 1) +
+  #geom_point(aes(x = method, y = R.2), size = 3, alpha = 0.3) +
+  facet_wrap(~method, ncol =1) +
+  theme_minimal() +
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank()) +
+  theme(axis.ticks.y = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank()) +
+  xlim(-0.1,1) +
+  theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))+
+  theme(axis.title = element_blank())
+intro_box
+
+intro_box_cow <- cowplot::plot_grid(intro_hist_broad_a, intro_box,
+                                    intro_hist_broad_b, nrow = 3, ncol = 1,
+                                    rel_heights = c(4,1, 4),
+                                    align = "v", axis = "lr", 
+                                    labels = c("C", "", "F"))
+intro_box_cow
+
+### ecology
+
+levels(data.for.ecology.models$method)
+
+data.eco <- data.for.ecology.models
+levels(data.eco$method) <- c("Between both slopes",
+                             "Only the southern slope")
+
+(ecology_hist_a <- 
+    data.eco %>% 
+    filter(method == "Between both slopes") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    facet_wrap(~method) +
+    labs(x = "") +
+    theme_bw() +
+    theme(
+      axis.ticks.x = element_blank(),
+    ) +
+    xlim(-0.1,1) +
+    # theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm")) +
+    theme(axis.title = element_blank(),
+          strip.text = element_text(size = 13),
+          axis.text = element_text(size = 10)))
+
+(ecology_hist_b <-
+    data.eco %>% 
+    filter(method == "Only the southern slope") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    facet_wrap(~method) +
+    labs(x = "") +
+    theme_bw() +
+    theme(
+      axis.ticks.x = element_blank(),
+    ) +
+    xlim(-0.1,1) +
+    # theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm")) +
+    theme(axis.title = element_blank(),
+          strip.text = element_text(size = 13),
+          axis.text = element_text(size = 10)))
+
+ecology_box <-
+  data.for.ecology.models %>% 
+  ggplot(aes(x = R.2)) +
+  geom_boxplot(size = 1) +
+  #geom_point(aes(x = method, y = R.2), size = 3, alpha = 0.3) +
+  facet_wrap(~method, ncol =1) +
+  theme_minimal() +
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank()) +
+  theme(axis.ticks.y = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank()) +
+  xlim(-0.1,1) +
+  theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))+
+  theme(axis.title = element_blank())
+
+ecology_box_cow <- cowplot::plot_grid(ecology_hist_a, ecology_box,
+                                      ecology_hist_b, nrow = 3, ncol = 1,
+                                      rel_heights = c(4,1, 4),
+                                      align = "v", axis = "lr", 
+                                      labels = c("A", "", "D"))
+
+ecology_box_cow
+
+### evolutionary history
+
+data.evo <- data.for.evolhist.models
+levels(data.evo$method) <- c("Between both drainages",
+                             "Only the Caroni drainage")
+(evolhist_hist_a <-
+    data.evo %>% 
+    filter(method == "Between both drainages") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    facet_wrap(~method) +
+    labs(x = "") +
+    theme_bw() +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    theme(
+      axis.title = element_blank(),
+      strip.text = element_text(size = 13),
+      axis.text = element_text(size = 10)
+    ) +
+    xlim(-0.1,1) 
+  #+  theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))
+)
+
+(evolhist_hist_b <-
+    data.evo %>% 
+    filter(method == "Only the Caroni drainage") %>% 
+    ggplot(aes(x = R.2)) +
+    geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                   fill="#E6E6E6", colour = "black", size = 1) +
+    
+    facet_wrap(.~method) +
+    labs(x = "") +
+    theme_bw() +
+    xlab(expression(paste(R^2))) +
+    ylab("Frequency") +
+    theme(
+      axis.title = element_blank(),
+      strip.text = element_text(size = 13),
+      axis.text = element_text(size = 10)
+    ) +
+    xlim(-0.1,1) 
+  #+  theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))
+)
+
+evolhist_box <-
+  data.for.evolhist.models %>% 
+  ggplot(aes(x = R.2)) +
+  geom_boxplot(size = 1) +
+  #geom_point(aes(x = method, y = R.2), size = 3, alpha = 0.3) +
+  facet_wrap(~method, ncol =1) +
+  theme_minimal() +
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank()) +
+  theme(axis.ticks.y = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank()) +
+  xlim(-0.1,1) +
+  theme(plot.margin = unit(c(0, 0.5, 0, 0), "cm"))+
+  theme(axis.title = element_blank())
+
+
+evolhist_box_cow <- cowplot::plot_grid(evolhist_hist_a, evolhist_box, 
+                                       evolhist_hist_b, nrow = 3, ncol = 1,
+                                       rel_heights = c(4,1, 4),
+                                       align = "v", axis = "lr", 
+                                       labels = c("B", "", "E"))
+
+evolhist_box_cow
+
+fig5 <- cowplot::plot_grid(ecology_box_cow, evolhist_box_cow, intro_box_cow, nrow = 1,
+                           align = "hv", axis = "tblr",
+                           rel_widths = c(1,1,1))
+# tiff("pg.fig5.tiff", res= 600, units = "in", height = 6, width =8)
+fig5
+dev.off()
+
+## figure 6 ----
+
+# (These dataframes are all made above)
+
+listforfig6 <- list("Male with colour (274)" = Malewithcolour$R.2, "Male without colour (165)" = Malenocolour$R.2, 
+                    "Female (172)" = Femalesex$R.2, 
+                    "Colour (109)" = Colourtrait$R.2, "Life history (48)" = LHtrait$R.2, "Size (47)" = Sizetrait$R.2, 
+                    "Morphology (42)" = Morphtrait$R.2, "Other (3)" = Othertrait$R.2, "Physiology (64)" = Phystrait$R.2,
+                    "Common Garden (F2) (70)" = cg$R.2, "Wild caught (373)" = wc$R.2, "Within one slope (176)" = one.slope$R.2, "Between both slopes (176)" = both.slopes$R.2, 
+                    "Only natural (183)" = only_natural_broad$R.2, "Natural and introduced (183)" = natural_and_intro_broad$R.2, 
+                    "Within one drainage (258)" = one_drainage$R.2, "Between both drainages (258)" = both_drainages$R.2)
+
+mean <- (as.data.frame(sapply(listforfig6, mean, na.rm = TRUE)))
+mean <- cbind(Factor = rownames(mean), mean)
+rownames(mean) <- NULL
+colnames(mean)[2] <- "mean"
+
+standev <- (as.data.frame(sapply(listforfig6, sd, na.rm = TRUE)))
+standev <- cbind(Factor = rownames(standev), standev)
+rownames(standev) <- NULL
+colnames(standev)[2] <- "sd"
+
+larger_table <- inner_join(mean, standev, by = "Factor")
+
+larger_table$minsd <- larger_table$mean - larger_table$sd
+larger_table$maxsd <- larger_table$mean + larger_table$sd
+
+larger_table$order <- c(1,2,3,4,5,6,7,8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
+larger_table$Question <- c("Sex", "Sex", "Sex", 
+                           "Trait type", "Trait type", "Trait type", "Trait type",
+                           "Trait type", "Trait type",
+                           "Rearing environment", "Rearing environment",
+                           "Ecological complexity", "Ecological complexity",
+                           "Time since colonization", "Time since colonization",
+                           "Evolutionary history", "Evolutionary history")
+
+larger_table$Question  <- with(larger_table, reorder(Question, rev(order)))
+
+vertical_lines <- c(3.5, 9.5, 11.5, 13.5, 15.5)
+
+(figure6<-
+    larger_table %>% ggplot(x = Factor, aes(reorder(Factor, order), y = mean)) +
+    geom_point(size = 2) +
+    geom_linerange(aes(x = Factor, ymin = minsd, ymax = maxsd), size = 0.5) +
+    
+    annotate("rect", xmin = 0.5, xmax = 3.5, ymin = -Inf, ymax = Inf, fill = "yellow", alpha = 0.2) +
+    annotate("rect", xmin = 3.5, xmax = 9.5, ymin = -Inf, ymax = Inf, fill = "orange", alpha = .4) +
+    annotate("rect", xmin = 9.5, xmax = 11.5, ymin = -Inf, ymax = Inf, fill = "palegreen", alpha = .4) +
+    annotate("rect", xmin = 11.5, xmax = 13.5, ymin = -Inf, ymax = Inf, fill = "#0404B7", alpha = .3) +
+    annotate("rect", xmin = 13.5, xmax = 15.5, ymin = -Inf, ymax = Inf, fill = "purple", alpha = .4) +
+    annotate("rect", xmin = 15.5, xmax = 17.5, ymin = -Inf, ymax = Inf, fill = "hot pink", alpha = .3) +
+    
+    
+    labs(x = "", 
+         y = expression(paste(R^2))) +
+    coord_flip() +
+    theme_bw() +
+    theme(axis.text = element_text(size = 14),
+          axis.title = element_text(size = 24)))
+
+tiff("pg.figure6.tiff", res = 600, units = "in", height = 6, width = 8)
+figure6
+dev.off()
+
+
+# Supplementary material ----
+## Supplemental table 1 ----
+
+suptable.R2 <- data.all %>% group_by(Study)
+suptable.R2 <- mutate(suptable.R2, min(R.2))
+suptable.R2 <- mutate(suptable.R2, max(R.2))
+
+suptable.people <- data.frame(data.all %>% group_by(Study, Poptype_broad) %>% tally())
+
+binded.suptable <- rbind(suptable.R2, suptable.people)
+
+No.traits <- data.all %>% group_by(Study, Trait) %>% tally() %>% 
+  transmute(No.traits = sum(n)) %>% 
+  distinct(No.traits, .keep_all = FALSE) 
+
+Slope.names <- spreadsheet.data %>% group_by(Study, Slope) %>% count()
+Slope.names <- data.frame(aggregate(Slope ~ Study, data = Slope.names, paste, collapse = ","))
+
+traits.slopes <- left_join(No.traits, Slope.names)
+
+Drainage.names <- spreadsheet.data %>% group_by(Study, Drainage) %>% count()
+Drainage.names <- data.frame(aggregate(Drainage ~ Study, data = Drainage.names, paste, collapse = ","))
+
+traits.slopes.drainages <- left_join(traits.slopes, Drainage.names)
+
+Pop.type <- spreadsheet.data %>% group_by(Study, Poptype_broad) %>% count()
+Pop.type <- data.frame(aggregate(Poptype_broad ~ Study, data = Pop.names, paste, collapse = ","))
+
+traits.slopes.drinages.pops <- left_join(traits.slopes.drainages, Pop.type)
+
+
+Populations.names <- spreadsheet.data %>% group_by(Study, Poptype_broad, Population) %>% 
+  filter(Poptype_broad == "Introduction") %>% count()
+Populations.names <- data.frame(aggregate(Population ~ Study, data = Populations.names, paste, collapse = ","))
+
+final.sup.table <- left_join(traits.slopes.drinages.pops, Populations.names)
+
+View(final.sup.table)
+
+## Supplemental table 3 
+
+R2Female <- data.all %>% filter(Sex == "F")
+mean(R2Female$R.2)
+sd(R2Female$R.2)
+
+mean(R2Male.noColour$R.2)
+sd(R2Male.noColour$R.2)
+
+R2Female.Colour <- data.all %>% filter(Sex == "F" &
+                                         Kingsolver_traits == "Colour")
+mean(R2Female.Colour$R.2)
+sd(R2Female.Colour$R.2)
+
+R2Female.Behaviour <- data.all %>% filter(Sex == "F" &
+                                            Kingsolver_traits == "Behaviour")
+mean(R2Female.Behaviour$R.2)
+sd(R2Female.Behaviour$R.2)
+
+R2Female.LH <- data.all %>% filter(Sex == "F" &
+                                     Kingsolver_traits == "Other_life_history")
+mean(R2Female.LH$R.2)
+sd(R2Female.LH$R.2)
+
+R2Female.Size <- data.all %>% filter(Sex == "F" &
+                                       Kingsolver_traits == "Size")
+mean(R2Female.Size$R.2)
+sd(R2Female.Size$R.2)
+
+R2Female.Morph <- data.all %>% filter(Sex == "F" &
+                                        Kingsolver_traits == "Other_morphology")
+mean(R2Female.Morph$R.2)
+sd(R2Female.Morph$R.2)
+
+R2Female.Physiology <- data.all %>% filter(Sex == "F" &
+                                             Kingsolver_traits == "Physiology")
+mean(R2Female.Physiology$R.2)
+sd(R2Female.Physiology$R.2)
+
+R2Female.Other <- data.all %>% filter(Sex == "F" &
+                                        Kingsolver_traits == "Other")
+mean(R2Female.Other$R.2)
+sd(R2Female.Other$R.2)
+
+R2Female.cg <- data.all.rear %>% filter(Sex == "F" &
+                                          StudyType == c("Common Garden (F2)"))
+mean(R2Female.cg$R.2)
+sd(R2Female.cg$R.2)
+
+R2Female.wc <- data.all.rear %>% filter(Sex == "F" &
+                                          StudyType == c("Wildcaught"))
+mean(R2Female.wc$R.2)
+sd(R2Female.wc$R.2)
+
+
+R2femaleeco.within <- data.for.ecology.models %>% filter(Sex == "F" &
+                                                           method == "south")
+
+mean(R2femaleeco.within$R.2)
+sd(R2femaleeco.within$R.2)
+
+R2femaleeco.between <- data.for.ecology.models %>% filter(Sex == "F" &
+                                                            method == "all")
+
+mean(R2femaleeco.between$R.2)
+sd(R2femaleeco.between$R.2)
+
+R2femaleevo.within <- data.for.evolhist.models %>% filter(Sex == "F" &
+                                                            method == "caroni")
+
+mean(R2femaleevo.within$R.2)
+sd(R2femaleevo.within$R.2)
+
+R2femaleevo.between <- data.for.evolhist.models %>% filter(Sex == "F" &
+                                                             method == "both.drainages")
+
+mean(R2femaleevo.between$R.2)
+sd(R2femaleevo.between$R.2)
+
+R2femaletime.within <- data.for.intro.models.broad %>% filter(Sex == "F" &
+                                                                method == "only_natural_broad")
+
+mean(R2femaletime.within$R.2)
+sd(R2femaletime.within$R.2)
+
+R2femaletime.between <- data.for.intro.models.broad %>% filter(Sex == "F" &
+                                                                 method == "all")
+
+mean(R2femaletime.between$R.2)
+sd(R2femaletime.between$R.2)
+
+
+R2Male.wcolour <- data.all %>% filter(Sex == "M")
+mean(R2Male.wcolour$R.2)
+sd(R2Male.wcolour$R.2)
+
+R2Male.noColour <- data.all %>% filter(Sex == "M" &
+                                         !Kingsolver_traits == "Colour")
+mean(R2Male.noColour$R.2)
+sd(R2Male.noColour$R.2)
+
+R2Male.Colour <- data.all %>% filter(Sex == "M" &
+                                       Kingsolver_traits == "Colour")
+mean(R2Male.Colour$R.2)
+sd(R2Male.Colour$R.2)
+
+R2Male.Behaviour <- data.all %>% filter(Sex == "M" &
+                                          Kingsolver_traits == "Behaviour")
+mean(R2Male.Behaviour$R.2)
+sd(R2Male.Behaviour$R.2)
+
+R2Male.LH <- data.all %>% filter(Sex == "M" &
+                                   Kingsolver_traits == "Other_life_history")
+mean(R2Male.LH$R.2)
+sd(R2Male.LH$R.2)
+
+R2Male.Size <- data.all %>% filter(Sex == "M" &
+                                     Kingsolver_traits == "Size")
+mean(R2Male.Size$R.2)
+sd(R2Male.Size$R.2)
+
+R2Male.Morph <- data.all %>% filter(Sex == "M" &
+                                      Kingsolver_traits == "Other_morphology")
+mean(R2Male.Morph$R.2)
+sd(R2Male.Morph$R.2)
+
+R2Male.Physiology <- data.all %>% filter(Sex == "M" &
+                                           Kingsolver_traits == "Physiology")
+mean(R2Male.Physiology$R.2)
+sd(R2Male.Physiology$R.2)
+
+R2Male.Other <- data.all %>% filter(Sex == "M" &
+                                      Kingsolver_traits == "Other")
+mean(R2Male.Other$R.2)
+sd(R2Male.Other$R.2)
+
+R2Male.cg <- data.all.rear %>% filter(Sex == "M" &
+                                        StudyType == "Common Garden (F2)")
+mean(R2Male.cg$R.2)
+sd(R2Male.cg$R.2)
+
+R2Male.wc <- data.all.rear %>% filter(Sex == "M" &
+                                        StudyType == "Wildcaught")
+mean(R2Male.wc$R.2)
+sd(R2Male.wc$R.2)
+
+R2Maleeco.within <- data.for.ecology.models %>% filter(Sex == "M" &
+                                                         method == "south")
+
+mean(R2Maleeco.within$R.2)
+sd(R2Maleeco.within$R.2)
+
+R2Maleeco.between <- data.for.ecology.models %>% filter(Sex == "M" &
+                                                          method == "all")
+
+mean(R2Maleeco.between$R.2)
+sd(R2Maleeco.between$R.2)
+
+R2Maleevo.within <- data.for.evolhist.models %>% filter(Sex == "M" &
+                                                          method == "caroni")
+
+mean(R2Maleevo.within$R.2)
+sd(R2Maleevo.within$R.2)
+
+R2Maleevo.between <- data.for.evolhist.models %>% filter(Sex == "M" &
+                                                           method == "both.drainages")
+
+mean(R2Maleevo.between$R.2)
+sd(R2Maleevo.between$R.2)
+
+R2Maletime.within <- data.for.intro.models.broad %>% filter(Sex == "M" &
+                                                              method == "only_natural_broad")
+
+mean(R2Maletime.within$R.2)
+sd(R2Maletime.within$R.2)
+
+R2Maletime.between <- data.for.intro.models.broad %>% filter(Sex == "M" &
+                                                               method == "all")
+
+mean(R2Maletime.between$R.2)
+sd(R2Maletime.between$R.2)
+
+
+## Supplemental figure 1 ----
+
+(sup1<-
+   data.all %>% 
+   filter(!Kingsolver_traits %in% c("Colour", "Other")) %>% 
+   ggplot(aes(y = R.2)) +
+   geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                  fill="#E6E6E6", colour = "black", size = 1) +
+   xlab(expression(paste(R^2))) +
+   ylab("Frequency (%)") +
+   theme_bw() +
+   facet_grid(Sex ~ Kingsolver_traits, scales = "free") +
+   theme(
+     strip.text = element_text(size = 13),
+     axis.title = element_text(size = 24)))
+
+behav_hist_f <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Behaviour" &
+           Sex == "F") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  xlim(0,1) +
+  ylim(0,35)+
+  #ggtitle("Wildcaught (n = 373)") +
+  facet_wrap(. ~ Kingsolver_traits) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+behav_hist_m <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Behaviour" &
+           Sex == "M") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  xlim(0,1) +
+  ylim(0,35)+
+  #ggtitle("Wildcaught (n = 373)") +
+  #facet_wrap(. ~ Kingsolver_traits) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+behav_sex_hist <- cowplot::plot_grid(behav_hist_f +theme(axis.title = element_blank(),
+                                                         axis.text.x = element_blank()), 
+                                     behav_hist_m + theme(axis.title = element_blank()), 
+                                     ncol = 1)
+
+behav_sex_hist
+
+LH_hist_f <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Other_life_history" &
+           Sex == "F") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  xlim(0,1) +
+  ylim(0,35)+
+  #ggtitle("Wildcaught (n = 373)") +
+  facet_wrap(. ~ Kingsolver_traits) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+LH_hist_m <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Other_life_history" &
+           Sex == "M") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  xlim(0,1) +
+  ylim(0,35)+
+  #ggtitle("Wildcaught (n = 373)") +
+  #facet_wrap(. ~ Kingsolver_traits) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+LH_sex_hist <- cowplot::plot_grid(LH_hist_f +theme(axis.title = element_blank(),
+                                                   axis.text.x = element_blank()), 
+                                  LH_hist_m + theme(axis.title = element_blank()), 
+                                  ncol = 1)
+
+morph_hist_f <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Other_morphology" &
+           Sex == "F") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  xlim(0,1) +
+  ylim(0,35)+
+  #ggtitle("Wildcaught (n = 373)") +
+  facet_wrap(. ~ Kingsolver_traits) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+
+morph_hist_m <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Other_morphology" &
+           Sex == "M") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  xlim(0,1) +
+  ylim(0,35)+
+  #ggtitle("Wildcaught (n = 373)") +
+  #facet_wrap(. ~ Kingsolver_traits) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+morph_sex_hist <- cowplot::plot_grid(morph_hist_f +theme(axis.title = element_blank(),
+                                                         axis.text.x = element_blank()),
+                                     morph_hist_m + theme(axis.title = element_blank()), 
+                                     ncol = 1)
+
+size_hist_f <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Size" &
+           Sex == "F") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  xlim(0,1) +
+  ylim(0,35)+
+  #ggtitle("Wildcaught (n = 373)") +
+  facet_wrap(. ~ Kingsolver_traits) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+size_hist_m <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Size" &
+           Sex == "M") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  xlim(0,1) +
+  ylim(0,35)+
+  #ggtitle("Wildcaught (n = 373)") +
+  #facet_wrap(. ~ Kingsolver_traits) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+size_sex_hist <- cowplot::plot_grid(size_hist_f +theme(axis.title = element_blank(),
+                                                       axis.text.x = element_blank()),
+                                    size_hist_m + theme(axis.title = element_blank()), 
+                                    ncol = 1)
+
+phys_hist_f <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Physiology" &
+           Sex == "F") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  xlim(0,1) +
+  ylim(0,35)+
+  #ggtitle("Wildcaught (n = 373)") +
+  facet_wrap(. ~ Kingsolver_traits) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+phys_hist_m <-
+  data.all %>% 
+  filter(Kingsolver_traits == "Physiology" &
+           Sex == "M") %>% 
+  ggplot(aes(x = R.2)) +
+  geom_histogram(mapping=aes(x=R.2, y=..count../sum(..count..)*100), bins=10, 
+                 fill="#E6E6E6", colour = "black", size = 1) +
+  xlab(expression(paste(R^2))) +
+  ylab("Frequency") +
+  xlim(0,1) +
+  ylim(0,35)+
+  #ggtitle("Wildcaught (n = 373)") +
+  #facet_wrap(. ~ Kingsolver_traits) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)) +
+  theme(
+    strip.text = element_text(size = 13),
+    axis.title = element_text(size = 24))
+
+phys_sex_hist <- cowplot::plot_grid(phys_hist_f +theme(axis.title = element_blank(),
+                                                       axis.text.x = element_blank()),
+                                    phys_hist_m + theme(axis.title = element_blank()), 
+                                    ncol = 1)
+
+
+sex_facet_hist <- cowplot::plot_grid("",behav_sex_hist, LH_sex_hist, morph_sex_hist, 
+                                     phys_sex_hist, size_sex_hist, nrow = 1,
+                                     rel_widths = c(0.20,1,1,1,1,1))
+
+sex_facet_hist <- sex_facet_hist + cowplot::draw_label("Frequency (%)", x=  0, y=0.5, vjust= 1, angle=90, size = 24)
+
+#tiff("figs1.pg.tiff", res = 600, units = "in", height = 5, width = 8)
+sex_facet_hist
+#dev.off()
+
+# Sample Size ----
+
+##%######################################################%##
+#                                                          #
+####      IMPORTANT run line 36-74 to restructure       ####
+####        and read in data before coming here.        ####
+#                                                          #
+##%######################################################%##
+
+
+## Sample Size Data Wrangling ----
+# subsets originally in the Tallies code
+
+ids<-spreadsheet.data %>%
+  group_by(TraitID, Slope, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for each Slope within a trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Slope))>1) %>% #selects traits with multiple slopes
+  filter(Slope == "South") %>% #select only South pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  dplyr::select(TraitID)
+
+traits_s<-spreadsheet.data %>% 
+  filter(TraitID %in% ids$TraitID) %>% 
+  filter(Slope== "South") # 204 traits, done and on drive
+
+ids_south<-spreadsheet.data %>%
+  group_by(TraitID, Slope, Predation) %>%
+  tally() %>% 
+  group_by(TraitID) %>% 
+  filter(Slope == "South") %>%
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>%
+  filter(!duplicated(TraitID)) %>% 
+  dplyr::select(TraitID) #432 traits total, use this to select traits with enough south pops to be viable for drainage analysis
+
+ids_d<-spreadsheet.data %>%
+  filter(TraitID %in% ids_south$TraitID) %>% 
+  filter(Slope == "South") %>% #only use south pops
+  group_by(TraitID, Drainage, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for each driange within a trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Drainage))>1) %>% #selects traits with both drainages
+  filter(Drainage == "Caroni") %>% #select only caroni pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  dplyr::select(TraitID)
+
+traits_d<-spreadsheet.data %>%
+  filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
+  filter(Drainage == "Caroni") # 317 traits
+
+#this will be used as the among drainage comparisons to control for variation between slopes
+traits_d_all<-spreadsheet.data %>%
+  filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
+  filter(Slope == "South")
+
+#Introductions
+ids_i<-spreadsheet.data %>% 
+  group_by(TraitID, Poptype, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Poptype))>1) %>% #selects traits with both natural and introduction populations
+  filter(Poptype == "Natural") %>% #select only natural pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  dplyr::select(TraitID)
+
+traits_i<-spreadsheet.data %>% 
+  filter(TraitID %in% ids_i$TraitID) %>% 
+  filter(Poptype == "Natural") #209 traits, done and on drive
+
+ids_i_broad<-spreadsheet.data %>% 
+  group_by(TraitID, Poptype_broad, Predation) %>%
+  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
+  group_by(TraitID) %>% 
+  filter(length(unique(Poptype_broad))>1) %>% #selects traits with both natural and introduction populations
+  filter(Poptype_broad == "Natural") %>% #select only natural pops to determine which traits are viable
+  filter(n>1) %>%
+  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
+  filter(!duplicated(TraitID)) %>% 
+  dplyr::select(TraitID)
+
+traits_i_broad<-spreadsheet.data %>% 
+  filter(TraitID %in% ids_i_broad$TraitID) %>% 
+  filter(Poptype_broad == "Natural") #219 traits, done and on drive
+
+#(Number averaged per trait), done for each subset
+
+n_all<-spreadsheet.data %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.all.n<-inner_join(spreadsheet.data, R2.data.among, by = "TraitID") %>% 
+  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(y = n_all, by = "TraitID") %>% 
+  filter(!is.na(meanNumber))
+
+#south slope only traits (slope Q)
+n_s<-traits_s %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.south.n <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>% 
+  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_s, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+
+#caroni drainage only traits (drainage Q)
+n_d<-traits_d %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.caroni.n <- inner_join(spreadsheet.data, R2.data.caroni, by = "TraitID") %>% 
+  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_d, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+# south drainages only (drainage Q)
+n_d_all<-traits_d_all %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.among.drainage.n <- inner_join(spreadsheet.data, R2.data.among.drainage, by = "TraitID") %>% 
+  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_d_all, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+# intro broad (introduction Q)
+n_i_broad<-traits_i_broad %>% 
+  group_by(TraitID) %>% 
+  summarize(meanNumber = mean(Number)) %>% 
+  mutate(TraitID = as.factor(TraitID))
+
+data.intro.broad.n <- inner_join(spreadsheet.data, R2.data.intro.broad, by = "TraitID") %>% 
+  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
+  distinct(TraitID, .keep_all = TRUE) %>% 
+  left_join(n_i_broad, by = "TraitID")  %>% 
+  filter(!is.na(meanNumber))
+
+#intros (introduction Q) not used
+#n_i<-traits_i %>% 
+#group_by(TraitID) %>% 
+#summarize(meanNumber = mean(Number)) %>% 
+#mutate(TraitID = as.factor(TraitID))
+
+#data.intro.n <- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
+#dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
+#distinct(TraitID, .keep_all = TRUE) %>% 
+#left_join(n_i, by = "TraitID")  %>% 
+#filter(!is.na(meanNumber))
+
+
+## Sample Size dfs for models ----
+## trait types and sex
+data.all.no.colour.n <- data.all.n %>% 
+  filter(Sex %in% c("M", "F")) %>% 
+  filter(!Kingsolver_traits == 'Colour')
+
+data.all.n<-data.all.n %>% 
+  filter(Sex %in% c("M", "F"))
+
+data.all.rear.n <- data.all.n %>% 
+  filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+
+## determinants models
+data.for.ecology.models.n<-rbind(data.all.n,data.south.n) %>%
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) %>%  #filters only trait IDs that have more than 1 entry within the group (n = 162 traits)
+  mutate(method = as.factor(method)) %>% # fix structure
+  filter(Sex %in% c("M", "F")) %>%
+  ungroup()
+
+data.for.evolhist.models.n<-rbind(data.caroni.n,data.among.drainage.n) %>%
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) %>% #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+  mutate(method = as.factor(method)) %>% # fix structure
+  filter(Sex %in% c("M", "F")) %>%
+  ungroup()
+
+data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) %>% #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+  mutate(method = as.factor(method)) %>% # fix structure
+  filter(Sex %in% c("M", "F")) %>%
+  ungroup()
+
+# THESE ARE THE ONES ALEXIS DID TO REMOVE STUDY ID FROM THE MODELS
+# THE ONES ALLEGRA DID THAT MORE SIMILARLY STRUCUTRE THE REAL MODELS ARE BELOW
+
+## Sample Size Models GLM----
+###NOTE all with Other as of right now
+
+##single factor models
+## trait type model (in paper)
+data.all.no.other.n <- data.all.n %>% filter(!Kingsolver_traits == "Other")
+(all.model.traits.n <- glm(R.2 ~ Kingsolver_traits + meanNumber, data = data.all.no.other.n, family = binomial)) %>% 
+  summary() 
+car::Anova(all.model.traits.n, type = "II")
+
+## Rearing enviro model (in paper)
+
+(all.model.rearing.n <- glm(R.2 ~ StudyType + meanNumber, data = data.all.rear.n, family = binomial)) %>% 
+  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
+car::Anova(all.model.rearing.n, type = "II")
+
+## sex with colour (in paper)
+(all.model.sex.n <- glm(R.2 ~ Sex + meanNumber, data = data.all.n, family = binomial)) %>% 
+  summary() #no sig effects (without studyID sex is p = 0.525)
+car::Anova(all.model.sex.n, type = "II")
+
+## sex without colour  (in paper)
+(all.model.sex.no.colour.n <- glm(R.2 ~ Sex + meanNumber, data = data.all.no.colour.n, family = binomial)) %>% 
+  summary() #no sig effects (without StudyID same)
+car::Anova(all.model.sex.no.colour.n, type = "II")
+
+## Multivariate Models
+## sex and traits (in paper)
+(sex.and.traits.n <- glm(R.2 ~ Kingsolver_traits + Sex + meanNumber, data = data.all.n, family = binomial)) %>% 
+  summary() #colour traits significant
+car::Anova(sex.and.traits.n, type = "II") #traits significant
+
+## sex and rear (in paper)
+(sex.and.rear.n <- glm(R.2 ~ StudyType + Sex + meanNumber, data = data.all.rear.n, family = binomial)) %>% 
+  summary()
+car::Anova(sex.and.rear.n, type = "II") #nothing sig
+
+##Determinant Models
+
+## Ecology model (in paper)
+
+(ecology.full.n <- glm(R.2 ~ method*Sex + meanNumber, data = data.for.ecology.models.n, family = binomial)) %>% 
+  summary() #singular, sex significant
+Anova(ecology.full.n, type = 3)
+## remove the interaction (in paper)
+(ecology.full.n <- glm(R.2 ~ method + Sex + meanNumber, data = data.for.ecology.models.n, family = binomial)) %>% 
+  summary() #singular, sex significant
+Anova(ecology.full.n, type = 2)
+
+#(ecology.full.n <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n, family = binomial)) %>% summary()
+#singular, sex significant
+
+## Intro model (in paper)
+(intro.full.broad.n <- glm(R.2 ~ method + meanNumber, data = data.for.intro.models.broad.n, family = binomial)) %>% 
+  summary() #singular  ### indicates sample size is significant
+#allFit(intro.full.broad.n)
+Anova(intro.full.broad.n, type = 2)
+
+#(intro.full.broad.n <- glmer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n, family = binomial)) %>% summary() 
+#singular, nothing sig
+
+## Evolutionary history model w interaction (in paper)
+(evolhist.full.n <- glm(R.2 ~ method * Sex + meanNumber, data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #fail to converge, nothing sig
+Anova(evolhist.full.n, type = 3)
+
+allFit(evolhist.full.n) #singular fits
+
+#(evolhist.full.n <- glmer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
+#singular, sex sig
+
+## interaction removed wout interaction (in paper)
+(evolhist.full.n <- glm(R.2 ~ method + Sex + meanNumber, data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #singular, method sig.
+Anova(evolhist.full.n, type = 2)
+#(evolhist.full <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
+#singular, method sig. and sex sig.
+
+## Evolutionary history model as a GLM (in paper)
+
+(evolhist.glm.n <- glm(R.2 ~ method + meanNumber, data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #nothing sig
+
+
+# THESE ARE THE ONES ALLEGRA DID TO MIMIC THE STRUCTURE OF MODELS IN THE PAPER
+## Sample Size Models GLMM ----
+###NOTE all with Other as of right now
+
+##single factor models
+## trait type model (in paper)
+
+(all.model.traits.n <- glmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.n, family = binomial)) %>% 
+  summary() #singular
+car::Anova(all.model.traits.n, type = "II")
+
+## Rearing enviro model (in paper)
+
+(all.model.rearing.n <- glmer(R.2 ~ StudyType + meanNumber + (1|StudyID), data = data.all.rear.n, family = binomial)) %>% 
+  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
+car::Anova(all.model.rearing.n, type = "II")
+
+## sex with colour (in paper)
+(all.model.sex.n <- glmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.n, family = binomial)) %>% 
+  summary() #no sig effects (without studyID sex is p = 0.525)
+car::Anova(all.model.sex.n, type = "II")
+
+## sex without colour  (in paper)
+(all.model.sex.no.colour.n <- glmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.no.colour.n, family = binomial)) %>% 
+  summary() #no sig effects (without StudyID same)
+car::Anova(all.model.sex.no.colour.n, type = "II")
+
+## Multivariate Models
+## sex and traits (in paper)
+#singular with StudyID as a random factor or just meanNumber as fixed
+
+(sex.and.traits.n <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|meanNumber), data = data.all.n, family = binomial)) %>% 
+  summary() #phys and colour traits significant
+car::Anova(sex.and.traits.n, type = "II") #traits significant
+
+## sex and rear (in paper)
+#keeping formula to match sex.and.traits
+(sex.and.rear.n <- glmer(R.2 ~ StudyType + Sex + (1|meanNumber), data = data.all.rear.n, family = binomial)) %>% 
+  summary()
+car::Anova(sex.and.rear.n, type = "II") #nothing sig
+
+##Determinant Models
+
+## Ecology model (in paper)
+
+(ecology.full.n <- glmer(R.2 ~ method*Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
+  summary() #singular, sex significant
+
+## remove the interaction (in paper)
+(ecology.full.n <- glmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
+  summary() #singular, sex significant
+
+#(ecology.full.n <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n, family = binomial)) %>% summary()
+#singular, sex significant
+
+## Intro model (in paper)
+(intro.full.broad.n <- glmer(R.2 ~ method + meanNumber + (1|StudyID), data = data.for.intro.models.broad.n, family = binomial)) %>% 
+  summary() #singular  ### indicates sample size is significant
+#allFit(intro.full.broad.n)
+
+#(intro.full.broad.n <- glmer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n, family = binomial)) %>% summary() 
+#singular, nothing sig
+
+## Evolutionary history model w interaction (in paper)
+(evolhist.full.n <- glmer(R.2 ~ method * Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #fail to converge, nothing sig
+allFit(evolhist.full.n) #singular fits
+
+#(evolhist.full.n <- glmer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
+#singular, sex sig
+
+## interaction removed wout interaction (in paper)
+(evolhist.full.n <- glmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #singular, method sig.
+
+#(evolhist.full <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
+#singular, method sig. and sex sig.
+
+## Evolutionary history model as a GLM (in paper)
+
+(evolhist.glm.n <- glm(R.2 ~ method + meanNumber + StudyID, data = data.for.evolhist.models.n, family = binomial)) %>% 
+  summary() #nothing sig
+
+
+## Sample Size Models LMM ----
+
+##single factor models
+## trait type model (in paper)
+data.all.no.other.n <- data.all.n %>% filter(!Kingsolver_traits == "Other")
+(all.model.traits.n <- lmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.no.other.n)) %>% 
+  summary() 
+car::Anova(all.model.traits.n, type = "II")
+
+## Rearing enviro model (in paper)
+
+(all.model.rearing.n <- lmer(R.2 ~ StudyType + meanNumber + (1|StudyID), data = data.all.rear.n)) %>% 
+  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
+car::Anova(all.model.rearing.n, type = "II")
+
+## sex with colour (in paper)
+(all.model.sex.n <- lmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.n)) %>% 
+  summary() #no sig effects (without studyID sex is p = 0.525)
+car::Anova(all.model.sex.n, type = "II")
+
+## sex without colour  (in paper)
+(all.model.sex.no.colour.n <- lmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.no.colour.n)) %>% 
+  summary() #no sig effects (without StudyID same)
+car::Anova(all.model.sex.no.colour.n, type = "II")
+
+## Multivariate Models
+## sex and traits (in paper)
+(sex.and.traits.n <- lmer(R.2 ~ Kingsolver_traits + Sex + meanNumber + (1|StudyID), data = data.all.n)) %>% 
+  summary() #colour traits significant
+car::Anova(sex.and.traits.n, type = "II") #traits significant
+
+## sex and rear (in paper)
+(sex.and.rear.n <- lmer(R.2 ~ StudyType + Sex + meanNumber + (1|StudyID), data = data.all.rear.n)) %>% 
+  summary()
+car::Anova(sex.and.rear.n, type = "II") #nothing sig
+
+##Determinant Models
+
+## Ecology model (in paper)
+
+(ecology.full.n <- lmer(R.2 ~ method*Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n)) %>% 
+  summary() #singular, sex significant
+Anova(ecology.full.n, type = 3)
+## remove the interaction (in paper)
+(ecology.full.n <- lmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n)) %>% 
+  summary() #singular, sex significant
+Anova(ecology.full.n, type = 2)
+
+#(ecology.full.n <- lmerer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n)) %>% summary()
+#singular, sex significant
+
+## Intro model (in paper)
+(intro.full.broad.n <- lmer(R.2 ~ method + meanNumber + (1|StudyID), data = data.for.intro.models.broad.n)) %>% 
+  summary() #singular  ### indicates sample size is significant
+#allFit(intro.full.broad.n)
+Anova(intro.full.broad.n, type = 2)
+
+#(intro.full.broad.n <- lmerer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n)) %>% summary() 
+#singular, nothing sig
+
+## Evolutionary history model w interaction (in paper)
+(evolhist.full.n <- lmer(R.2 ~ method * Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n)) %>% 
+  summary() #fail to converge, nothing sig
+Anova(evolhist.full.n, type = 3)
+
+allFit(evolhist.full.n) #singular fits
+
+#(evolhist.full.n <- lmerer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n)) %>% summary() 
+#singular, sex sig
+
+## interaction removed wout interaction (in paper)
+(evolhist.full.n <- lmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n)) %>% 
+  summary() #singular, method sig.
+Anova(evolhist.full.n, type = 2)
+#(evolhist.full <- lmerer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n)) %>% summary() 
+#singular, method sig. and sex sig.
+
+# Residuals ---- 
+
+R2.data.among.resid <- read.csv("Resample_among.csv")
+R2.data.south.resid <- read.csv("Resample_South.csv")
+R2.data.intro.resid <- read.csv("Resample_intro.csv")
+R2.data.intro.resid.broad <- read.csv("Resample_intro_broad.csv")
+R2.data.caroni.resid <- read.csv("Resample_Caroni.csv")
+R2.data.among.drainage.resid <- read.csv("Resample_Among_Drainage.csv")
+
+## fix structure
+R2.data.among.resid$TraitID <- as.factor(R2.data.among.resid$TraitID)
+R2.data.south.resid$TraitID <- as.factor(R2.data.south.resid$TraitID)
+R2.data.intro.resid$TraitID <- as.factor(R2.data.intro.resid$TraitID)
+R2.data.intro.resid.broad$TraitID <- as.factor(R2.data.intro.resid.broad$TraitID)
+R2.data.caroni.resid$TraitID <- as.factor(R2.data.caroni.resid$TraitID)
+R2.data.among.drainage.resid$TraitID <- as.factor(R2.data.among.drainage.resid$TraitID)
+
+# combine R2 and spreadsheet data
+## prep for when we bind them together, this variable will go in the model to indicate the type of R2
+R2.data.among.resid$method <- "all"
+R2.data.south.resid$method <- "south"
+R2.data.intro.resid$method <- "only_natural"
+R2.data.intro.resid.broad$method <- "only_natural_broad"
+R2.data.caroni.resid$method <- "caroni"
+R2.data.among.drainage.resid$method <- "both.drainages"
+
+## get relevant data with one entry for each Trait
+### I was inclusive with columns, many probably aren't needed so you can cut them out
+data.all.resid <- inner_join(spreadsheet.data, R2.data.among.resid, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) #removes replicated TraitIDs and retains the columns
+
+## repeat for south only R2 and others...
+data.south.resid <- inner_join(spreadsheet.data, R2.data.south.resid, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.intro.resid<- inner_join(spreadsheet.data, R2.data.intro.resid, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.intro.broad.resid<- inner_join(spreadsheet.data, R2.data.intro.resid.broad, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.caroni.resid<- inner_join(spreadsheet.data, R2.data.caroni.resid, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) 
+
+data.among.drainage.resid<- inner_join(spreadsheet.data, R2.data.among.drainage.resid, by = "TraitID") %>% 
+  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE)
+
+## then we can bind them together as we wish! First ecology...
+data.for.ecology.models.resid<-rbind(data.all.resid,data.south.resid) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
+
+## evolutionary history question
+data.for.evolhist.models.resid<-rbind(data.caroni.resid,data.among.drainage.resid) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+
+## Intro "broad", 
+data.for.intro.models.broad.resid<-rbind(data.all.resid,data.intro.broad.resid) %>% 
+  arrange(TraitID) %>% #puts them in a nice order
+  group_by(TraitID) %>% #groups them for the count
+  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
+
+### as a note and fail safe I would run the grouping with TraitID on the sex specific dfs to make sure theres two traitID entries for each
+
+## remove 'both'
+(data.all.resid <- data.all.resid %>% filter(Sex %in% c("M", "F"))  ) %>% summary()
+(data.all.resid.no.colour <- data.all.resid %>% filter(!Kingsolver_traits == 'Colour'))
+
+# Before models, test dist of residuals 
+ggqqplot(data.all.resid$R.2)
+shapiro.test(data.all.resid$R.2)
+
+## Overall models (traits, sex, rearing) ----
+
+### remove other (because model below will not converge with other)
+
+### Trait type model (in paper) ----
+data.all.resid.traits <- data.all.resid %>% filter(!Kingsolver_traits == "Other")
+(all.model.traits.resid <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID), 
+                                 data = data.all.resid.traits, family = binomial)) %>% summary()
+car::Anova(all.model.traits.resid, type = "II")
+
+qqnorm(residuals(all.model.traits.resid.lmer))
+qqline(residuals(all.model.traits.resid.lmer))
+shapiro.test(residuals(all.model.traits.resid.lmer))
+
+### sex with colour (in paper) ----
+### with colour
+(all.model.sex.resid <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid, family = binomial)) %>% summary()
+car::Anova(all.model.sex.resid, type = "II")
+
+(all.model.sex.resid.lmer <- lmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid)) %>% summary()
+
+shapiro.test(residuals(all.model.sex.resid.lmer))
+
+### sex without colour  (in paper) ----
+(all.model.sex.no.colour.resid <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid.no.colour, family = binomial)) %>% summary()
+car::Anova(all.model.sex.no.colour.resid, type = "II")
+
+(all.model.sex.no.colour.resid.lmer <- lmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid.no.colour)) %>% summary()
+
+shapiro.test(residuals(all.model.sex.no.colour.resid.lmer))
+
+
+### rearing enviro model (in paper) ----
+data.all.resid.rear <- data.all.resid %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
+(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.resid.rear, family = binomial)) %>% summary()
+car::Anova(all.model.rearing, type = "II")
+
+(all.model.rearing.lmer <- lmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.resid.rear)) %>% summary()
+shapiro.test(residuals(all.model.rearing.lmer))
+
+## multivariate models (traits, sex, rearing) ----
+
+### sex and traits (in paper) ----
+(sex.and.traits.resid <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all.resid, family = binomial)) %>% summary()
+Anova(sex.and.traits.resid, type = "II")
+
+sex.and.traits.resid.lmer <- lmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all.resid)
+shapiro.test(residuals(sex.and.traits.resid.lmer))
+
+### sex and rear (in paper) ----
+(sex.and.rear.resid <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.resid.rear, family = binomial)) %>% summary()
+Anova(sex.and.rear.resid, type = 2)
+
+(sex.and.rear.resid.lmer <- lmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.resid.rear)) %>% summary()
+shapiro.test(residuals(sex.and.rear.resid.lmer))
+
+## Determinants models ----
+### Ecology models ----
+
+#### fix structure
+data.for.ecology.models.resid$method <- as.factor(data.for.ecology.models.resid$method)
+
+#### Remove 'Both' sex category because duplicates
+data.for.ecology.models.resid <- data.for.ecology.models.resid %>% filter(Sex %in% c("M", "F"))  
+
+#### Ecology model (in paper) ----
+(ecology.full.resid <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models.resid, family = binomial)) %>% summary()
+car::Anova(ecology.full.resid, type = "III")
+
+(ecology.full.resid.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models.resid)) %>% summary()
+shapiro.test(resid(ecology.full.resid.lmer))
+
+#### remove the interaction (in paper) ----
+(ecology.full.resid <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models.resid, family = binomial)) %>% summary()
+car::Anova(ecology.full.resid, type = "II")
+
+(ecology.full.resid.lmer <- lmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models.resid)) %>% summary()
+shapiro.test(residuals(ecology.full.resid.lmer))
+
+### Intro models ----
+#### Fix structure
+data.for.intro.models.broad.resid$method <- as.factor(data.for.intro.models.broad.resid$method)
+
+#### Remove 'Both' sex category because duplicates
+data.for.intro.models.broad.resid <- data.for.intro.models.broad.resid %>% filter(Sex %in% c("M", "F"))  
+
+#### Intro model (in paper) ----
+(intro.full.broad.resid <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad.resid, family = binomial)) %>% summary()
+car::Anova(intro.full.broad.resid, type = "II")
+
+intro.full.broad.resid.lmer <- lmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad.resid)
+shapiro.test(residuals(intro.full.broad.resid.lmer))
+
+### Evolutionary history models ----
+#### (These are all singular fits)
+
+#### fix structure
+data.for.evolhist.models.resid$method <- as.factor(data.for.evolhist.models.resid$method)
+
+#### Remove 'Both' sex category because duplicates
+data.for.evolhist.models.resid <- data.for.evolhist.models.resid %>% filter(Sex %in% c("M", "F"))  
+
+#### Evolutionary history model w interaction (in paper) ----
+(evolhist.full.resid <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
+car::Anova(evolhist.full.resid, type = "III")
+
+#### interaction removed wout interaction (in paper) ----
+(evolhist.full.resid <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
+car::Anova(evolhist.full.resid, type = "II")
+
+(evolhist.glm.resid <- glm(R.2 ~ method, data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
+car::Anova(evolhist.glm.resid, type = "II")
+
+#### try w lmer
+(evolhist.full.lmer.resid <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models.resid)) %>% summary()
+Anova(evolhist.full.lmer.resid, type = 3)
+
+shapiro.test(residuals(evolhist.full.lmer.resid))
+
+#### try w glm
+(evolhist.full.glm.resid <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
+
+car::Anova(evolhist.full.lmer.resid, type = "II")
+car::Anova(evolhist.full.glm.resid, type = "II")
+
+# model validation ----
+## validate trait type ----
+#response = R2
+#expl = Kingsolver_traits
+#random = StudyID
+# glm name = all.model.traits
+
+
+# zuur book
+
+#step 1 linear regression
+lmTraits <- lm(R.2 ~ Kingsolver_traits, data = data.all.traits)
+plot(lmTraits)
+data.all.traits$logR.2 <- log10(data.all.traits$R.2 + 1)
+loglmtraits <- lm(logR.2 ~ Kingsolver_traits, data = data.all.traits)
+asinlmtraits <- lm(asin(R.2) ~ Kingsolver_traits, data = data.all.traits)
+sqrtlmtraits <- lm(sqrt(R.2) ~ Kingsolver_traits, data = data.all.traits)
+
+
+# visual inspection 
+par(mfrow = c(2,2))
+plot(sqrtlmtraits, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
+hist(resid(sqrtlmtraits), xlab = "Residuals", main = "") # normality - not normal
+plot(data.all.traits$Kingsolver_traits, resid(sqrtlmtraits), # note that spread not the same 
+     xlab = "Trait type", ylab = "residuals")
+par(op)
+
+# non-visual test of homogeneity (bartlett)
+# null hypothesis is that variances are equal 
+bartlett.test(resid(lmTraits), data.all.traits$Kingsolver_traits) # reject null
+
+#step 2 GLS
+traitsForm <- formula(R.2 ~ Kingsolver_traits) 
+glsTraits <- gls(traitsForm, data = data.all.traits)
+
+#step 3 variance
+# choose random effect?
+
+#step 4 fit model
+lmmTraits <- lme(traitsForm, random = ~ 1 | StudyID,
+                 method = "REML", data = data.all.traits)
+
+#step 5 compare new/old models
+anova(glsTraits, lmmTraits) #model w random is better; L = 89.46 (df = 8, p < 0.0001)
+
+#step6 is it ok?
+residTraits <- resid(lmmTraits, type = "normalized")
+fittedTraits <- fitted(lmmTraits)
+par(mfrow = c(1,2), mar = c(4,4,3,2))
+plot(x = fittedTraits, y = residTraits, xlab = "Fitted values", ylab = "Residuals")
+boxplot(residTraits ~ Kingsolver_traits, data = data.all.traits,
+        main = "Kingsolver traits", lab= "Residuals")
+par(op)
+
+#step7/8 optimal fixed str
+# this does not apply because we have 1 fixed ??
+
+#step9 validate the omodel
+summary(lmmTraits)
+# (0.188^2)/(0.188^2 + 0.202^2) = correlation between obs from the same stuyd = 0.46
+
+#steo10
+
+#step11
+library(lattice)
+xyplot(residTraits ~ Kingsolver_traits, 
+       data = data.all.traits, 
+       ylab = "Residuals",
+       xlab = "Kingsolver_traits",
+       panel = function(x,y)
+       {panel.grid(h = -1, v = 2) 
+         panel.points(x, y, col = 1) 
+         panel.loess(x, y, span = 0.5, col = 1,lwd=2)
+       }
+)
+
+
+library(mgcv)
+
+gammTraits <- gamm(R.2 ~ Kingsolver_traits,
+                   random = list(StudyID = ~1),
+                   data = data.all.traits) 
+summary(gammTraits$gam)
+summary(gammTraits$lme)
+
+anova(gammTraits$gam)
+anova(gammTraits$lme)
+
+plot(gammTraits$gam, all.terms = TRUE)
+plot(gammTraits$lme)
+
+drop1(sex.and.traits)
+
+
+# I have no idea what any of the above is showing atm 
+
+# so, dharma package instead
+
+library("DHARMa")
+
+testDispersion(all.model.traits)
+simulationOutput <- simulateResiduals(fittedModel = all.model.traits, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
+countOnes <- function(x) sum(x == 1)
+testGeneric(simulationOutput, summary = countOnes, alternative = "greater") 
+
+M2 <- glmer.nb(R.2 ~ Kingsolver_traits + (1|StudyID),
+               data = data.all.traits)
+
+summary(M2)
+
+E2 <- resid(M2, type = "pearson")
+N  <- nrow(data.all.traits)
+p  <- length(coef(M2)) + 1  # '+1' is for variance parameter in NB
+sum(E2^2) / (N - p)
+
+
+f = glmm.zinb(fixed = R.2 ~ Kingsolver_traits,
+              random = ~ 1 | StudyID, data = data.all.traits) 
+summary(f)
+fixed(f)
+summary(f$fit.zero)
+
+## validate sex ----
+all.model.sex
+
+lmSex <- lm(R.2 ~ Sex, data = data.all)
+
+
+par(mfrow = c(2,2))
+plot(lmSex, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
+hist(resid(lmSex), xlab = "Residuals", main = "") # normality - not normal
+plot(data.all$Sex, resid(lmSex), # note that spread not the same 
+     xlab = "Sex", ylab = "residuals")
+par(op)
+
+loglmSex <- lm(log10(R.2) ~ Sex, data = data.all)
+
+plot(resid(all.model.sex))
+hist(resid(all.model.sex))
+
+## validate rearing ----
+all.model.rearing
+hist(resid(all.model.rearing))
+plot(resid(all.model.rearing))
+par(op)
+
+
+# traits
+plot(resid(all.model.traits))
+hist(resid(all.model.traits))
+
+# ecology
+ecology.full
+
+ecology.test <- glmer(R.2 ~ method + (1 | StudyID), 
+                      family = binomial, data= data.for.ecology.models)
+plot(resid(ecology.test))
+hist(resid(ecology.test))
+summary(ecology.full)
+
+# evil
+plot(resid(evolhist.full))
+hist(resid(evolhist.full))
+summary(evolhist.full)
+# intro
+# regression
+data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(!TraitID == 303)
+
+introlm <- lm(R.2 ~ method, data = data.for.intro.models.broad)
+plot(introlm) # trash
+data.for.intro.models.broad$logR.2 <- log10(data.for.intro.models.broad$R.2 + 1)
+introlmlog <- lm(logR.2 ~ method, data = data.for.intro.models.broad)
+E <- rstandard(introlmlog)
+plot(introlmlog)
+
+
+# step2/3
+introformula <- formula(logR.2 ~ method)
+introgls <- gls(introformula, data = data.for.intro.models.broad)
+
+# step4
+introlme <- lme(introformula, random = ~ 1 | StudyID,
+                method = "REML", data = data.for.intro.models.broad)
+
+# step5
+anova(introgls, introlme) # better with RE (L = 28.66, p < 0.0001)
+
+#step6
+normresidintrolme <- resid(introlme, type = "normalized")
+fittedintrolme <- fitted(introlme)
+plot(x = fittedintrolme, y = normresidintrolme)
+boxplot(normresidintrolme ~ method,
+        data = data.for.intro.models.broad)
+
+#step7/8 - skip
+
+#step9
+summary(introlme)
+# 0.66 = correlation of obs from same study
+
+#step10 p 156
+library(lattice)
+xyplot(normresidintrolme ~ method,
+       data = data.for.intro.models.broad,
+       ylab = "residuals",
+       panel = function(x,y){
+         panel.grid(h = -1, v = 2)
+         panel.points(x, y, col = 1)
+         panel.loess(x, y, span = 0.5, col = 1,lwd=2)})
+
+library(mgcv)
+introgamm <- gamm(logR.2 ~ method,
+                  random = list(StudyID = ~ 1),
+                  data = data.for.intro.models.broad)
+summary(introgamm$gam)
+summary(introgamm$lme)
+anova(introgamm$gam) 
+plot(introgamm$gam) # we didn't have smoother (only categorical data)
+plot(introgamm$lme)
+
+plot(resid(introlm))
+hist(resid(introlm))
+plot(resid(intro.full.broad))
+hist(resid(intro.full.broad))
+
+
+summary(intro.full.broad)
+
+
+
+
+M5 <- glm(R.2 ~ method, family = binomial, data = data.for.intro.models.broad)
+
+EP <- resid(M5, type = "pearson")
+ED <- resid(M5, type = "deviance")
+mu <- predict(M5, type = "response")
+E <- data.for.intro.models.broad$R.2 ~ mu
+par(mfrow = c(2,2))
+plot(x = mu, y = E, main = "response residuals")
+plot(x = mu, y = EP)
+plot(x = mu, y = ED)
+plot(M5)
+
+
+
+test <- glm(R.2 ~ method, family = quasibinomial, data = data.for.intro.models.broad)
+summary(test)
+drop1(test, test = "F")
+
+
+EP <- resid(test, type = "pearson")
+ED <- resid(test, type = "deviance")
+mu <- predict(test, type = "response")
+E <- data.for.intro.models.broad$R.2 ~ mu
+par(mfrow = c(2,2))
+plot(x = mu, y = E, main = "response residuals")
+plot(x = mu, y = EP)
+plot(x = mu, y = ED)
+plot(test)
+
+
+
+a1b <- (glmer.nb(R.2 ~ method + (1 | StudyID), data = data.for.intro.models.broad))
+b2b <- (glmer.nb(R.2 ~ method + (1 | StudyID), data = data.for.ecology.models)) 
+c2b <- (glmer.nb(R.2 ~ method + (1 | StudyID), data = data.for.evolhist.models)) 
+
+
+
+library("DHARMa")
+
+testDispersion(c2b)
+simulationOutput <- simulateResiduals(fittedModel = c2b, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
+countOnes <- function(x) sum(x == 1)
+testGeneric(simulationOutput, summary = countOnes, alternative = "greater") 
+
+library(NBZIMM)
+f = glmm.zinb(fixed = log10(R.2+1) ~ method, 
+              random = ~ 1 | StudyID, data = data.for.intro.models.broad) 
+summary(f)
+plot(f)
+plot(intro.full.broad)
+
+g = glmm.zinb(fixed = R.2 ~ method, 
+              random = ~ 1 | StudyID, data = data.for.ecology.models) 
+summary(g)
+plot(g)
+plot(ecology.full)
+
+h = glmm.zinb(fixed = R.2 ~ method, 
+              random = ~ 1 | StudyID, data = data.for.evolhist.models) 
+summary(h)
+plot(h)
+plot(evolhist.full)
+
+plot(resid(h))
+plot(resid(f))
+plot(resid(h))
+plot(resid(introlm))
+hist(resid(introlm))
+hist(resid(h))
+hist(resid(g))
+hist(resid(f))
+plot(resid(intro.full.broad))
+hist(resid(intro.full.broad))
+
+all.model.rearing
+
+testDispersion(all.model.rearing)
+simulationOutput <- simulateResiduals(fittedModel = all.model.rearing, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
+
+## ecology
+
+ecology.full
+
+testDispersion(ecology.full)
+simulationOutput <- simulateResiduals(fittedModel = ecology.full, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
+
+
+## evilhist
+
+evolhist.full
+
+testDispersion(evolhist.full)
+simulationOutput <- simulateResiduals(fittedModel = evolhist.full, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
+
+
+#step 1 linear regression
+lmTraits <- lm(R.2 ~ method, data = data.for.evolhist.models)
+plot(lmTraits)
+data.for.evolhist.models$logR.2 <- log10(data.for.evolhist.models$R.2 + 1)
+loglmtraits <- lm(logR.2 ~ method, data = data.for.evolhist.models)
+asinlmtraits <- lm(asin(R.2) ~ method, data = data.for.evolhist.models)
+sqrtlmtraits <- lm(sqrt(R.2) ~ method, data = data.for.evolhist.models)
+
+
+# visual inspection 
+par(mfrow = c(2,2))
+plot(sqrtlmtraits, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
+hist(resid(loglmtraits), xlab = "Residuals", main = "") # normality - not normal
+plot(data.for.evolhist.models$method, resid(loglmtraits), # note that spread not the same 
+     xlab = "Trait type", ylab = "residuals")
+par(op)
+
+# non-visual test of homogeneity (bartlett)
+# null hypothesis is that variances are equal 
+bartlett.test(resid(lmTraits), data.for.evolhist.models$method) # reject null
+
+bartlett.test(resid(loglmtraits), data.for.evolhist.models$method) # reject null
+
+#step 2 GLS
+traitsForm <- formula(R.2 ~ method) 
+glsTraits <- gls(traitsForm, data = data.for.evolhist.models)
+
+#step 3 variance
+# choose random effect?
+
+#step 4 fit model
+lmmTraits <- lme(traitsForm, random = ~ 1 | StudyID,
+                 method = "REML", data = data.for.evolhist.models)
+
+#step 5 compare new/old models
+anova(glsTraits, lmmTraits) #model w random is better
+
+#step6 is it ok?
+residTraits <- resid(lmmTraits, type = "normalized")
+fittedTraits <- fitted(lmmTraits)
+par(mfrow = c(1,2), mar = c(4,4,3,2))
+plot(x = fittedTraits, y = residTraits, xlab = "Fitted values", ylab = "Residuals")
+boxplot(residTraits ~ method, data = data.for.evolhist.models,
+        main = "Methods", lab= "Residuals")
+par(op)
+
+#step7/8 optimal fixed str
+# this does not apply because we have 1 fixed ??
+
+#step9 validate the omodel
+summary(lmmTraits)
+# (0.188^2)/(0.188^2 + 0.202^2) = correlation between obs from the same stuyd = 0.46
+
+#steo10
+
+#step11
+library(lattice)
+xyplot(residTraits ~ method, 
+       data = data.for.evolhist.models, 
+       ylab = "Residuals",
+       xlab = "Method",
+       panel = function(x,y)
+       {panel.grid(h = -1, v = 2) 
+         panel.points(x, y, col = 1) 
+         panel.loess(x, y, span = 0.5, col = 1,lwd=2)
+       }
+)
+
+
+library(mgcv)
+
+gammTraits <- gamm(R.2 ~ method,
+                   random = list(StudyID = ~1),
+                   data = data.for.evolhist.models) 
+summary(gammTraits$gam)
+summary(gammTraits$lme)
+
+anova(gammTraits$gam)
+anova(gammTraits$lme)
+
+plot(gammTraits$gam, all.terms = TRUE)
+plot(gammTraits$lme)
+
+drop1(sex.and.traits)
+
+
+
+
+## introductions
+
+intro.full.broad
+
+testDispersion(intro.full.broad)
+simulationOutput <- simulateResiduals(fittedModel = intro.full.broad, plot = F)
+residuals(simulationOutput)
+residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
+plot(simulationOutput)
+plotQQunif(simulationOutput)
+plotResiduals(simulationOutput)
+
+testZeroInflation(simulationOutput)
+
+
