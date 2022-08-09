@@ -118,39 +118,20 @@ evolhist.data.females <- data.for.evolhist.models %>%
   filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
   ungroup(TraitID)
 
-## Intro "strict", I'm pretty sure these are the right csvs for this question
-data.for.intro.models<-rbind(data.all,data.intro) %>% 
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
-
-time.data.males <- data.for.intro.models %>% 
-  filter(Sex == "M" & Kingsolver_traits !="Other") %>% 
-  ungroup(TraitID)
-
-time.data.females <- data.for.intro.models %>% 
-  filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
-  ungroup(TraitID)
-
-
-## Intro "broad", 
+## Intro "broad", used in analyses in paper 
 data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>% 
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
   filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
 
-### as a note and fail safe I would run the grouping with TraitID on the sex specific dfs to make sure theres two traitID entries for each
-
-## remove 'both'
+## select only traits that did not mix sexes (for sex-specific analysis)
 (data.all <- data.all %>% filter(Sex %in% c("M", "F")))
 
-## remove 'colour'
-(data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour'))
-
-## remove 'other'
+## remove traits that are underrepresented, 'colour' and 'Other'
+data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour')
 data.all.no.other <- data.all %>% filter(!Kingsolver_traits == "Other")
 
-## drop the unused levels, just in case 
+## drop the unused levels to prepare for model
 data.all <- data.all %>% mutate(Sex = droplevels(Sex)) 
 data.all.no.colour <- data.all.no.colour %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
 data.all.no.other <- data.all.no.other %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
@@ -178,7 +159,7 @@ car::Anova(all.model.sex, type = "II") # anova to get Chi-sq
 car::Anova(all.model.sex.no.colour, type = "II") # anova to get Chi-sq
 
 ## Rearing enviro model (in paper) ----
-### Remove common garden F1
+### Remove common garden F1 as it's underrepresented
 data.all.rear <- data.all %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
 (all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
 
@@ -204,7 +185,7 @@ Anova(sex.and.rear, type = 2) # anova to get Chi-sq
 ### fix structure
 data.for.ecology.models$method <- as.factor(data.for.ecology.models$method)
 
-### Remove 'Both' sex category because duplicates
+### Remove 'Both' sex category because of duplicates
 data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
 
 ### Drop unused 'sex' level
