@@ -136,6 +136,7 @@ ecology.data.females <- data.for.ecology.models %>%
   filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
   ungroup(TraitID)
 
+
 ### Evolutionary History (Caroni vs entire South slope) ----
 #Note: Northern slope excluded from this subset
 data.for.evolhist.models<-rbind(data.caroni,data.among.drainage) %>% 
@@ -158,6 +159,7 @@ data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>%
   filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
 
 ### Permutation test ----
+
 
 
 
