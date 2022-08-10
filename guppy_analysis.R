@@ -1,4 +1,5 @@
 # Analysis for 'Compiling forty years of guppy research to investigate the factors contributing to (non)parallel evolution'
+#This R script uses the prepared R2 files provided on the repository, see "GuppyR2_Prep.R" for the process of generating these
 
 # Libraries ---- 
 library(plyr)
@@ -21,12 +22,12 @@ library(MuMIn)
 library(nlme)
 
 
-# import and format R2 values for anlayses (change to relative paths)
+# import and tidy R2 values to prepare for running models (descriptions of documents in ReadMe)
 
 spreadsheet.data <- read.csv(paste(wd,'/Data/MetaData.csv',sep=""), header=TRUE, sep=",")
 R2.data.among <- read.csv(paste(wd,'/Data/TraitR2_among.csv',sep=""), header=TRUE, sep=",")
 R2.data.south <- read.csv(paste(wd,'/Data/TraitR2_south.csv',sep=""), header=TRUE, sep=",")
-R2.data.intro <- read.csv(paste(wd,'/Data/TraitR2_intro.csv',sep=""), header=TRUE, sep=",")
+#R2.data.intro <- read.csv(paste(wd,'/Data/TraitR2_intro.csv',sep=""), header=TRUE, sep=",") # Not used in paper (doesn't include all introduction information in Table S2)
 R2.data.caroni <- read.csv(paste(wd,'/Data/TraitR2_Caroni.csv',sep=""), header=TRUE, sep=",")
 R2.data.among.drainage <- read.csv(paste(wd,'/Data/TraitR2_Among_Drainage.csv',sep=""), header=TRUE, sep=",")
 R2.data.intro.broad <- read.csv(paste(wd, '/Data/TraitR2_intro_broad.csv', sep = ""), header = TRUE, sep = ",")
@@ -49,7 +50,6 @@ spreadsheet.data$Kingsolver_traits <- as.factor(spreadsheet.data$Kingsolver_trai
 
 R2.data.among$TraitID <- as.factor(R2.data.among$TraitID)
 R2.data.south$TraitID <- as.factor(R2.data.south$TraitID)
-R2.data.intro$TraitID <- as.factor(R2.data.intro$TraitID)
 R2.data.intro.broad$TraitID <- as.factor(R2.data.intro.broad$TraitID)
 R2.data.caroni$TraitID <- as.factor(R2.data.caroni$TraitID)
 R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
@@ -58,22 +58,17 @@ R2.data.among.drainage$TraitID <- as.factor(R2.data.among.drainage$TraitID)
 ## prep for when we bind them together, this variable will go in the model to indicate the type of R2
 R2.data.among$method <- "all"
 R2.data.south$method <- "south"
-R2.data.intro$method <- "only_natural"
 R2.data.intro.broad$method <- "only_natural_broad"
 R2.data.caroni$method <- "caroni"
 R2.data.among.drainage$method <- "both.drainages"
 
 ## get relevant data with one entry for each Trait
-### I was inclusive with columns, many probably aren't needed so you can cut them out
 data.all <- inner_join(spreadsheet.data, R2.data.among, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% #I selected only the columns that have information that applies at the trait level
-  distinct(TraitID, .keep_all = TRUE) #removes replicated TraitIDs and retains the columns
+  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% #selected only the columns that have information that applies at the trait level
+  distinct(TraitID, .keep_all = TRUE) #removes duplicated TraitID rows and retain columns
 
+## repeat for other subset R2
 data.south <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) 
-
-data.intro<- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
   dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
   distinct(TraitID, .keep_all = TRUE) 
 
@@ -89,8 +84,45 @@ data.among.drainage<- inner_join(spreadsheet.data, R2.data.among.drainage, by = 
   dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
   distinct(TraitID, .keep_all = TRUE)
 
+### Models for basic potential determinants of parallelism -----
+# remove 'both' from sex (only used traits measured in male or female guppies)
+(data.all <- data.all %>% filter(Sex %in% c("M", "F"))) %>% mutate(Sex = droplevels(Sex))
 
-## preparing dataframes for each model analysis
+## Trait type -------
+## remove 'other'
+data.all.no.other <- data.all %>% filter(!Kingsolver_traits == "Other") %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
+
+(all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
+                           data = data.all.no.other, family = binomial)) %>% summary()
+
+car::Anova(all.model.traits, type = "II") # anova to get Chi-sq
+## Sex (with and without colour) -------
+# sex with colour
+(all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
+
+car::Anova(all.model.sex, type = "II") # anova to get Chi-sq
+
+# sex without colour
+# remove 'colour'
+(data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour')) %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits))
+
+(all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
+
+car::Anova(all.model.sex.no.colour, type = "II") # anova to get Chi-sq
+## Rearing environment ------
+data.all.rear <- data.all %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))
+
+(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
+
+car::Anova(all.model.rearing, type = "II") # anova to get Chi-sq
+
+## Sex and rearing environment ------
+# Use the same df as in rearing environment
+(sex.and.rear <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
+
+Anova(sex.and.rear, type = 2) # anova to get Chi-sq
+
+### Ecological Complexity (North vs Both slopes) -----
 data.for.ecology.models<-rbind(data.all,data.south) %>% 
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
@@ -104,7 +136,8 @@ ecology.data.females <- data.for.ecology.models %>%
   filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
   ungroup(TraitID)
 
-## evolutionary history question
+### Evolutionary History (Caroni vs entire South slope) ----
+#Note: Northern slope excluded from this subset
 data.for.evolhist.models<-rbind(data.caroni,data.among.drainage) %>% 
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
@@ -118,155 +151,19 @@ evolhist.data.females <- data.for.evolhist.models %>%
   filter(Sex == "F" & Kingsolver_traits !="Other") %>% 
   ungroup(TraitID)
 
-## Intro "broad", used in analyses in paper 
+### Time since Colonization (Natural vs Introduced and natural) ----
 data.for.intro.models.broad<-rbind(data.all,data.intro.broad) %>% 
   arrange(TraitID) %>% #puts them in a nice order
   group_by(TraitID) %>% #groups them for the count
   filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
 
-## select only traits that did not mix sexes (for sex-specific analysis)
-(data.all <- data.all %>% filter(Sex %in% c("M", "F")))
-
-## remove traits that are underrepresented, 'colour' and 'Other'
-data.all.no.colour <- data.all %>% filter(!Kingsolver_traits == 'Colour')
-data.all.no.other <- data.all %>% filter(!Kingsolver_traits == "Other")
-
-## drop the unused levels to prepare for model
-data.all <- data.all %>% mutate(Sex = droplevels(Sex)) 
-data.all.no.colour <- data.all.no.colour %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
-data.all.no.other <- data.all.no.other %>% mutate(Kingsolver_traits = droplevels(Kingsolver_traits)) 
-
-# Overall models (traits, sex, rearing) ----
-
-## Trait type model (in paper) ----
-### Use df without 'Other' traits
-
-(all.model.traits <- glmer(R.2 ~ Kingsolver_traits +  (1|StudyID), 
-                           data = data.all.no.other, family = binomial)) %>% summary()
-
-car::Anova(all.model.traits, type = "II") # anova to get Chi-sq
-
-## sex with colour (in paper) ----
-(all.model.sex <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
-
-car::Anova(all.model.sex, type = "II") # anova to get Chi-sq
-
-## sex without colour  (in paper) ----
-### Use df without 'Colour' traits
-
-(all.model.sex.no.colour <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.no.colour, family = binomial)) %>% summary()
-
-car::Anova(all.model.sex.no.colour, type = "II") # anova to get Chi-sq
-
-## Rearing enviro model (in paper) ----
-### Remove common garden F1 as it's underrepresented
-data.all.rear <- data.all %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
-(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
-
-car::Anova(all.model.rearing, type = "II") # anova to get Chi-sq
-
-# multivariate models (traits, sex, rearing) ----
-
-## sex and traits (in paper) ----
-(sex.and.traits <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all, family = binomial)) %>% summary()
-
-Anova(sex.and.traits, type = "II") # anova to get Chi-sq
-
-## sex and rear (in paper) ----
-### Use df without F1
-(sex.and.rear <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.rear, family = binomial)) %>% summary()
-
-Anova(sex.and.rear, type = 2) # anova to get Chi-sq
-
-# Determinants models ----
-
-## Ecology models ----
-
-### fix structure
-data.for.ecology.models$method <- as.factor(data.for.ecology.models$method)
-
-### Remove 'Both' sex category because of duplicates
-data.for.ecology.models <- data.for.ecology.models %>% filter(Sex %in% c("M", "F"))  
-
-### Drop unused 'sex' level
-data.for.ecology.models <- data.for.ecology.models %>% mutate(Sex = droplevels(Sex)) 
-
-### Ecology model (in paper) ----
-(ecology.full <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
-
-car::Anova(ecology.full, type = "III") # anova to get Chi-sq
-
-### Ecology without interaction (in paper) ----
-(ecology.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models, family = binomial)) %>% summary()
-
-car::Anova(ecology.full, type = "II") # anova to get Chi-sq
-
-## Intro models (broad) ----
-### Fix structure
-data.for.intro.models.broad$method <- as.factor(data.for.intro.models.broad$method)
-
-### Remove 'Both' sex category because duplicates
-data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(Sex %in% c("M", "F"))  
-
-### Drop unused level
-data.for.intro.models.broad <- data.for.intro.models.broad %>% mutate(Sex = droplevels(Sex)) 
-
-### Intro model (in paper) ----
-(intro.full.broad <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad, family = binomial)) %>% summary()
-car::Anova(intro.full.broad, type = "II")
-
-## Evolutionary history models ----
-### (These are all singular fits)
-
-### fix structure
-data.for.evolhist.models$method <- as.factor(data.for.evolhist.models$method)
-
-### Remove 'Both' sex category because duplicates
-data.for.evolhist.models <- data.for.evolhist.models %>% filter(Sex %in% c("M", "F"))  
-
-### Drop unused 'sex' level
-data.for.evolhist.models <- data.for.evolhist.models %>% mutate(Sex = droplevels(Sex)) 
-
-### Evolutionary history model w interaction (in paper) ----
-(evolhist.full <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
-
-car::Anova(evolhist.full, type = "III") # anova to get Chi-sq
-
-### Evolhist without interaction (in paper) ----
-(evolhist.full <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models, family = binomial)) %>% summary()
-
-car::Anova(evolhist.full, type = "II") # anova to get Chi-sq
-
-### Troubleshooting Evolutionary history----
-#### Evolhist are all singular, so here we are comparing our models that are not singular to glms/lmer, to see if it changes anything.
-
-summary(evolhist.full) # GLMM from above - the one that is singular
-
-#### evolhist glm (in paper) ----
-#### (with interaction)
-(evolhist.full.glm <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
-
-car::Anova(evolhist.full.glm, type = 3) # anova to get Chi-sq
-
-#### (without interaction)
-(evolhist.full.glm <- glm(R.2 ~ method + Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
-
-car::Anova(evolhist.full.glm, type = 2) # anova to get Chi-sq
+### Permutation test ----
 
 
-#### evolhist lmm (in paper) ----
-#### (with interaction)
-(evolhist.full.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models)) %>% summary()
-
-Anova(evolhist.full.lmer, type = 3) # anova to get Chi-sq
-
-#### (without interaction)
-(evolhist.full.lmer <- lmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models)) %>% summary()
-
-Anova(evolhist.full.lmer, type = 2) # anova to get Chi-sq
 
 
-# Other means etc reported in text ----
+
+### Other values (Mean and SD) reported in text ----
 
 count(data.all %>% filter(R.2 < 0.5))  # 364
 count(data.all)  # 446
@@ -331,11 +228,12 @@ sd(one_drainage$R.2)
 (both_drainages <- data.for.evolhist.models %>% filter(method == "both.drainages")) %>% summary()
 sd(both_drainages$R.2)
 
-# figures in manuscript ----
+
+### figures in manuscript ----
 
 ## figure 1 is map 
 
-## figure 2 ----
+## figure 2
 fig2data <- read.csv("testPG_figure.csv", fileEncoding="UTF-8-BOM")
 fig2data$population <- as.factor(fig2data$population)
 
@@ -399,7 +297,7 @@ fig2 <- ggarrange(highparal, lowparal, common.legend = TRUE, legend = "bottom")
 fig2
 #dev.off()
 
-## figure 3 ----
+## figure 3 
 
 data.all$overall <- "Overall"
 overall_hist <- 
@@ -536,7 +434,7 @@ fig3 <- figure3 + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, angle
 fig3
 #dev.off()
 
-## figure 4 ----
+## figure 4 
 behav_hist <-
   data.all %>% 
   filter(Kingsolver_traits == "Behaviour") %>% 
@@ -654,7 +552,7 @@ fig4 <- traitsplot + cowplot::draw_label("Frequency", x=  0, y=0.5, vjust= 1, an
 fig4
 #dev.off()
 
-## figure 5 ----
+## figure 5 
 
 ### intro
 levels(data.for.intro.models.broad$method)
@@ -885,7 +783,7 @@ fig5 <- cowplot::plot_grid(ecology_box_cow, evolhist_box_cow, intro_box_cow, nro
 fig5
 dev.off()
 
-## figure 6 ----
+## figure 6 
 
 # (These dataframes are all made above)
 
@@ -950,8 +848,8 @@ figure6
 dev.off()
 
 
-# Supplementary material ----
-## Supplemental table 1 ----
+### Supplementary material ----
+## Supplemental table 1 
 
 suptable.R2 <- data.all %>% group_by(Study)
 suptable.R2 <- mutate(suptable.R2, min(R.2))
@@ -1172,7 +1070,7 @@ mean(R2Maletime.between$R.2)
 sd(R2Maletime.between$R.2)
 
 
-## Supplemental figure 1 ----
+## Supplemental figure 1 
 
 (sup1<-
    data.all %>% 
@@ -1416,1130 +1314,4 @@ sex_facet_hist <- sex_facet_hist + cowplot::draw_label("Frequency (%)", x=  0, y
 #tiff("figs1.pg.tiff", res = 600, units = "in", height = 5, width = 8)
 sex_facet_hist
 #dev.off()
-
-# Sample Size ----
-
-##%######################################################%##
-#                                                          #
-####      IMPORTANT run line 36-74 to restructure       ####
-####        and read in data before coming here.        ####
-#                                                          #
-##%######################################################%##
-
-
-## Sample Size Data Wrangling ----
-# subsets originally in the Tallies code
-
-ids<-spreadsheet.data %>%
-  group_by(TraitID, Slope, Predation) %>%
-  tally() %>% #tallies how many populations in high and low for each Slope within a trait
-  group_by(TraitID) %>% 
-  filter(length(unique(Slope))>1) %>% #selects traits with multiple slopes
-  filter(Slope == "South") %>% #select only South pops to determine which traits are viable
-  filter(n>1) %>%
-  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
-  filter(!duplicated(TraitID)) %>% 
-  dplyr::select(TraitID)
-
-traits_s<-spreadsheet.data %>% 
-  filter(TraitID %in% ids$TraitID) %>% 
-  filter(Slope== "South") # 204 traits, done and on drive
-
-ids_south<-spreadsheet.data %>%
-  group_by(TraitID, Slope, Predation) %>%
-  tally() %>% 
-  group_by(TraitID) %>% 
-  filter(Slope == "South") %>%
-  filter(n>1) %>%
-  filter(length(unique(Predation))>1) %>%
-  filter(!duplicated(TraitID)) %>% 
-  dplyr::select(TraitID) #432 traits total, use this to select traits with enough south pops to be viable for drainage analysis
-
-ids_d<-spreadsheet.data %>%
-  filter(TraitID %in% ids_south$TraitID) %>% 
-  filter(Slope == "South") %>% #only use south pops
-  group_by(TraitID, Drainage, Predation) %>%
-  tally() %>% #tallies how many populations in high and low for each driange within a trait
-  group_by(TraitID) %>% 
-  filter(length(unique(Drainage))>1) %>% #selects traits with both drainages
-  filter(Drainage == "Caroni") %>% #select only caroni pops to determine which traits are viable
-  filter(n>1) %>%
-  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
-  filter(!duplicated(TraitID)) %>% 
-  dplyr::select(TraitID)
-
-traits_d<-spreadsheet.data %>%
-  filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
-  filter(Drainage == "Caroni") # 317 traits
-
-#this will be used as the among drainage comparisons to control for variation between slopes
-traits_d_all<-spreadsheet.data %>%
-  filter(TraitID %in% ids_d$TraitID) %>% #use only traits that have enough caroni pops
-  filter(Slope == "South")
-
-#Introductions
-ids_i<-spreadsheet.data %>% 
-  group_by(TraitID, Poptype, Predation) %>%
-  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
-  group_by(TraitID) %>% 
-  filter(length(unique(Poptype))>1) %>% #selects traits with both natural and introduction populations
-  filter(Poptype == "Natural") %>% #select only natural pops to determine which traits are viable
-  filter(n>1) %>%
-  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
-  filter(!duplicated(TraitID)) %>% 
-  dplyr::select(TraitID)
-
-traits_i<-spreadsheet.data %>% 
-  filter(TraitID %in% ids_i$TraitID) %>% 
-  filter(Poptype == "Natural") #209 traits, done and on drive
-
-ids_i_broad<-spreadsheet.data %>% 
-  group_by(TraitID, Poptype_broad, Predation) %>%
-  tally() %>% #tallies how many populations in high and low for intro or natural pops per trait
-  group_by(TraitID) %>% 
-  filter(length(unique(Poptype_broad))>1) %>% #selects traits with both natural and introduction populations
-  filter(Poptype_broad == "Natural") %>% #select only natural pops to determine which traits are viable
-  filter(n>1) %>%
-  filter(length(unique(Predation))>1) %>% #selects for traits with natural HP and LP with 2+ pops
-  filter(!duplicated(TraitID)) %>% 
-  dplyr::select(TraitID)
-
-traits_i_broad<-spreadsheet.data %>% 
-  filter(TraitID %in% ids_i_broad$TraitID) %>% 
-  filter(Poptype_broad == "Natural") #219 traits, done and on drive
-
-#(Number averaged per trait), done for each subset
-
-n_all<-spreadsheet.data %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
-
-data.all.n<-inner_join(spreadsheet.data, R2.data.among, by = "TraitID") %>% 
-  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(y = n_all, by = "TraitID") %>% 
-  filter(!is.na(meanNumber))
-
-#south slope only traits (slope Q)
-n_s<-traits_s %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
-
-data.south.n <- inner_join(spreadsheet.data, R2.data.south, by = "TraitID") %>% 
-  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(n_s, by = "TraitID")  %>% 
-  filter(!is.na(meanNumber))
-
-
-#caroni drainage only traits (drainage Q)
-n_d<-traits_d %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
-
-data.caroni.n <- inner_join(spreadsheet.data, R2.data.caroni, by = "TraitID") %>% 
-  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(n_d, by = "TraitID")  %>% 
-  filter(!is.na(meanNumber))
-
-# south drainages only (drainage Q)
-n_d_all<-traits_d_all %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
-
-data.among.drainage.n <- inner_join(spreadsheet.data, R2.data.among.drainage, by = "TraitID") %>% 
-  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(n_d_all, by = "TraitID")  %>% 
-  filter(!is.na(meanNumber))
-
-# intro broad (introduction Q)
-n_i_broad<-traits_i_broad %>% 
-  group_by(TraitID) %>% 
-  summarize(meanNumber = mean(Number)) %>% 
-  mutate(TraitID = as.factor(TraitID))
-
-data.intro.broad.n <- inner_join(spreadsheet.data, R2.data.intro.broad, by = "TraitID") %>% 
-  dplyr::select(1:3,6:14,17:21,23,43:52)%>% 
-  distinct(TraitID, .keep_all = TRUE) %>% 
-  left_join(n_i_broad, by = "TraitID")  %>% 
-  filter(!is.na(meanNumber))
-
-#intros (introduction Q) not used
-#n_i<-traits_i %>% 
-#group_by(TraitID) %>% 
-#summarize(meanNumber = mean(Number)) %>% 
-#mutate(TraitID = as.factor(TraitID))
-
-#data.intro.n <- inner_join(spreadsheet.data, R2.data.intro, by = "TraitID") %>% 
-#dplyr::select(1:3, 6:14, 17:21, 23, 43:52)%>% 
-#distinct(TraitID, .keep_all = TRUE) %>% 
-#left_join(n_i, by = "TraitID")  %>% 
-#filter(!is.na(meanNumber))
-
-
-## Sample Size dfs for models ----
-## trait types and sex
-data.all.no.colour.n <- data.all.n %>% 
-  filter(Sex %in% c("M", "F")) %>% 
-  filter(!Kingsolver_traits == 'Colour')
-
-data.all.n<-data.all.n %>% 
-  filter(Sex %in% c("M", "F"))
-
-data.all.rear.n <- data.all.n %>% 
-  filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
-
-## determinants models
-data.for.ecology.models.n<-rbind(data.all.n,data.south.n) %>%
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) %>%  #filters only trait IDs that have more than 1 entry within the group (n = 162 traits)
-  mutate(method = as.factor(method)) %>% # fix structure
-  filter(Sex %in% c("M", "F")) %>%
-  ungroup()
-
-data.for.evolhist.models.n<-rbind(data.caroni.n,data.among.drainage.n) %>%
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) %>% #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
-  mutate(method = as.factor(method)) %>% # fix structure
-  filter(Sex %in% c("M", "F")) %>%
-  ungroup()
-
-data.for.intro.models.broad.n<-rbind(data.all.n,data.intro.broad.n) %>%
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) %>% #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
-  mutate(method = as.factor(method)) %>% # fix structure
-  filter(Sex %in% c("M", "F")) %>%
-  ungroup()
-
-# THESE ARE THE ONES ALEXIS DID TO REMOVE STUDY ID FROM THE MODELS
-# THE ONES ALLEGRA DID THAT MORE SIMILARLY STRUCUTRE THE REAL MODELS ARE BELOW
-
-## Sample Size Models GLM----
-###NOTE all with Other as of right now
-
-##single factor models
-## trait type model (in paper)
-data.all.no.other.n <- data.all.n %>% filter(!Kingsolver_traits == "Other")
-(all.model.traits.n <- glm(R.2 ~ Kingsolver_traits + meanNumber, data = data.all.no.other.n, family = binomial)) %>% 
-  summary() 
-car::Anova(all.model.traits.n, type = "II")
-
-## Rearing enviro model (in paper)
-
-(all.model.rearing.n <- glm(R.2 ~ StudyType + meanNumber, data = data.all.rear.n, family = binomial)) %>% 
-  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
-car::Anova(all.model.rearing.n, type = "II")
-
-## sex with colour (in paper)
-(all.model.sex.n <- glm(R.2 ~ Sex + meanNumber, data = data.all.n, family = binomial)) %>% 
-  summary() #no sig effects (without studyID sex is p = 0.525)
-car::Anova(all.model.sex.n, type = "II")
-
-## sex without colour  (in paper)
-(all.model.sex.no.colour.n <- glm(R.2 ~ Sex + meanNumber, data = data.all.no.colour.n, family = binomial)) %>% 
-  summary() #no sig effects (without StudyID same)
-car::Anova(all.model.sex.no.colour.n, type = "II")
-
-## Multivariate Models
-## sex and traits (in paper)
-(sex.and.traits.n <- glm(R.2 ~ Kingsolver_traits + Sex + meanNumber, data = data.all.n, family = binomial)) %>% 
-  summary() #colour traits significant
-car::Anova(sex.and.traits.n, type = "II") #traits significant
-
-## sex and rear (in paper)
-(sex.and.rear.n <- glm(R.2 ~ StudyType + Sex + meanNumber, data = data.all.rear.n, family = binomial)) %>% 
-  summary()
-car::Anova(sex.and.rear.n, type = "II") #nothing sig
-
-##Determinant Models
-
-## Ecology model (in paper)
-
-(ecology.full.n <- glm(R.2 ~ method*Sex + meanNumber, data = data.for.ecology.models.n, family = binomial)) %>% 
-  summary() #singular, sex significant
-Anova(ecology.full.n, type = 3)
-## remove the interaction (in paper)
-(ecology.full.n <- glm(R.2 ~ method + Sex + meanNumber, data = data.for.ecology.models.n, family = binomial)) %>% 
-  summary() #singular, sex significant
-Anova(ecology.full.n, type = 2)
-
-#(ecology.full.n <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n, family = binomial)) %>% summary()
-#singular, sex significant
-
-## Intro model (in paper)
-(intro.full.broad.n <- glm(R.2 ~ method + meanNumber, data = data.for.intro.models.broad.n, family = binomial)) %>% 
-  summary() #singular  ### indicates sample size is significant
-#allFit(intro.full.broad.n)
-Anova(intro.full.broad.n, type = 2)
-
-#(intro.full.broad.n <- glmer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n, family = binomial)) %>% summary() 
-#singular, nothing sig
-
-## Evolutionary history model w interaction (in paper)
-(evolhist.full.n <- glm(R.2 ~ method * Sex + meanNumber, data = data.for.evolhist.models.n, family = binomial)) %>% 
-  summary() #fail to converge, nothing sig
-Anova(evolhist.full.n, type = 3)
-
-allFit(evolhist.full.n) #singular fits
-
-#(evolhist.full.n <- glmer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
-#singular, sex sig
-
-## interaction removed wout interaction (in paper)
-(evolhist.full.n <- glm(R.2 ~ method + Sex + meanNumber, data = data.for.evolhist.models.n, family = binomial)) %>% 
-  summary() #singular, method sig.
-Anova(evolhist.full.n, type = 2)
-#(evolhist.full <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
-#singular, method sig. and sex sig.
-
-## Evolutionary history model as a GLM (in paper)
-
-(evolhist.glm.n <- glm(R.2 ~ method + meanNumber, data = data.for.evolhist.models.n, family = binomial)) %>% 
-  summary() #nothing sig
-
-
-# THESE ARE THE ONES ALLEGRA DID TO MIMIC THE STRUCTURE OF MODELS IN THE PAPER
-## Sample Size Models GLMM ----
-###NOTE all with Other as of right now
-
-##single factor models
-## trait type model (in paper)
-
-(all.model.traits.n <- glmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.n, family = binomial)) %>% 
-  summary() #singular
-car::Anova(all.model.traits.n, type = "II")
-
-## Rearing enviro model (in paper)
-
-(all.model.rearing.n <- glmer(R.2 ~ StudyType + meanNumber + (1|StudyID), data = data.all.rear.n, family = binomial)) %>% 
-  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
-car::Anova(all.model.rearing.n, type = "II")
-
-## sex with colour (in paper)
-(all.model.sex.n <- glmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.n, family = binomial)) %>% 
-  summary() #no sig effects (without studyID sex is p = 0.525)
-car::Anova(all.model.sex.n, type = "II")
-
-## sex without colour  (in paper)
-(all.model.sex.no.colour.n <- glmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.no.colour.n, family = binomial)) %>% 
-  summary() #no sig effects (without StudyID same)
-car::Anova(all.model.sex.no.colour.n, type = "II")
-
-## Multivariate Models
-## sex and traits (in paper)
-#singular with StudyID as a random factor or just meanNumber as fixed
-
-(sex.and.traits.n <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|meanNumber), data = data.all.n, family = binomial)) %>% 
-  summary() #phys and colour traits significant
-car::Anova(sex.and.traits.n, type = "II") #traits significant
-
-## sex and rear (in paper)
-#keeping formula to match sex.and.traits
-(sex.and.rear.n <- glmer(R.2 ~ StudyType + Sex + (1|meanNumber), data = data.all.rear.n, family = binomial)) %>% 
-  summary()
-car::Anova(sex.and.rear.n, type = "II") #nothing sig
-
-##Determinant Models
-
-## Ecology model (in paper)
-
-(ecology.full.n <- glmer(R.2 ~ method*Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
-  summary() #singular, sex significant
-
-## remove the interaction (in paper)
-(ecology.full.n <- glmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n, family = binomial)) %>% 
-  summary() #singular, sex significant
-
-#(ecology.full.n <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n, family = binomial)) %>% summary()
-#singular, sex significant
-
-## Intro model (in paper)
-(intro.full.broad.n <- glmer(R.2 ~ method + meanNumber + (1|StudyID), data = data.for.intro.models.broad.n, family = binomial)) %>% 
-  summary() #singular  ### indicates sample size is significant
-#allFit(intro.full.broad.n)
-
-#(intro.full.broad.n <- glmer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n, family = binomial)) %>% summary() 
-#singular, nothing sig
-
-## Evolutionary history model w interaction (in paper)
-(evolhist.full.n <- glmer(R.2 ~ method * Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n, family = binomial)) %>% 
-  summary() #fail to converge, nothing sig
-allFit(evolhist.full.n) #singular fits
-
-#(evolhist.full.n <- glmer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
-#singular, sex sig
-
-## interaction removed wout interaction (in paper)
-(evolhist.full.n <- glmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n, family = binomial)) %>% 
-  summary() #singular, method sig.
-
-#(evolhist.full <- glmer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n, family = binomial)) %>% summary() 
-#singular, method sig. and sex sig.
-
-## Evolutionary history model as a GLM (in paper)
-
-(evolhist.glm.n <- glm(R.2 ~ method + meanNumber + StudyID, data = data.for.evolhist.models.n, family = binomial)) %>% 
-  summary() #nothing sig
-
-
-## Sample Size Models LMM ----
-
-##single factor models
-## trait type model (in paper)
-data.all.no.other.n <- data.all.n %>% filter(!Kingsolver_traits == "Other")
-(all.model.traits.n <- lmer(R.2 ~ Kingsolver_traits + meanNumber + (1|StudyID), data = data.all.no.other.n)) %>% 
-  summary() 
-car::Anova(all.model.traits.n, type = "II")
-
-## Rearing enviro model (in paper)
-
-(all.model.rearing.n <- lmer(R.2 ~ StudyType + meanNumber + (1|StudyID), data = data.all.rear.n)) %>% 
-  summary() #no sig effects (without StudyID wildcaught p = 0.0553)
-car::Anova(all.model.rearing.n, type = "II")
-
-## sex with colour (in paper)
-(all.model.sex.n <- lmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.n)) %>% 
-  summary() #no sig effects (without studyID sex is p = 0.525)
-car::Anova(all.model.sex.n, type = "II")
-
-## sex without colour  (in paper)
-(all.model.sex.no.colour.n <- lmer(R.2 ~ Sex + meanNumber + (1|StudyID), data = data.all.no.colour.n)) %>% 
-  summary() #no sig effects (without StudyID same)
-car::Anova(all.model.sex.no.colour.n, type = "II")
-
-## Multivariate Models
-## sex and traits (in paper)
-(sex.and.traits.n <- lmer(R.2 ~ Kingsolver_traits + Sex + meanNumber + (1|StudyID), data = data.all.n)) %>% 
-  summary() #colour traits significant
-car::Anova(sex.and.traits.n, type = "II") #traits significant
-
-## sex and rear (in paper)
-(sex.and.rear.n <- lmer(R.2 ~ StudyType + Sex + meanNumber + (1|StudyID), data = data.all.rear.n)) %>% 
-  summary()
-car::Anova(sex.and.rear.n, type = "II") #nothing sig
-
-##Determinant Models
-
-## Ecology model (in paper)
-
-(ecology.full.n <- lmer(R.2 ~ method*Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n)) %>% 
-  summary() #singular, sex significant
-Anova(ecology.full.n, type = 3)
-## remove the interaction (in paper)
-(ecology.full.n <- lmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.ecology.models.n)) %>% 
-  summary() #singular, sex significant
-Anova(ecology.full.n, type = 2)
-
-#(ecology.full.n <- lmerer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.ecology.models.n)) %>% summary()
-#singular, sex significant
-
-## Intro model (in paper)
-(intro.full.broad.n <- lmer(R.2 ~ method + meanNumber + (1|StudyID), data = data.for.intro.models.broad.n)) %>% 
-  summary() #singular  ### indicates sample size is significant
-#allFit(intro.full.broad.n)
-Anova(intro.full.broad.n, type = 2)
-
-#(intro.full.broad.n <- lmerer(R.2 ~ method + (1|meanNumber), data = data.for.intro.models.broad.n)) %>% summary() 
-#singular, nothing sig
-
-## Evolutionary history model w interaction (in paper)
-(evolhist.full.n <- lmer(R.2 ~ method * Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n)) %>% 
-  summary() #fail to converge, nothing sig
-Anova(evolhist.full.n, type = 3)
-
-allFit(evolhist.full.n) #singular fits
-
-#(evolhist.full.n <- lmerer(R.2 ~ method * Sex + (1|meanNumber), data = data.for.evolhist.models.n)) %>% summary() 
-#singular, sex sig
-
-## interaction removed wout interaction (in paper)
-(evolhist.full.n <- lmer(R.2 ~ method + Sex + meanNumber + (1|StudyID), data = data.for.evolhist.models.n)) %>% 
-  summary() #singular, method sig.
-Anova(evolhist.full.n, type = 2)
-#(evolhist.full <- lmerer(R.2 ~ method + Sex + (1|meanNumber), data = data.for.evolhist.models.n)) %>% summary() 
-#singular, method sig. and sex sig.
-
-# Residuals ---- 
-
-R2.data.among.resid <- read.csv("Resample_among.csv")
-R2.data.south.resid <- read.csv("Resample_South.csv")
-R2.data.intro.resid <- read.csv("Resample_intro.csv")
-R2.data.intro.resid.broad <- read.csv("Resample_intro_broad.csv")
-R2.data.caroni.resid <- read.csv("Resample_Caroni.csv")
-R2.data.among.drainage.resid <- read.csv("Resample_Among_Drainage.csv")
-
-## fix structure
-R2.data.among.resid$TraitID <- as.factor(R2.data.among.resid$TraitID)
-R2.data.south.resid$TraitID <- as.factor(R2.data.south.resid$TraitID)
-R2.data.intro.resid$TraitID <- as.factor(R2.data.intro.resid$TraitID)
-R2.data.intro.resid.broad$TraitID <- as.factor(R2.data.intro.resid.broad$TraitID)
-R2.data.caroni.resid$TraitID <- as.factor(R2.data.caroni.resid$TraitID)
-R2.data.among.drainage.resid$TraitID <- as.factor(R2.data.among.drainage.resid$TraitID)
-
-# combine R2 and spreadsheet data
-## prep for when we bind them together, this variable will go in the model to indicate the type of R2
-R2.data.among.resid$method <- "all"
-R2.data.south.resid$method <- "south"
-R2.data.intro.resid$method <- "only_natural"
-R2.data.intro.resid.broad$method <- "only_natural_broad"
-R2.data.caroni.resid$method <- "caroni"
-R2.data.among.drainage.resid$method <- "both.drainages"
-
-## get relevant data with one entry for each Trait
-### I was inclusive with columns, many probably aren't needed so you can cut them out
-data.all.resid <- inner_join(spreadsheet.data, R2.data.among.resid, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
-  distinct(TraitID, .keep_all = TRUE) #removes replicated TraitIDs and retains the columns
-
-## repeat for south only R2 and others...
-data.south.resid <- inner_join(spreadsheet.data, R2.data.south.resid, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
-  distinct(TraitID, .keep_all = TRUE) 
-
-data.intro.resid<- inner_join(spreadsheet.data, R2.data.intro.resid, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
-  distinct(TraitID, .keep_all = TRUE) 
-
-data.intro.broad.resid<- inner_join(spreadsheet.data, R2.data.intro.resid.broad, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
-  distinct(TraitID, .keep_all = TRUE) 
-
-data.caroni.resid<- inner_join(spreadsheet.data, R2.data.caroni.resid, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
-  distinct(TraitID, .keep_all = TRUE) 
-
-data.among.drainage.resid<- inner_join(spreadsheet.data, R2.data.among.drainage.resid, by = "TraitID") %>% 
-  dplyr::select(1:3, 6:14, 17:21, 23, 41:54)%>% #I selected only the columns that have information that applies at the trait level
-  distinct(TraitID, .keep_all = TRUE)
-
-## then we can bind them together as we wish! First ecology...
-data.for.ecology.models.resid<-rbind(data.all.resid,data.south.resid) %>% 
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits) %>% 
-
-## evolutionary history question
-data.for.evolhist.models.resid<-rbind(data.caroni.resid,data.among.drainage.resid) %>% 
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
-
-## Intro "broad", 
-data.for.intro.models.broad.resid<-rbind(data.all.resid,data.intro.broad.resid) %>% 
-  arrange(TraitID) %>% #puts them in a nice order
-  group_by(TraitID) %>% #groups them for the count
-  filter(n() > 1) #filters only trait IDs that have more than 1 entry within the group (n = 204 traits)
-
-### as a note and fail safe I would run the grouping with TraitID on the sex specific dfs to make sure theres two traitID entries for each
-
-## remove 'both'
-(data.all.resid <- data.all.resid %>% filter(Sex %in% c("M", "F"))  ) %>% summary()
-(data.all.resid.no.colour <- data.all.resid %>% filter(!Kingsolver_traits == 'Colour'))
-
-# Before models, test dist of residuals 
-ggqqplot(data.all.resid$R.2)
-shapiro.test(data.all.resid$R.2)
-
-## Overall models (traits, sex, rearing) ----
-
-### remove other (because model below will not converge with other)
-
-### Trait type model (in paper) ----
-data.all.resid.traits <- data.all.resid %>% filter(!Kingsolver_traits == "Other")
-(all.model.traits.resid <- glmer(R.2 ~ Kingsolver_traits + (1|StudyID), 
-                                 data = data.all.resid.traits, family = binomial)) %>% summary()
-car::Anova(all.model.traits.resid, type = "II")
-
-qqnorm(residuals(all.model.traits.resid.lmer))
-qqline(residuals(all.model.traits.resid.lmer))
-shapiro.test(residuals(all.model.traits.resid.lmer))
-
-### sex with colour (in paper) ----
-### with colour
-(all.model.sex.resid <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid, family = binomial)) %>% summary()
-car::Anova(all.model.sex.resid, type = "II")
-
-(all.model.sex.resid.lmer <- lmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid)) %>% summary()
-
-shapiro.test(residuals(all.model.sex.resid.lmer))
-
-### sex without colour  (in paper) ----
-(all.model.sex.no.colour.resid <- glmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid.no.colour, family = binomial)) %>% summary()
-car::Anova(all.model.sex.no.colour.resid, type = "II")
-
-(all.model.sex.no.colour.resid.lmer <- lmer(R.2 ~ Sex + (1|StudyID), data = data.all.resid.no.colour)) %>% summary()
-
-shapiro.test(residuals(all.model.sex.no.colour.resid.lmer))
-
-
-### rearing enviro model (in paper) ----
-data.all.resid.rear <- data.all.resid %>% filter(StudyType %in% c("Common Garden (F2)", "Wildcaught"))  # won't run w CG F1 (not a lot anyway)
-(all.model.rearing <- glmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.resid.rear, family = binomial)) %>% summary()
-car::Anova(all.model.rearing, type = "II")
-
-(all.model.rearing.lmer <- lmer(R.2 ~ StudyType +  (1|StudyID), data = data.all.resid.rear)) %>% summary()
-shapiro.test(residuals(all.model.rearing.lmer))
-
-## multivariate models (traits, sex, rearing) ----
-
-### sex and traits (in paper) ----
-(sex.and.traits.resid <- glmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all.resid, family = binomial)) %>% summary()
-Anova(sex.and.traits.resid, type = "II")
-
-sex.and.traits.resid.lmer <- lmer(R.2 ~ Kingsolver_traits + Sex + (1|StudyID), data = data.all.resid)
-shapiro.test(residuals(sex.and.traits.resid.lmer))
-
-### sex and rear (in paper) ----
-(sex.and.rear.resid <- glmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.resid.rear, family = binomial)) %>% summary()
-Anova(sex.and.rear.resid, type = 2)
-
-(sex.and.rear.resid.lmer <- lmer(R.2 ~ StudyType + Sex + (1|StudyID), data = data.all.resid.rear)) %>% summary()
-shapiro.test(residuals(sex.and.rear.resid.lmer))
-
-## Determinants models ----
-### Ecology models ----
-
-#### fix structure
-data.for.ecology.models.resid$method <- as.factor(data.for.ecology.models.resid$method)
-
-#### Remove 'Both' sex category because duplicates
-data.for.ecology.models.resid <- data.for.ecology.models.resid %>% filter(Sex %in% c("M", "F"))  
-
-#### Ecology model (in paper) ----
-(ecology.full.resid <- glmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models.resid, family = binomial)) %>% summary()
-car::Anova(ecology.full.resid, type = "III")
-
-(ecology.full.resid.lmer <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.ecology.models.resid)) %>% summary()
-shapiro.test(resid(ecology.full.resid.lmer))
-
-#### remove the interaction (in paper) ----
-(ecology.full.resid <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models.resid, family = binomial)) %>% summary()
-car::Anova(ecology.full.resid, type = "II")
-
-(ecology.full.resid.lmer <- lmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.ecology.models.resid)) %>% summary()
-shapiro.test(residuals(ecology.full.resid.lmer))
-
-### Intro models ----
-#### Fix structure
-data.for.intro.models.broad.resid$method <- as.factor(data.for.intro.models.broad.resid$method)
-
-#### Remove 'Both' sex category because duplicates
-data.for.intro.models.broad.resid <- data.for.intro.models.broad.resid %>% filter(Sex %in% c("M", "F"))  
-
-#### Intro model (in paper) ----
-(intro.full.broad.resid <- glmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad.resid, family = binomial)) %>% summary()
-car::Anova(intro.full.broad.resid, type = "II")
-
-intro.full.broad.resid.lmer <- lmer(R.2 ~ method + (1|StudyID), data = data.for.intro.models.broad.resid)
-shapiro.test(residuals(intro.full.broad.resid.lmer))
-
-### Evolutionary history models ----
-#### (These are all singular fits)
-
-#### fix structure
-data.for.evolhist.models.resid$method <- as.factor(data.for.evolhist.models.resid$method)
-
-#### Remove 'Both' sex category because duplicates
-data.for.evolhist.models.resid <- data.for.evolhist.models.resid %>% filter(Sex %in% c("M", "F"))  
-
-#### Evolutionary history model w interaction (in paper) ----
-(evolhist.full.resid <- glmer(R.2 ~ method * Sex + (1|StudyID), data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
-car::Anova(evolhist.full.resid, type = "III")
-
-#### interaction removed wout interaction (in paper) ----
-(evolhist.full.resid <- glmer(R.2 ~ method + Sex + (1|StudyID), data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
-car::Anova(evolhist.full.resid, type = "II")
-
-(evolhist.glm.resid <- glm(R.2 ~ method, data = data.for.evolhist.models.resid, family = binomial)) %>% summary()
-car::Anova(evolhist.glm.resid, type = "II")
-
-#### try w lmer
-(evolhist.full.lmer.resid <- lmer(R.2 ~ method*Sex + (1|StudyID), data = data.for.evolhist.models.resid)) %>% summary()
-Anova(evolhist.full.lmer.resid, type = 3)
-
-shapiro.test(residuals(evolhist.full.lmer.resid))
-
-#### try w glm
-(evolhist.full.glm.resid <- glm(R.2 ~ method*Sex, data = data.for.evolhist.models, family = binomial)) %>% summary()
-
-car::Anova(evolhist.full.lmer.resid, type = "II")
-car::Anova(evolhist.full.glm.resid, type = "II")
-
-# model validation ----
-## validate trait type ----
-#response = R2
-#expl = Kingsolver_traits
-#random = StudyID
-# glm name = all.model.traits
-
-
-# zuur book
-
-#step 1 linear regression
-lmTraits <- lm(R.2 ~ Kingsolver_traits, data = data.all.traits)
-plot(lmTraits)
-data.all.traits$logR.2 <- log10(data.all.traits$R.2 + 1)
-loglmtraits <- lm(logR.2 ~ Kingsolver_traits, data = data.all.traits)
-asinlmtraits <- lm(asin(R.2) ~ Kingsolver_traits, data = data.all.traits)
-sqrtlmtraits <- lm(sqrt(R.2) ~ Kingsolver_traits, data = data.all.traits)
-
-
-# visual inspection 
-par(mfrow = c(2,2))
-plot(sqrtlmtraits, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
-hist(resid(sqrtlmtraits), xlab = "Residuals", main = "") # normality - not normal
-plot(data.all.traits$Kingsolver_traits, resid(sqrtlmtraits), # note that spread not the same 
-     xlab = "Trait type", ylab = "residuals")
-par(op)
-
-# non-visual test of homogeneity (bartlett)
-# null hypothesis is that variances are equal 
-bartlett.test(resid(lmTraits), data.all.traits$Kingsolver_traits) # reject null
-
-#step 2 GLS
-traitsForm <- formula(R.2 ~ Kingsolver_traits) 
-glsTraits <- gls(traitsForm, data = data.all.traits)
-
-#step 3 variance
-# choose random effect?
-
-#step 4 fit model
-lmmTraits <- lme(traitsForm, random = ~ 1 | StudyID,
-                 method = "REML", data = data.all.traits)
-
-#step 5 compare new/old models
-anova(glsTraits, lmmTraits) #model w random is better; L = 89.46 (df = 8, p < 0.0001)
-
-#step6 is it ok?
-residTraits <- resid(lmmTraits, type = "normalized")
-fittedTraits <- fitted(lmmTraits)
-par(mfrow = c(1,2), mar = c(4,4,3,2))
-plot(x = fittedTraits, y = residTraits, xlab = "Fitted values", ylab = "Residuals")
-boxplot(residTraits ~ Kingsolver_traits, data = data.all.traits,
-        main = "Kingsolver traits", lab= "Residuals")
-par(op)
-
-#step7/8 optimal fixed str
-# this does not apply because we have 1 fixed ??
-
-#step9 validate the omodel
-summary(lmmTraits)
-# (0.188^2)/(0.188^2 + 0.202^2) = correlation between obs from the same stuyd = 0.46
-
-#steo10
-
-#step11
-library(lattice)
-xyplot(residTraits ~ Kingsolver_traits, 
-       data = data.all.traits, 
-       ylab = "Residuals",
-       xlab = "Kingsolver_traits",
-       panel = function(x,y)
-       {panel.grid(h = -1, v = 2) 
-         panel.points(x, y, col = 1) 
-         panel.loess(x, y, span = 0.5, col = 1,lwd=2)
-       }
-)
-
-
-library(mgcv)
-
-gammTraits <- gamm(R.2 ~ Kingsolver_traits,
-                   random = list(StudyID = ~1),
-                   data = data.all.traits) 
-summary(gammTraits$gam)
-summary(gammTraits$lme)
-
-anova(gammTraits$gam)
-anova(gammTraits$lme)
-
-plot(gammTraits$gam, all.terms = TRUE)
-plot(gammTraits$lme)
-
-drop1(sex.and.traits)
-
-
-# I have no idea what any of the above is showing atm 
-
-# so, dharma package instead
-
-library("DHARMa")
-
-testDispersion(all.model.traits)
-simulationOutput <- simulateResiduals(fittedModel = all.model.traits, plot = F)
-residuals(simulationOutput)
-residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
-plot(simulationOutput)
-plotQQunif(simulationOutput)
-plotResiduals(simulationOutput)
-
-testZeroInflation(simulationOutput)
-
-countOnes <- function(x) sum(x == 1)
-testGeneric(simulationOutput, summary = countOnes, alternative = "greater") 
-
-M2 <- glmer.nb(R.2 ~ Kingsolver_traits + (1|StudyID),
-               data = data.all.traits)
-
-summary(M2)
-
-E2 <- resid(M2, type = "pearson")
-N  <- nrow(data.all.traits)
-p  <- length(coef(M2)) + 1  # '+1' is for variance parameter in NB
-sum(E2^2) / (N - p)
-
-
-f = glmm.zinb(fixed = R.2 ~ Kingsolver_traits,
-              random = ~ 1 | StudyID, data = data.all.traits) 
-summary(f)
-fixed(f)
-summary(f$fit.zero)
-
-## validate sex ----
-all.model.sex
-
-lmSex <- lm(R.2 ~ Sex, data = data.all)
-
-
-par(mfrow = c(2,2))
-plot(lmSex, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
-hist(resid(lmSex), xlab = "Residuals", main = "") # normality - not normal
-plot(data.all$Sex, resid(lmSex), # note that spread not the same 
-     xlab = "Sex", ylab = "residuals")
-par(op)
-
-loglmSex <- lm(log10(R.2) ~ Sex, data = data.all)
-
-plot(resid(all.model.sex))
-hist(resid(all.model.sex))
-
-## validate rearing ----
-all.model.rearing
-hist(resid(all.model.rearing))
-plot(resid(all.model.rearing))
-par(op)
-
-
-# traits
-plot(resid(all.model.traits))
-hist(resid(all.model.traits))
-
-# ecology
-ecology.full
-
-ecology.test <- glmer(R.2 ~ method + (1 | StudyID), 
-                      family = binomial, data= data.for.ecology.models)
-plot(resid(ecology.test))
-hist(resid(ecology.test))
-summary(ecology.full)
-
-# evil
-plot(resid(evolhist.full))
-hist(resid(evolhist.full))
-summary(evolhist.full)
-# intro
-# regression
-data.for.intro.models.broad <- data.for.intro.models.broad %>% filter(!TraitID == 303)
-
-introlm <- lm(R.2 ~ method, data = data.for.intro.models.broad)
-plot(introlm) # trash
-data.for.intro.models.broad$logR.2 <- log10(data.for.intro.models.broad$R.2 + 1)
-introlmlog <- lm(logR.2 ~ method, data = data.for.intro.models.broad)
-E <- rstandard(introlmlog)
-plot(introlmlog)
-
-
-# step2/3
-introformula <- formula(logR.2 ~ method)
-introgls <- gls(introformula, data = data.for.intro.models.broad)
-
-# step4
-introlme <- lme(introformula, random = ~ 1 | StudyID,
-                method = "REML", data = data.for.intro.models.broad)
-
-# step5
-anova(introgls, introlme) # better with RE (L = 28.66, p < 0.0001)
-
-#step6
-normresidintrolme <- resid(introlme, type = "normalized")
-fittedintrolme <- fitted(introlme)
-plot(x = fittedintrolme, y = normresidintrolme)
-boxplot(normresidintrolme ~ method,
-        data = data.for.intro.models.broad)
-
-#step7/8 - skip
-
-#step9
-summary(introlme)
-# 0.66 = correlation of obs from same study
-
-#step10 p 156
-library(lattice)
-xyplot(normresidintrolme ~ method,
-       data = data.for.intro.models.broad,
-       ylab = "residuals",
-       panel = function(x,y){
-         panel.grid(h = -1, v = 2)
-         panel.points(x, y, col = 1)
-         panel.loess(x, y, span = 0.5, col = 1,lwd=2)})
-
-library(mgcv)
-introgamm <- gamm(logR.2 ~ method,
-                  random = list(StudyID = ~ 1),
-                  data = data.for.intro.models.broad)
-summary(introgamm$gam)
-summary(introgamm$lme)
-anova(introgamm$gam) 
-plot(introgamm$gam) # we didn't have smoother (only categorical data)
-plot(introgamm$lme)
-
-plot(resid(introlm))
-hist(resid(introlm))
-plot(resid(intro.full.broad))
-hist(resid(intro.full.broad))
-
-
-summary(intro.full.broad)
-
-
-
-
-M5 <- glm(R.2 ~ method, family = binomial, data = data.for.intro.models.broad)
-
-EP <- resid(M5, type = "pearson")
-ED <- resid(M5, type = "deviance")
-mu <- predict(M5, type = "response")
-E <- data.for.intro.models.broad$R.2 ~ mu
-par(mfrow = c(2,2))
-plot(x = mu, y = E, main = "response residuals")
-plot(x = mu, y = EP)
-plot(x = mu, y = ED)
-plot(M5)
-
-
-
-test <- glm(R.2 ~ method, family = quasibinomial, data = data.for.intro.models.broad)
-summary(test)
-drop1(test, test = "F")
-
-
-EP <- resid(test, type = "pearson")
-ED <- resid(test, type = "deviance")
-mu <- predict(test, type = "response")
-E <- data.for.intro.models.broad$R.2 ~ mu
-par(mfrow = c(2,2))
-plot(x = mu, y = E, main = "response residuals")
-plot(x = mu, y = EP)
-plot(x = mu, y = ED)
-plot(test)
-
-
-
-a1b <- (glmer.nb(R.2 ~ method + (1 | StudyID), data = data.for.intro.models.broad))
-b2b <- (glmer.nb(R.2 ~ method + (1 | StudyID), data = data.for.ecology.models)) 
-c2b <- (glmer.nb(R.2 ~ method + (1 | StudyID), data = data.for.evolhist.models)) 
-
-
-
-library("DHARMa")
-
-testDispersion(c2b)
-simulationOutput <- simulateResiduals(fittedModel = c2b, plot = F)
-residuals(simulationOutput)
-residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
-plot(simulationOutput)
-plotQQunif(simulationOutput)
-plotResiduals(simulationOutput)
-
-testZeroInflation(simulationOutput)
-
-countOnes <- function(x) sum(x == 1)
-testGeneric(simulationOutput, summary = countOnes, alternative = "greater") 
-
-library(NBZIMM)
-f = glmm.zinb(fixed = log10(R.2+1) ~ method, 
-              random = ~ 1 | StudyID, data = data.for.intro.models.broad) 
-summary(f)
-plot(f)
-plot(intro.full.broad)
-
-g = glmm.zinb(fixed = R.2 ~ method, 
-              random = ~ 1 | StudyID, data = data.for.ecology.models) 
-summary(g)
-plot(g)
-plot(ecology.full)
-
-h = glmm.zinb(fixed = R.2 ~ method, 
-              random = ~ 1 | StudyID, data = data.for.evolhist.models) 
-summary(h)
-plot(h)
-plot(evolhist.full)
-
-plot(resid(h))
-plot(resid(f))
-plot(resid(h))
-plot(resid(introlm))
-hist(resid(introlm))
-hist(resid(h))
-hist(resid(g))
-hist(resid(f))
-plot(resid(intro.full.broad))
-hist(resid(intro.full.broad))
-
-all.model.rearing
-
-testDispersion(all.model.rearing)
-simulationOutput <- simulateResiduals(fittedModel = all.model.rearing, plot = F)
-residuals(simulationOutput)
-residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
-plot(simulationOutput)
-plotQQunif(simulationOutput)
-plotResiduals(simulationOutput)
-
-testZeroInflation(simulationOutput)
-
-
-## ecology
-
-ecology.full
-
-testDispersion(ecology.full)
-simulationOutput <- simulateResiduals(fittedModel = ecology.full, plot = F)
-residuals(simulationOutput)
-residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
-plot(simulationOutput)
-plotQQunif(simulationOutput)
-plotResiduals(simulationOutput)
-
-testZeroInflation(simulationOutput)
-
-
-
-## evilhist
-
-evolhist.full
-
-testDispersion(evolhist.full)
-simulationOutput <- simulateResiduals(fittedModel = evolhist.full, plot = F)
-residuals(simulationOutput)
-residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
-plot(simulationOutput)
-plotQQunif(simulationOutput)
-plotResiduals(simulationOutput)
-
-testZeroInflation(simulationOutput)
-
-
-
-#step 1 linear regression
-lmTraits <- lm(R.2 ~ method, data = data.for.evolhist.models)
-plot(lmTraits)
-data.for.evolhist.models$logR.2 <- log10(data.for.evolhist.models$R.2 + 1)
-loglmtraits <- lm(logR.2 ~ method, data = data.for.evolhist.models)
-asinlmtraits <- lm(asin(R.2) ~ method, data = data.for.evolhist.models)
-sqrtlmtraits <- lm(sqrt(R.2) ~ method, data = data.for.evolhist.models)
-
-
-# visual inspection 
-par(mfrow = c(2,2))
-plot(sqrtlmtraits, add.smooth = FALSE, which = 1) # homogeneity (fitted values vs residuals)
-hist(resid(loglmtraits), xlab = "Residuals", main = "") # normality - not normal
-plot(data.for.evolhist.models$method, resid(loglmtraits), # note that spread not the same 
-     xlab = "Trait type", ylab = "residuals")
-par(op)
-
-# non-visual test of homogeneity (bartlett)
-# null hypothesis is that variances are equal 
-bartlett.test(resid(lmTraits), data.for.evolhist.models$method) # reject null
-
-bartlett.test(resid(loglmtraits), data.for.evolhist.models$method) # reject null
-
-#step 2 GLS
-traitsForm <- formula(R.2 ~ method) 
-glsTraits <- gls(traitsForm, data = data.for.evolhist.models)
-
-#step 3 variance
-# choose random effect?
-
-#step 4 fit model
-lmmTraits <- lme(traitsForm, random = ~ 1 | StudyID,
-                 method = "REML", data = data.for.evolhist.models)
-
-#step 5 compare new/old models
-anova(glsTraits, lmmTraits) #model w random is better
-
-#step6 is it ok?
-residTraits <- resid(lmmTraits, type = "normalized")
-fittedTraits <- fitted(lmmTraits)
-par(mfrow = c(1,2), mar = c(4,4,3,2))
-plot(x = fittedTraits, y = residTraits, xlab = "Fitted values", ylab = "Residuals")
-boxplot(residTraits ~ method, data = data.for.evolhist.models,
-        main = "Methods", lab= "Residuals")
-par(op)
-
-#step7/8 optimal fixed str
-# this does not apply because we have 1 fixed ??
-
-#step9 validate the omodel
-summary(lmmTraits)
-# (0.188^2)/(0.188^2 + 0.202^2) = correlation between obs from the same stuyd = 0.46
-
-#steo10
-
-#step11
-library(lattice)
-xyplot(residTraits ~ method, 
-       data = data.for.evolhist.models, 
-       ylab = "Residuals",
-       xlab = "Method",
-       panel = function(x,y)
-       {panel.grid(h = -1, v = 2) 
-         panel.points(x, y, col = 1) 
-         panel.loess(x, y, span = 0.5, col = 1,lwd=2)
-       }
-)
-
-
-library(mgcv)
-
-gammTraits <- gamm(R.2 ~ method,
-                   random = list(StudyID = ~1),
-                   data = data.for.evolhist.models) 
-summary(gammTraits$gam)
-summary(gammTraits$lme)
-
-anova(gammTraits$gam)
-anova(gammTraits$lme)
-
-plot(gammTraits$gam, all.terms = TRUE)
-plot(gammTraits$lme)
-
-drop1(sex.and.traits)
-
-
-
-
-## introductions
-
-intro.full.broad
-
-testDispersion(intro.full.broad)
-simulationOutput <- simulateResiduals(fittedModel = intro.full.broad, plot = F)
-residuals(simulationOutput)
-residuals(simulationOutput, quantilefunction = qnorm, outlierValues = c(-7,7))
-plot(simulationOutput)
-plotQQunif(simulationOutput)
-plotResiduals(simulationOutput)
-
-testZeroInflation(simulationOutput)
-
-
+###
